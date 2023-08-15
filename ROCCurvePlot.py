@@ -12,19 +12,19 @@ import tau_selections
 exec(open("NanoAOD_Dict.py").read())
 exec(open("tau_func.py").read())
 
-f = open("TTToHadronic_Events.txt", 'r')
-lines = f.readlines()
-eventDict = {}
-keys = lines[0].strip().split("\t")
-for key in keys:
-  eventDict[key] = []
-for line in lines[1:]:
-  eventDict["event"].append(int(line.strip().split("\t")[0]))
-  eventDict["lumiBlock"].append(int(line.strip().split("\t")[1]))
-  eventDict["run"].append(int(line.strip().split("\t")[2]))
-eventDict["event"] = np.array(eventDict["event"])
-eventDict["lumiBlock"] = np.array(eventDict["lumiBlock"])
-eventDict["run"] = np.array(eventDict["run"])
+#f = open("TTToHadronic_Events.txt", 'r')
+#lines = f.readlines()
+#eventDict = {}
+#keys = lines[0].strip().split("\t")
+#for key in keys:
+#  eventDict[key] = []
+#for line in lines[1:]:
+#  eventDict["event"].append(int(line.strip().split("\t")[0]))
+#  eventDict["lumiBlock"].append(int(line.strip().split("\t")[1]))
+#  eventDict["run"].append(int(line.strip().split("\t")[2]))
+#eventDict["event"] = np.array(eventDict["event"])
+#eventDict["lumiBlock"] = np.array(eventDict["lumiBlock"])
+#eventDict["run"] = np.array(eventDict["run"])
 #print(eventDict)
 
 
@@ -33,6 +33,8 @@ can = ROOT.TCanvas("can", "can", 1000, 600)
 score_legend = ROOT.TLegend(0.7,0.6,0.8,0.8)
 dict_idx = 0
 scoreSpace = np.linspace(0.0,0.995,200)
+scoreSpace = np.append(scoreSpace, np.linspace(0.9951, 1.0001, 51))
+print(scoreSpace)
 score_dict = {}
 
 Files = Nano_Dict
@@ -46,7 +48,7 @@ Run3_ROC = {}
 Run2_ROC = {}
 
 for file in Files:
-  #print(file, " is running")
+  print(file, " is running")
   nano_file = uproot.open(Files[file])
   nano_file_evt = nano_file["Events"]
 
@@ -99,7 +101,7 @@ for file in Files:
   if ("TT" in file):
     nevt = nano_file_evt.num_entries
     #nevt = 24000
-    #print(file, " has ", nevt, " number of entries")
+    print(file, " has ", nevt, " number of entries")
 
 ### Match jets that pass score cut to hadronically decaying taus using dR matching ###
     unmatchedJetsPassScore = []
@@ -107,7 +109,7 @@ for file in Files:
 
     for evt in range(nevt):
       if isLeptonic(evt, Branches["GenPart_pdgId"], Branches["GenPart_genPartIdxMother"]): continue 
-      if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
+      #if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
       unmatchedJetsPassScore_evt = []
       unmatchedJets_score_evt = []  
       if (len(Branches["GenVisTau_pt"][evt])== 0):
@@ -175,7 +177,7 @@ for file in Files:
     matchedDisTauTagScore = []
     for evt in range(nevt):
       
-      if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
+      #if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
       matchedJetsPassScore_evt = []
       matchedScore_evt = []
       matchedDisTauTagScore_evt = []
@@ -276,7 +278,7 @@ for file in Files:
     isStauMother = []
     #Lxyz = []
     for evt in range(nevt):
-      if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
+      #if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
       vZ_evt = []
       vRho_evt = []
       isStauMother_evt = []
@@ -342,9 +344,8 @@ colorIdx3 = 0
 colorIdx2 = 0
 for file in Files:
   if "Run3" in file:    
-    Run3_Eff[file] = array( 'd' ) 
-    Run3_Fake[file] = array( 'd' ) 
     if "Stau" in file:
+      Run3_Eff[file] = array( 'd' ) 
       #print(file)
       #print(colorIdx3)
       colorDict[file] = colors[colorIdx3]
@@ -352,21 +353,23 @@ for file in Files:
       for score_idx in range(len(scoreSpace)):
         Run3_Eff[file].append(Sample[file].GetEfficiency(score_idx+1))
     if "TT" in file:
+      Run3_Fake[file] = array( 'd' ) 
       for score_idx in range(len(scoreSpace)):
         Run3_Fake[file].append(BG[file].GetEfficiency(score_idx+1))
 
 
   if "Run2" in file:
-    Run2_Eff[file] = array( 'd' ) 
-    Run2_Fake[file] = array( 'd' )  
     if "Stau" in file:
-      #print(file)
+      Run2_Eff[file] = array( 'd' ) 
+      print(file)
       #print(colorIdx2)
       colorDict[file] = colors[colorIdx2]
       colorIdx2+=1
       for score_idx in range(len(scoreSpace)):
         Run2_Eff[file].append(Sample[file].GetEfficiency(score_idx+1))
+      print(Run2_Eff[file][-1])
     if "TT" in file:
+      Run2_Fake[file] = array( 'd' )  
       for score_idx in range(len(scoreSpace)):
         Run2_Fake[file].append(BG[file].GetEfficiency(score_idx+1))
 
@@ -421,6 +424,7 @@ for file in Files:
 #can.SaveAs("TauEfficiency_L" + str(tau_selections.stauTauVtxDistMin) + "to" + str(tau_selections.stauTauVtxDistMax) + ".pdf")
 #
 
+
 Run2_TauEff = ROOT.TMultiGraph("run2_taueff", "run2_taueff")
 Run2_TauEff_legend = ROOT.TLegend(0.7, 0.5, 0.88, 0.65)
 Run3_TauEff = ROOT.TMultiGraph("run3_taueff", "run3_taueff")
@@ -428,11 +432,15 @@ Run3_TauEff_legend = ROOT.TLegend(0.7, 0.5, 0.88, 0.65)
 Run2_TauEff_TGraph = {}
 Run3_TauEff_TGraph = {}
 for file in Run2_Eff:
+    print(len(Run2_Eff[file]))
+    print(len(scoreSpace))
     Run2_TauEff_TGraph[file] = ROOT.TGraph(len(scoreSpace), scoreSpace, Run2_Eff[file])
+    Run2_TauEff_TGraph[file].SetLineColor(colorDict[file])
     Run2_TauEff.Add(Run2_TauEff_TGraph[file])
     Run2_TauEff_legend.AddEntry(Run2_TauEff_TGraph[file], file)      
 for file in Run3_Eff:
     Run3_TauEff_TGraph[file] = ROOT.TGraph(len(scoreSpace), scoreSpace, Run3_Eff[file])
+    Run3_TauEff_TGraph[file].SetLineColor(colorDict[file])
     Run3_TauEff.Add(Run3_TauEff_TGraph[file])
     Run3_TauEff_legend.AddEntry(Run3_TauEff_TGraph[file], file)      
 Run2_TauEff.SetMaximum(1)
@@ -479,14 +487,14 @@ ROC3 = ROOT.TMultiGraph("roc3","roc3")
 for file in Files:
   if "Run2" in file:
     if "Stau" in file:
-      Run2_ROC[file] = ROOT.TGraph(100, Run2_Fake["Run2_TTToHadronic_13TeV"], Run2_Eff[file])
+      Run2_ROC[file] = ROOT.TGraph(len(scoreSpace), Run2_Fake["Run2_TTToHadronic_13TeV"], Run2_Eff[file])
       Run2_ROC[file].SetMaximum(1)
       Run2_ROC[file].SetLineColor(colorDict[file])
       ROC2.Add(Run2_ROC[file])
       ROC2_legend.AddEntry(Run2_ROC[file], file)
   if "Run3" in file:
     if "Stau" in file:
-      Run3_ROC[file] = ROOT.TGraph(100, Run3_Fake["Run3_TT_13p6TeV"], Run3_Eff[file])
+      Run3_ROC[file] = ROOT.TGraph(len(scoreSpace), Run3_Fake["Run3_TT_13p6TeV"], Run3_Eff[file])
       Run3_ROC[file].SetMaximum(1)
       Run3_ROC[file].SetLineColor(colorDict[file])
       ROC3.Add(Run3_ROC[file])
@@ -497,13 +505,13 @@ ROC3.SetTitle("ROC Curves for different mass points for Run3; Fake Rate; Tau Eff
 
 ROC2.Draw("A")
 ROC2_legend.Draw()
-can.SetLogx(1)
-can.SaveAs("Run2_ROC_DiffMass_Logx.pdf")
+can.SetLogx(0)
+can.SaveAs("Run2_ROC_DiffMass.pdf")
 
 ROC3.Draw("A")
 ROC3_legend.Draw()
-can.SetLogx(1)
-can.SaveAs("Run3_ROC_DiffMass_Logx.pdf") 
+can.SetLogx(0)
+can.SaveAs("Run3_ROC_DiffMass.pdf") 
 
 #ROC = ROOT.TMultiGraph("roc","roc")
 #
