@@ -77,6 +77,7 @@ for file in Files:
               "GenPart_vertexZ": nano_file_evt["GenPart_vertexZ"].array(),
               "GenPart_vertexR": nano_file_evt["GenPart_vertexR"].array(),
               "GenPart_vertexRho": nano_file_evt["GenPart_vertexRho"].array(),
+              "GenPart_statusFlags": nano_file_evt["GenPart_statusFlags"].array(),
 
               "GenJet_partonFlavour": nano_file_evt["GenJet_partonFlavour"].array(),
               "GenJet_pt": nano_file_evt["GenJet_pt"].array(),
@@ -96,6 +97,14 @@ for file in Files:
               "run": nano_file_evt["run"].array()
   }
 
+  lepton_selection = ((abs(Branches["GenPart_pdgId"]) == 11) | (abs(Branches["GenPart_pdgId"]) == 13) | (abs(Branches["GenPart_pdgId"]) == 15))
+  prompt_selection = (Branches["GenPart_statusFlags"] & 1 == 1)
+  first_selection  = ((Branches["GenPart_statusFlags"] & 4096) == 4096)
+
+  Branches["GenLep_pt"] = Branches["GenPart_pt"][lepton_selection & (prompt_selection & first_selection)]
+  Branches["GenLep_phi"] = Branches["GenPart_phi"][lepton_selection & (prompt_selection & first_selection)]
+  Branches["GenLep_eta"] =  Branches["GenPart_eta"][lepton_selection & (prompt_selection & first_selection)]
+
   #print(file, " has ", len(Branches), " brranches")
 
   if ("TT" in file):
@@ -114,13 +123,21 @@ for file in Files:
       unmatchedJets_score_evt = []  
       if (len(Branches["GenVisTau_pt"][evt])== 0):
         for jet_idx in range(len(Branches["Jet_pt"][evt])):
-          #print(vetoLep(Branches["Jet_phi"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], evt, "Electron") , vetoLep(Branches["Jet_phi"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], evt, "Muon"), " tells us whether we should veto this jet")
-          if Branches["Jet_partonFlavour"][evt][jet_idx] == 0 and Branches["Jet_hadronFlavour"][evt][jet_idx] == 0: continue
-          #if Branches["Jet_jetId"][evt][jet_idx] < 6: continue
           if Branches["Jet_pt"][evt][jet_idx] < tau_selections.jetPtMin or abs(Branches["Jet_eta"][evt][jet_idx]) > tau_selections.jetEtaMax: continue
           if Branches["Jet_genJetIdx"][evt][jet_idx] == -1 or Branches["Jet_genJetIdx"][evt][jet_idx] >= len(Branches["GenJet_partonFlavour"][evt]): continue
-          if vetoGenLep(Branches["GenJet_phi"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]], Branches["GenJet_eta"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]], evt, "Electron") or vetoGenLep(Branches["GenJet_phi"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]], Branches["GenJet_eta"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]], evt, "Muon"): continue  
           if Branches["GenJet_pt"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]] < tau_selections.genJetPtMin  or abs(Branches["GenJet_eta"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]]) > tau_selections.genJetEtaMax: continue
+          ###Start of lepton veto
+          lepVeto = False
+          if len(Branches["GenLep_pt"][evt]) > 0:
+            for lep_idx in range(len(Branches["GenLep_pt"][evt])):
+              lep_dphi = abs(Branches["Jet_phi"][evt][jet_idx] - Branches["GenLep_phi"][evt][lep_idx])
+              if (lep_dphi > math.pi) : dphi -= 2 * math.pi
+              lep_deta = Branches["Jet_eta"][evt][jet_idx] - Branches["GenLep_eta"][evt][lep_idx]              
+              lep_dR2 = lep_dphi ** 2 + lep_deta ** 2
+              if lep_dR2 < 0.4**2:
+                lepVeto = True
+          if lepVeto:continue        
+
           unmatchedJetsPassScore_evt.append(jet_idx)   
           unmatchedJets_score_evt.append(Branches["Jet_disTauTag_score1"][evt][jet_idx])
       for tau_idx in range(len(Branches["GenVisTau_pt"][evt])):
@@ -128,10 +145,19 @@ for file in Files:
         mthrTau_idx = Branches["GenVisTau_genPartIdxMother"][evt][tau_idx]
         if Branches["GenPart_vertexZ"][evt][mthrTau_idx] >= tau_selections.genTauVtxZMax or Branches["GenPart_vertexRho"][evt][mthrTau_idx] >= tau_selections.genTauVtxRhoMax: continue
         for jet_idx in range(len(Branches["Jet_pt"][evt])):
-          #if vetoLep(Branches["Jet_phi"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], evt, "Electron") or vetoLep(Branches["Jet_phi"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], evt, "Muon"): continue  
           if Branches["Jet_pt"][evt][jet_idx] < tau_selections.jetPtMin or abs(Branches["Jet_eta"][evt][jet_idx]) > tau_selections.jetEtaMax: continue
           if Branches["Jet_genJetIdx"][evt][jet_idx] == -1 or Branches["Jet_genJetIdx"][evt][jet_idx] >= len(Branches["GenJet_partonFlavour"][evt]): continue
           if Branches["GenJet_pt"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]] < tau_selections.genJetPtMin  or abs(Branches["GenJet_eta"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]]) > tau_selections.genJetEtaMax: continue
+          lepVeto = False
+          if len(Branches["GenLep_pt"][evt]) > 0:
+            for lep_idx in range(len(Branches["GenLep_pt"][evt])):
+              lep_dphi = abs(Branches["Jet_phi"][evt][jet_idx] - Branches["GenLep_phi"][evt][lep_idx])
+              if (lep_dphi > math.pi) : dphi -= 2 * math.pi
+              lep_deta = Branches["Jet_eta"][evt][jet_idx] - Branches["GenLep_eta"][evt][lep_idx]              
+              lep_dR2 = lep_dphi ** 2 + lep_deta ** 2
+              if lep_dR2 < 0.4**2:
+                lepVeto = True
+          if lepVeto:continue        
           dphi = abs(Branches["GenVisTau_phi"][evt][tau_idx]-Branches["Jet_phi"][evt][jet_idx])
             
           if (dphi > math.pi) :
@@ -487,7 +513,7 @@ ROC3 = ROOT.TMultiGraph("roc3","roc3")
 for file in Files:
   if "Run2" in file:
     if "Stau" in file:
-      Run2_ROC[file] = ROOT.TGraph(len(scoreSpace), Run2_Fake["Run2_TTToHadronic_13TeV"], Run2_Eff[file])
+      Run2_ROC[file] = ROOT.TGraph(len(scoreSpace), Run2_Eff[file], Run2_Fake["Run2_TTToHadronic_13TeV"])
       Run2_ROC[file].SetMaximum(1)
       Run2_ROC[file].SetLineColor(colorDict[file])
       ROC2.Add(Run2_ROC[file])
@@ -500,13 +526,13 @@ for file in Files:
       ROC3.Add(Run3_ROC[file])
       ROC3_legend.AddEntry(Run3_ROC[file], file)
         
-ROC2.SetTitle("ROC Curves for different mass points for Run2; Fake Rate; Tau Efficiency")
+ROC2.SetTitle("ROC Curves for different mass points for Run2; Tau Efficiency; Fake Rate")
 ROC3.SetTitle("ROC Curves for different mass points for Run3; Fake Rate; Tau Efficiency")
 
 ROC2.Draw("A")
 ROC2_legend.Draw()
-can.SetLogx(0)
-can.SaveAs("Run2_ROC_DiffMass.pdf")
+can.SetLogy(1)
+can.SaveAs("Run2_ROC_M_400GeV_100mm.pdf")
 
 ROC3.Draw("A")
 ROC3_legend.Draw()

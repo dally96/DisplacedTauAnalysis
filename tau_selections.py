@@ -1,4 +1,4 @@
-dR_squ = 0.4 ** 2        #Value of dR that determines whether a jet is matched to a tau 
+dR_squ = 0.3**2      #Value of dR that determines whether a jet is matched to a tau 
 
 jetPtMin = 20        #The minimum pt a jet can have for the tagger 
 
