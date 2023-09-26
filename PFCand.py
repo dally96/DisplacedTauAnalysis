@@ -103,14 +103,22 @@ Run3_best_dR = ak.argmin(Run3_dR, axis=-1, keepdims=False)
 ### this can be further improved in the future, to only allow one combination 
 Run3_matched_PFs = Run3_PFs[Run3_best_dR]
 Run3_charged_PF_selections = ((abs(Run3_matched_PFs.PF_charge) > 0))
+Run3_greaterpt_selections = (Run3_matched_PFs.PF_pt >= 0.5)
+Run3_lowerpt_selections = (Run3_matched_PFs.PF_pt < 0.5)
 Run3_matched_charged_PFs = Run3_matched_PFs[Run3_charged_PF_selections]
+Run3_matched_charged_greaterPt_PFs = Run3_matched_PFs[Run3_charged_PF_selections & Run3_greaterpt_selections]
+Run3_matched_charged_lowerPt_PFs = Run3_matched_PFs[Run3_charged_PF_selections & Run3_lowerpt_selections]
 
-Run3_matched_charged_PF = ak.unzip(Run3_matched_charged_PFs)
+Run3_matched_charged_greaterPt_PF = ak.unzip(Run3_matched_charged_greaterPt_PFs)
+Run3_matched_charged_lowerPt_PF = ak.unzip(Run3_matched_charged_lowerPt_PFs)
 
-Run3_matched_charged_PF_dict = {}
-for i in range(len(ak.fields(Run3_matched_charged_PFs))):
-  Run3_matched_charged_PF_dict[ak.fields(Run3_matched_charged_PFs)[i]] = Run3_matched_charged_PF[i]
-Run3_matched_charged_PF_dict["PF_track_chi2ndof"] = np.divide(ak.values_astype(Run3_matched_charged_PF_dict["PF_track_chi2"], "float64"), Run3_matched_charged_PF_dict["PF_track_ndof"])
+Run3_matched_charged_greaterPt_PF_dict = {}
+Run3_matched_charged_lowerPt_PF_dict = {}
+
+for i in range(len(ak.fields(Run3_matched_charged_greaterPt_PFs))):
+  Run3_matched_charged_greaterPt_PF_dict[ak.fields(Run3_matched_charged_greaterPt_PFs)[i]] = Run3_matched_charged_greaterPt_PF[i]
+for i in range(len(ak.fields(Run3_matched_charged_lowerPt_PFs))):
+  Run3_matched_charged_lowerPt_PF_dict[ak.fields(Run3_matched_charged_lowerPt_PFs)[i]] = Run3_matched_charged_lowerPt_PF[i]
 
 Run2_jets = ak.zip({
             "pt":  Run2_tree["jet_pt"].array(),
@@ -157,21 +165,35 @@ Run2_best_dR = ak.argmin(Run2_dR, axis=-1, keepdims=False)
 ### this can be further improved in the future, to only allow one combination 
 Run2_matched_PFs = Run2_PFs[Run2_best_dR]
 Run2_charged_PF_selections = ((abs(Run2_matched_PFs.PF_charge) > 0))
+Run2_greaterpt_selections = (Run2_matched_PFs.PF_pt >= 0.5)
+Run2_lowerpt_selections = (Run2_matched_PFs.PF_pt < 0.5)
 Run2_matched_charged_PFs = Run2_matched_PFs[Run2_charged_PF_selections]
+Run2_matched_charged_greaterPt_PFs = Run2_matched_PFs[Run2_charged_PF_selections & Run2_greaterpt_selections]
+Run2_matched_charged_lowerPt_PFs = Run2_matched_PFs[Run2_charged_PF_selections & Run2_lowerpt_selections]
 
-Run2_matched_charged_PF = ak.unzip(Run2_matched_charged_PFs)
+Run2_matched_charged_greaterPt_PF = ak.unzip(Run2_matched_charged_greaterPt_PFs)
+Run2_matched_charged_lowerPt_PF = ak.unzip(Run2_matched_charged_lowerPt_PFs)
 
-Run2_matched_charged_PF_dict = {}
-for i in range(len(ak.fields(Run2_matched_charged_PFs))):
-  Run2_matched_charged_PF_dict[ak.fields(Run2_matched_charged_PFs)[i]] = Run2_matched_charged_PF[i]
-Run2_matched_charged_PF_dict["PF_track_chi2ndof"] = np.divide(ak.values_astype(Run2_matched_charged_PF_dict["PF_track_chi2"], "float64"), Run2_matched_charged_PF_dict["PF_track_ndof"])
+Run2_matched_charged_greaterPt_PF_dict = {}
+Run2_matched_charged_lowerPt_PF_dict = {}
 
-for branch in Run2_matched_charged_PF_dict:
-  Run2_matched_charged_PF_dict[branch] = ak.flatten(Run2_matched_charged_PF_dict[branch], axis = None)
-  Run3_matched_charged_PF_dict[branch] = ak.flatten(Run3_matched_charged_PF_dict[branch], axis = None)
-  Run2_matched_charged_PF_dict[branch] = [x for x in Run2_matched_charged_PF_dict[branch] if abs(x) < 9999]
-  Run3_matched_charged_PF_dict[branch] = [x for x in Run3_matched_charged_PF_dict[branch] if abs(x) < 9999]
+for i in range(len(ak.fields(Run2_matched_charged_greaterPt_PFs))):
+  Run2_matched_charged_greaterPt_PF_dict[ak.fields(Run2_matched_charged_greaterPt_PFs)[i]] = Run2_matched_charged_greaterPt_PF[i]
+for i in range(len(ak.fields(Run2_matched_charged_lowerPt_PFs))):
+  Run2_matched_charged_lowerPt_PF_dict[ak.fields(Run2_matched_charged_lowerPt_PFs)[i]] = Run2_matched_charged_lowerPt_PF[i]
+
+
+for branch in Run2_matched_charged_greaterPt_PF_dict:
+  Run2_matched_charged_greaterPt_PF_dict[branch] = ak.flatten(Run2_matched_charged_greaterPt_PF_dict[branch], axis = None)
+  Run3_matched_charged_greaterPt_PF_dict[branch] = ak.flatten(Run3_matched_charged_greaterPt_PF_dict[branch], axis = None)
+  Run2_matched_charged_greaterPt_PF_dict[branch] = [x for x in Run2_matched_charged_greaterPt_PF_dict[branch] if abs(x) < 9999]
+  Run3_matched_charged_greaterPt_PF_dict[branch] = [x for x in Run3_matched_charged_greaterPt_PF_dict[branch] if abs(x) < 9999]
   
+for branch in Run2_matched_charged_lowerPt_PF_dict:
+  Run2_matched_charged_lowerPt_PF_dict[branch] =  ak.flatten(Run2_matched_charged_lowerPt_PF_dict[branch], axis = None)
+  Run3_matched_charged_lowerPt_PF_dict[branch] =  ak.flatten(Run3_matched_charged_lowerPt_PF_dict[branch], axis = None)
+  Run2_matched_charged_lowerPt_PF_dict[branch] = [x for x in Run2_matched_charged_lowerPt_PF_dict[branch] if abs(x) < 9999]
+  Run3_matched_charged_lowerPt_PF_dict[branch] = [x for x in Run3_matched_charged_lowerPt_PF_dict[branch] if abs(x) < 9999]
 
 
 ##          Input variable            bins                        xlabel            ylabel
@@ -198,49 +220,48 @@ histDict = {
            "puppiWeightNoLep" : [np.linspace(0, 1, 51),         "puppiWeightNoLep", "A.U."        ],
            "rawCaloFraction"  : [np.linspace(0, 2.6, 53),       "rawCaloFraction",  "A.U."        ],
            "rawHcalFraction"  : [np.linspace(0, 1.2, 25),       "rawHcalFraction",  "A.U."        ],
-           "nchi2"             : [np.linspace(0, 10, 21),     "Normalized Chi^2",            "A.U."        ],
            "chi2"             : [np.linspace(0, 20, 41),     "Chi^2",            "A.U."        ],
            "ndof"             : [np.linspace(0, 60, 31),        "ndof",             "A.U"         ],
-           "chi2ndof"         : [np.linspace(0, 10, 21),        "chi2/ndof",        "A.U."        ]
+           "nchi2"             : [np.linspace(0, 10, 21),     "Normalized Chi^2",            "A.U."        ],
            }
 
 
 
-for branch in Run2_matched_charged_PF_dict:
+for branch in Run2_matched_charged_greaterPt_PF_dict:
   plt.cla()
   plt.clf()
-  y2, bin2, other2 = plt.hist(Run2_matched_charged_PF_dict[branch], bins=histDict[branch.split("_")[-1]][0], weights=[1/len(Run2_matched_charged_PF_dict[branch]),]*len(Run2_matched_charged_PF_dict[branch]), histtype = 'step', label="Run2 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run2_matched_charged_PF_dict[branch])))
-  y3, bin3, other3 = plt.hist(Run3_matched_charged_PF_dict[branch], bins=histDict[branch.split("_")[-1]][0], weights=[1/len(Run3_matched_charged_PF_dict[branch]),]*len(Run3_matched_charged_PF_dict[branch]), histtype = 'step', label="Run3 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run3_matched_charged_PF_dict[branch])))
+  y2, bin2, other2 = plt.hist(Run2_matched_charged_greaterPt_PF_dict[branch], bins=histDict[branch.split("_")[-1]][0], weights=[1/len(Run2_matched_charged_greaterPt_PF_dict[branch]),]*len(Run2_matched_charged_greaterPt_PF_dict[branch]), histtype = 'step', label="Run2 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run2_matched_charged_greaterPt_PF_dict[branch])))
+  y3, bin3, other3 = plt.hist(Run3_matched_charged_greaterPt_PF_dict[branch], bins=histDict[branch.split("_")[-1]][0], weights=[1/len(Run3_matched_charged_greaterPt_PF_dict[branch]),]*len(Run3_matched_charged_greaterPt_PF_dict[branch]), histtype = 'step', label="Run3 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run3_matched_charged_greaterPt_PF_dict[branch])))
   bincenters2 = 0.5*(bin2[1:]+bin2[:-1])
   bincenters3 = 0.5*(bin3[1:]+bin3[:-1])
-  y2err = np.sqrt(y2 * len(Run2_matched_charged_PF_dict[branch]))/len(Run2_matched_charged_PF_dict[branch])
-  y3err = np.sqrt(y3 * len(Run3_matched_charged_PF_dict[branch]))/len(Run3_matched_charged_PF_dict[branch])
+  y2err = np.sqrt(y2 * len(Run2_matched_charged_greaterPt_PF_dict[branch]))/len(Run2_matched_charged_greaterPt_PF_dict[branch])
+  y3err = np.sqrt(y3 * len(Run3_matched_charged_greaterPt_PF_dict[branch]))/len(Run3_matched_charged_greaterPt_PF_dict[branch])
   
   plt.errorbar(bincenters2, y2, yerr = y2err, ls = 'none')
   plt.errorbar(bincenters3, y3, yerr = y3err, ls = 'none')
-  plt.title("Charged PF Cand " + branch.split("_")[-1] + " for matched jets"); plt.xlabel(histDict[branch.split("_")[-1]][1]); plt.ylabel(histDict[branch.split("_")[-1]][2])
+  plt.title("Charged PF Cand w/ pt > 0.5 GeV " + branch.split("_")[-1] + " for matched jets"); plt.xlabel(histDict[branch.split("_")[-1]][1]); plt.ylabel(histDict[branch.split("_")[-1]][2])
   #if "pt" in branch or "Frac" in branch or "Weight" in branch or "Error" in branch or "mass" in branch or "dxy" in branch or "dz" in branch:
-  #  plt.yscale("log")
+  plt.yscale("log")
   legend = plt.legend(fontsize="5.5")
   legend.get_frame().set_alpha(0)
-  plt.savefig("PFCandPlotImages/matchPF_" + branch.split("_")[-1] + "_chargedPF.png")
+  plt.savefig("PFCandPlotImages/matchPF_" + branch.split("_")[-1] + "_chargedPF_greater0p5_log.png")
 
 for branch in histDict:
   if "mod" in branch:
     plt.cla()
     plt.clf()
-    y2, bin2, other2 = plt.hist(Run2_matched_charged_PF_dict["PF_" + branch.split("_")[0]], bins=histDict[branch][0], weights=[1/len(Run2_matched_charged_PF_dict["PF_" + branch.split("_")[0]]),]*len(Run2_matched_charged_PF_dict["PF_" + branch.split("_")[0]]), histtype = 'step', label="Run2 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run2_matched_charged_PF_dict["PF_" + branch.split("_")[0]])))
-    y3, bin3, other3 = plt.hist(Run3_matched_charged_PF_dict["PF_" + branch.split("_")[0]], bins=histDict[branch][0], weights=[1/len(Run3_matched_charged_PF_dict["PF_" + branch.split("_")[0]]),]*len(Run3_matched_charged_PF_dict["PF_" + branch.split("_")[0]]), histtype = 'step', label="Run3 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run3_matched_charged_PF_dict["PF_" + branch.split("_")[0]])))
+    y2, bin2, other2 = plt.hist(Run2_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]], bins=histDict[branch][0], weights=[1/len(Run2_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]]),]*len(Run2_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]]), histtype = 'step', label="Run2 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run2_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]])))
+    y3, bin3, other3 = plt.hist(Run3_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]], bins=histDict[branch][0], weights=[1/len(Run3_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]]),]*len(Run3_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]]), histtype = 'step', label="Run3 M = 100 GeV, ctau = 100mm, RMS = " + "{:.1f}".format(np.std(Run3_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]])))
     bincenters2 = 0.5*(bin2[1:]+bin2[:-1])
     bincenters3 = 0.5*(bin3[1:]+bin3[:-1])
-    y2err = np.sqrt(y2 * len(Run2_matched_charged_PF_dict["PF_" + branch.split("_")[0]]))/len(Run2_matched_charged_PF_dict["PF_" + branch.split("_")[0]])
-    y3err = np.sqrt(y3 * len(Run3_matched_charged_PF_dict["PF_" + branch.split("_")[0]]))/len(Run3_matched_charged_PF_dict["PF_" + branch.split("_")[0]])
+    y2err = np.sqrt(y2 * len(Run2_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]]))/len(Run2_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]])
+    y3err = np.sqrt(y3 * len(Run3_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]]))/len(Run3_matched_charged_lowerPt_PF_dict["PF_" + branch.split("_")[0]])
     
     plt.errorbar(bincenters2, y2, yerr = y2err, ls = 'none')
     plt.errorbar(bincenters3, y3, yerr = y3err, ls = 'none')
-    plt.title("Charged PF Cand " + branch.split("_")[0] + " for matched jets"); plt.xlabel(histDict[branch][1]); plt.ylabel(histDict[branch][2])
+    plt.title("Charged PF Cand w/ pt < 0.5 GeV" + branch.split("_")[0] + " for matched jets"); plt.xlabel(histDict[branch][1]); plt.ylabel(histDict[branch][2])
     #if "pt" in branch or "Frac" in branch or "Weight" in branch or "Error" in branch or "mass" in branch or "dxy" in branch:
     #  plt.yscale("log")
     legend = plt.legend(fontsize="5.5")
     legend.get_frame().set_alpha(0)
-    plt.savefig("PFCandPlotImages/matchPF_" + branch + "_chargedPF_pteq0.png")
+    plt.savefig("PFCandPlotImages/matchPF_" + branch + "_chargedPF_lower0p5.png")
