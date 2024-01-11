@@ -157,8 +157,10 @@ GlobalMuons = (RecoMuons_isGlobal == 1)
 TightMuons = (RecoMuons_tightId == 1)
 LooseMuons = (RecoMuons_looseId == 1)
 
-TightElectrons = (RecoElectrons_cutBased == 4)
-LooseElectrons = (RecoElectrons_cutBased == 2)
+TightElectrons = (RecoElectrons_cutBased >= 4)
+MediumElectrons = (RecoElectrons_cutBased >= 3)
+LooseElectrons = (RecoElectrons_cutBased >= 2)
+VetoElectrons = (RecoElectrons_cutBased >= 1)
 
 SARecoMuons_pt = RecoMuons_pt[SAMuons]
 SARecoMuons_eta = RecoMuons_eta[SAMuons]
@@ -176,9 +178,17 @@ TightRecoMuons_pt = RecoMuons_pt[TightMuons]
 TightRecoMuons_eta = RecoMuons_eta[TightMuons]
 TightRecoMuons_dxy = RecoMuons_dxy[TightMuons]
 
+VetoRecoElectrons_pt =  RecoElectrons_pt[VetoElectrons]
+VetoRecoElectrons_eta = RecoElectrons_eta[VetoElectrons]
+VetoRecoElectrons_dxy = RecoElectrons_dxy[VetoElectrons]
+
 LooseRecoElectrons_pt =  RecoElectrons_pt[LooseElectrons]
 LooseRecoElectrons_eta = RecoElectrons_eta[LooseElectrons]
 LooseRecoElectrons_dxy = RecoElectrons_dxy[LooseElectrons]
+
+MediumRecoElectrons_pt =  RecoElectrons_pt[MediumElectrons]
+MediumRecoElectrons_eta = RecoElectrons_eta[MediumElectrons]
+MediumRecoElectrons_dxy = RecoElectrons_dxy[MediumElectrons]
 
 TightRecoElectrons_pt =  RecoElectrons_pt[TightElectrons]
 TightRecoElectrons_eta = RecoElectrons_eta[TightElectrons]
@@ -204,9 +214,17 @@ TightRecoMuonsFromGen_eta = RecoMuonsFromGen_eta[TightMuons]
 TightRecoMuonsFromGen_dxy = RecoMuonsFromGen_dxy[TightMuons]
 TightRecoMuonsFromGen_lxy = RecoMuonsFromGen_lxy[TightMuons]
 
+VetoRecoElectronsFromGen_pt =  RecoElectronsFromGen_pt[VetoElectrons]
+VetoRecoElectronsFromGen_eta = RecoElectronsFromGen_eta[VetoElectrons]
+VetoRecoElectronsFromGen_dxy = RecoElectronsFromGen_dxy[VetoElectrons]
+
 LooseRecoElectronsFromGen_pt =  RecoElectronsFromGen_pt[LooseElectrons]
 LooseRecoElectronsFromGen_eta = RecoElectronsFromGen_eta[LooseElectrons]
 LooseRecoElectronsFromGen_dxy = RecoElectronsFromGen_dxy[LooseElectrons]
+
+MediumRecoElectronsFromGen_pt =  RecoElectronsFromGen_pt[MediumElectrons]
+MediumRecoElectronsFromGen_eta = RecoElectronsFromGen_eta[MediumElectrons]
+MediumRecoElectronsFromGen_dxy = RecoElectronsFromGen_dxy[MediumElectrons]
 
 TightRecoElectronsFromGen_pt =  RecoElectronsFromGen_pt[TightElectrons]
 TightRecoElectronsFromGen_eta = RecoElectronsFromGen_eta[TightElectrons]
@@ -286,13 +304,6 @@ def makeEffPlot(lepton, dict_entries, xvar, bins, xmin, xmax, xbinsize, xunit, t
   h_eff_dict = {}
   h_eff_num_dict = {}
   h_eff_den_dict = {}
-
-  h_eff_dict["Eta1"] = {}
-  h_eff_dict["Eta2"] = {}
-  h_eff_dict["Eta3"] = {}
-  h_eff_dict["Eta4"] = {}
-  
-  etaRegions = [0, 0.9, 1.2, 2.1, 2.4]
   
   for ent in range(len(dict_entries)):
     h_eff_dict[dict_entries[ent]] = ROOT.TEfficiency("h_eff_"+xvar+"_"+dict_entries[ent], file.split("_")[0]+file.split("_")[1]+file.split("_")[2]+";"+xvar+" "+xunit+" ; Fraction of gen "+lepton+" which are recon'd", bins, xmin, xmax)
@@ -351,11 +362,12 @@ def makeEffPlotEta(lepton, dict_entries, xvar, xunit, tot_arr, etatot_arr, pass_
   h_eff_num_dict = {}
   h_eff_den_dict = {}
 
-  ptBins = [15, 20, 25, 30, 40, 50, 60, 120]
+  ptBins = np.concatenate((np.linspace(0,100,51), np.linspace(105, 150, 10), np.linspace(160, 200, 5)))
+  print(ptBins) 
   ptBins = array.array('d', ptBins)
 
-  etaBins = [0, 0.9, 1.2, 2.1, 2.4]
-  etaRegions = ["0-0.9", "0.9-1.2", "1.2-2.1", "2.1-2.4"]
+  etaBins = [0, 1.479, 2.4]
+  etaRegions = ["0-1.479", "1.479-2.4"]
 
   for i in etaRegions:
     h_eff_dict[i] = {}
@@ -371,10 +383,10 @@ def makeEffPlotEta(lepton, dict_entries, xvar, xunit, tot_arr, etatot_arr, pass_
   for reg in range(len(etaRegions)):
     for ent in range(len(dict_entries)):
       for i in range(len(ptBins) - 1):
-        h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetTotalEvents(i + 1, len(ak.flatten(tot_arr[(abs(etatot_arr) > etaBins[reg]) & (abs(etatot_arr) < etaBins[reg + 1]) & (tot_arr > ptBins[i]) & (tot_arr < ptBins[i + 1])])))
-        h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(tot_arr[(abs(etatot_arr) > etaBins[reg]) & (abs(etatot_arr) < etaBins[reg + 1]) & (tot_arr > ptBins[i]) & (tot_arr < ptBins[i + 1])])))
-        h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetPassedEvents(i + 1, len(ak.flatten(pass_arr[ent][(abs(etapass_arr[ent]) > etaBins[reg]) & (abs(etapass_arr[ent]) < etaBins[reg + 1]) & (pass_arr[ent] > ptBins[i]) & (pass_arr[ent] < ptBins[i + 1])])))
-        h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(abs(etapass_arr[ent]) > etaBins[reg]) & (abs(etapass_arr[ent]) < etaBins[reg + 1]) & (pass_arr[ent] > ptBins[i]) & (pass_arr[ent] < ptBins[i + 1])])))      
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetTotalEvents(i + 1, len(ak.flatten(tot_arr[(abs(etatot_arr) > etaBins[reg]) & (abs(etatot_arr) <= etaBins[reg + 1]) & (tot_arr > ptBins[i]) & (tot_arr <= ptBins[i + 1])])))
+        h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(tot_arr[(abs(etatot_arr) > etaBins[reg]) & (abs(etatot_arr) <= etaBins[reg + 1]) & (tot_arr > ptBins[i]) & (tot_arr < ptBins[i + 1])])))
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetPassedEvents(i + 1, len(ak.flatten(pass_arr[ent][(abs(etapass_arr[ent]) > etaBins[reg]) & (abs(etapass_arr[ent]) <= etaBins[reg + 1]) & (pass_arr[ent] > ptBins[i]) & (pass_arr[ent] <= ptBins[i + 1])])))
+        h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(abs(etapass_arr[ent]) > etaBins[reg]) & (abs(etapass_arr[ent]) <= etaBins[reg + 1]) & (pass_arr[ent] > ptBins[i]) & (pass_arr[ent] <= ptBins[i + 1])])))      
 
   for reg in range(len(etaRegions)):
     can.SetLogy(log_set)
@@ -391,7 +403,7 @@ def makeEffPlotEta(lepton, dict_entries, xvar, xunit, tot_arr, etatot_arr, pass_
         h_eff_dict[etaRegions[reg]][dict_entries[ent]].Draw("same")
     if len(dict_entries) > 1:
       l_eff.Draw()
-    can.SaveAs("Zto"+lepton+lepton+"_eff_"+xvar+"_eta"+etaRegions[reg]+".pdf")
+    can.SaveAs("Zto"+lepton+lepton+"_eff_"+xvar+"_eta"+etaRegions[reg]+".png")
 
     l_eff_num = ROOT.TLegend()
     for ent in range(len(dict_entries)):
@@ -427,9 +439,10 @@ print("The length of eta array is", len(ak.flatten(RecoMuonsFromGen_eta)))
 #makeEffPlot("mu", ["all", "STA", "Global"], "eta", 30, -3, 3, 0.2, " ", GenMuFromZ_eta, [RecoMuonsFromGen_eta, SARecoMuonsFromGen_eta, GlobalRecoMuonsFromGen_eta], 0)
 #makeEffPlot("mu", ["all", "STA", "Global"], "dxy", 36, 0, 0.036E-3, 0.001E-3, "[cm]", GenMuFromZ_dxy, [RecoMuonsFromGen_dxy, SARecoMuonsFromGen_dxy, GlobalRecoMuonsFromGen_dxy], 0)
 #makeEffPlot("mu", ["all", "STA", "Global"], "lxy", 36, 0, 0.036E-3, 0.001E-3, "[cm]", GenMuFromZ_lxy, [RecoMuonsFromGen_lxy, SARecoMuonsFromGen_lxy, GlobalRecoMuonsFromGen_lxy], 0)
+#makeEffPlot("e", ["no ID", "Loose ID", "Tight ID"], "pt", 200, 0, 100, 0.5, "[GeV]", GenEFromZ_pt, [RecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt],  0)
 
 #makeEffPlotEta("mu", ["no ID", "Loose ID", "Tight ID"], "pt", "[GeV]", GenMuFromZ_pt, [RecoMuonsFromGen_pt, LooseRecoMuonsFromGen_pt, TightRecoMuonsFromGen_pt], [RecoMuonsFromGen_eta, LooseRecoMuonsFromGen_eta, TightRecoMuonsFromGen_eta], 0)
-makeEffPlotEta("e", ["no ID", "Loose ID", "Tight ID"], "pt", "[GeV]", GenEFromZ_pt, GenEFromZ_eta,[RecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt], [RecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0)
+makeEffPlotEta("e", ["no ID", "Veto", "Loose ID", "Medium ID", "Tight ID"], "pt", "[GeV]", GenEFromZ_pt, GenEFromZ_eta,[RecoElectronsFromGen_pt, VetoRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt], [RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0)
 #makeEffPlot("e", ["all"], "pt", 20, 0, 100, 5, "[GeV]", GenEFromZ_pt, [RecoElectronsFromGen_pt], 0)
 #makeEffPlot("e", ["all"], "eta", 24, -2.4, 2.4, 0.2, " ", GenEFromZ_eta, [RecoElectronsFromGen_eta], 0)
 #makeEffPlot("e", ["all"], "dxy", 36, 0, 0.036E-3, 0.001E-3, "[cm]", GenEFromZ_dxy, [RecoElectronsFromGen_dxy], 0)

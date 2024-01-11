@@ -24,16 +24,19 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
 
   for ent in range(len(dict_entries)):
     for i in range(bins):
-      h_eff_dict[dict_entries[ent]].SetTotalEvents(i + 1, len(ak.flatten(tot_arr[(tot_arr > (xmin + (i * xbinsize))) & (tot_arr < (xmin + ((i + 1) * xbinsize)))])))
-      h_eff_den_dict[dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(tot_arr[(tot_arr > (xmin + (i * xbinsize))) & (tot_arr < (xmin + ((i + 1) * xbinsize)))])))
+      h_eff_dict[dict_entries[ent]].SetTotalEvents(i + 1, len(ak.flatten(tot_arr[ent][(tot_arr[ent] > (xmin + (i * xbinsize))) & (tot_arr[ent] < (xmin + ((i + 1) * xbinsize)))])))
+      h_eff_den_dict[dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(tot_arr[ent][(tot_arr[ent] > (xmin + (i * xbinsize))) & (tot_arr[ent] < (xmin + ((i + 1) * xbinsize)))])))
       h_eff_dict[dict_entries[ent]].SetPassedEvents(i + 1, len(ak.flatten(pass_arr[ent][(pass_arr[ent] > (xmin + (i * xbinsize))) & (pass_arr[ent] < (xmin + ((i + 1) * xbinsize)))])))
       h_eff_num_dict[dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(pass_arr[ent] > (xmin + (i * xbinsize))) & (pass_arr[ent] < (xmin + ((i + 1) * xbinsize)))])))      
 
   can.SetLogy(log_set)
-  l_eff = ROOT.TLegend()
+  l_eff = ROOT.TLegend(0.1, 0.6, 0.25, 0.8)
   l_eff.SetBorderSize(0)
+  l_eff.SetFillStyle(0)
   for ent in range(len(dict_entries)):
     h_eff_dict[dict_entries[ent]].SetLineColor(ent + 1)
+    if (ent + 1 == 5):
+      h_eff_dict[dict_entries[ent]].SetLineColor(ent + 2)
     l_eff.AddEntry(h_eff_dict[dict_entries[ent]], dict_entries[ent])
     if ent == 0:
       h_eff_dict[dict_entries[ent]].Draw()
@@ -43,9 +46,11 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
       h_eff_dict[dict_entries[ent]].Draw("same")
   if len(dict_entries) > 1:
     l_eff.Draw()
-  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+".pdf")
+  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+".png")
 
   l_eff_num = ROOT.TLegend()
+  l_eff_num.SetBorderSize(0)
+  l_eff_num.SetFillStyle(0)
   for ent in range(len(dict_entries)):
     h_eff_num_dict[dict_entries[ent]].SetLineColor(ent + 1)
     l_eff_num.AddEntry(h_eff_num_dict[dict_entries[ent]], dict_entries[ent])
@@ -55,9 +60,11 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
       h_eff_num_dict[dict_entries[ent]].Draw("samehist")
   if len(dict_entries) > 1:
     l_eff_num.Draw()
-  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+xvar+"_num.pdf")
+  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_num.pdf")
 
   l_eff_den = ROOT.TLegend()
+  l_eff_den.SetBorderSize(0)
+  l_eff_den.SetFillStyle(0)
   for ent in range(len(dict_entries)):
     h_eff_den_dict[dict_entries[ent]].SetLineColor(ent + 1)
     l_eff_den.AddEntry(h_eff_den_dict[dict_entries[ent]], dict_entries[ent])
@@ -67,7 +74,7 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
       h_eff_den_dict[dict_entries[ent]].Draw("samehist")
   if len(dict_entries) > 1:
     l_eff_den.Draw()
-  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+xvar+"_den.pdf")
+  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_den.pdf")
 
 def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, yresmax, xbinsize, xvararr, yvardiff, xunit, yunit): 
   h_resVsX_y_dict = {}
@@ -121,3 +128,91 @@ def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, y
   
   l_resVsX_y.Draw()
   can.SaveAs("Stauto"+lepton+"_resVs"+xvar+"_"+yvar+".pdf")
+
+def makeEffPlotEta(lepton, dict_entries, xvar, xunit, tot_arr, etatot_arr, pass_arr, etapass_arr, pass_arr_end, etapass_arr_end, log_set, file, bins):
+  h_eff_dict = {}
+  h_eff_num_dict = {}
+  h_eff_den_dict = {}
+
+  ptBins = bins
+  ptBins = array.array('d', ptBins)
+
+  etaBins = [0, 1.479, 2.4]
+  etaRegions = ["Barrel", "Endcaps"]
+
+  for i in etaRegions:
+    h_eff_dict[i] = {}
+    h_eff_num_dict[i] = {}
+    h_eff_den_dict[i] = {} 
+  
+  for reg in range(len(etaRegions)):
+    for ent in range(len(dict_entries)):
+      h_eff_dict[etaRegions[reg]][dict_entries[ent]] = ROOT.TEfficiency("h_eff_"+xvar+"_eta"+etaRegions[reg]+"_"+dict_entries[ent], file.split("_")[0]+file.split("_")[1]+file.split("_")[2]+file.split("_")[3]+file.split("_")[5]+" eta "+etaRegions[reg]+";"+xvar+" "+xunit+" ; Fraction of gen "+lepton+" which are recon'd", len(ptBins) - 1, ptBins)
+      h_eff_num_dict[etaRegions[reg]][dict_entries[ent]] = ROOT.TH1F("h_eff_num"+xvar+"_eta"+etaRegions[reg]+"_"+dict_entries[ent], file.split("_")[0]+file.split("_")[1]+file.split("_")[2]+file.split("_")[3]+file.split("_")[5]+" eta "+etaRegions[reg]+";"+xvar+" "+xunit+" ; Number of gen "+lepton+" which are recon'd", len(ptBins) - 1, ptBins)
+      h_eff_den_dict[etaRegions[reg]][dict_entries[ent]] = ROOT.TH1F("h_eff_den"+xvar+"_eta"+etaRegions[reg]+"_"+dict_entries[ent], file.split("_")[0]+file.split("_")[1]+file.split("_")[2]+file.split("_")[3]+file.split("_")[5]+" eta "+etaRegions[reg]+";"+xvar+" "+xunit+" ; Number of gen "+lepton, len(ptBins) - 1, ptBins)
+
+  for reg in range(len(etaRegions)):
+    for ent in range(len(dict_entries)):
+      for i in range(len(ptBins) - 1):
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetTotalEvents(i + 1, len(ak.flatten(tot_arr[(abs(etatot_arr) > etaBins[reg]) & (abs(etatot_arr) <= etaBins[reg + 1]) & (tot_arr > ptBins[i]) & (tot_arr <= ptBins[i + 1])])))
+        h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(tot_arr[(abs(etatot_arr) > etaBins[reg]) & (abs(etatot_arr) <= etaBins[reg + 1]) & (tot_arr > ptBins[i]) & (tot_arr < ptBins[i + 1])])))
+        if etaRegions[reg] ==  "Barrel":
+          h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetPassedEvents(i + 1, len(ak.flatten(pass_arr[ent][(abs(etapass_arr[ent]) > etaBins[reg]) & (abs(etapass_arr[ent]) <= etaBins[reg + 1]) & (pass_arr[ent] > ptBins[i]) & (pass_arr[ent] <= ptBins[i + 1])])))
+          h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(abs(etapass_arr[ent]) > etaBins[reg]) & (abs(etapass_arr[ent]) <= etaBins[reg + 1]) & (pass_arr[ent] > ptBins[i]) & (pass_arr[ent] <= ptBins[i + 1])])))      
+        if etaRegions[reg] == "Endcaps":
+          h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetPassedEvents(i + 1, len(ak.flatten(pass_arr_end[ent][(abs(etapass_arr_end[ent]) > etaBins[reg]) & (abs(etapass_arr_end[ent]) <= etaBins[reg + 1]) & (pass_arr_end[ent] > ptBins[i]) & (pass_arr_end[ent] <= ptBins[i + 1])])))
+          h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr_end[ent][(abs(etapass_arr_end[ent]) > etaBins[reg]) & (abs(etapass_arr_end[ent]) <= etaBins[reg + 1]) & (pass_arr_end[ent] > ptBins[i]) & (pass_arr_end[ent] <= ptBins[i + 1])])))      
+          
+
+  for reg in range(len(etaRegions)):
+    can.SetLogy(log_set)
+    l_eff = ROOT.TLegend(0.2, 0.6, 0.35, 0.8)
+    l_eff.SetBorderSize(0)
+    l_eff.SetFillStyle(0)
+    for ent in range(len(dict_entries)):
+      h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetLineColor(ent + 1)
+      if (ent >= 4):
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].SetLineColor(ent + 2)
+      l_eff.AddEntry(h_eff_dict[etaRegions[reg]][dict_entries[ent]], dict_entries[ent])
+      if ent == 0:
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].Draw()
+        ROOT.gPad.Update()
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].GetPaintedGraph().GetYaxis().SetRangeUser(0, 1.1)
+      else:
+        h_eff_dict[etaRegions[reg]][dict_entries[ent]].Draw("same")
+    if len(dict_entries) > 1:
+      l_eff.Draw()
+    can.SaveAs("Stauto"+lepton+"_eff_"+xvar+"_eta"+etaRegions[reg]+".png")
+
+    l_eff_num = ROOT.TLegend()
+    l_eff_num.SetBorderSize(0)
+    l_eff_num.SetFillStyle(0)
+    for ent in range(len(dict_entries)):
+      h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].SetLineColor(ent + 1)
+      if (ent + 1 == 5):
+        h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].SetLineColor(ent + 2)
+      l_eff_num.AddEntry(h_eff_num_dict[etaRegions[reg]][dict_entries[ent]], dict_entries[ent])
+      if ent == 0:
+        h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].Draw("hist")
+      else:
+        h_eff_num_dict[etaRegions[reg]][dict_entries[ent]].Draw("samehist")
+    if len(dict_entries) > 1:
+      l_eff_num.Draw()
+    can.SaveAs("Stauto"+lepton+"_eff_"+xvar+"_eta"+etaRegions[reg]+"_num.pdf")
+
+    l_eff_den = ROOT.TLegend()
+    l_eff_den.SetBorderSize(0)
+    l_eff_den.SetFillStyle(0)
+    for ent in range(len(dict_entries)):
+      h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].SetLineColor(ent + 1)
+      if (ent + 1 == 5):
+        h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].SetLineColor(ent + 2)
+      l_eff_den.AddEntry(h_eff_den_dict[etaRegions[reg]][dict_entries[ent]], dict_entries[ent])
+      if ent == 0:
+        h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].Draw("hist")
+      else:
+        h_eff_den_dict[etaRegions[reg]][dict_entries[ent]].Draw("samehist")
+    if len(dict_entries) > 1:
+      l_eff_den.Draw()
+    can.SaveAs("Stauto"+lepton+"_eff_"+xvar+"_eta"+etaRegions[reg]+"_den.pdf")
+
