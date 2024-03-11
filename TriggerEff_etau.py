@@ -80,22 +80,39 @@ recoSemiLep_el_evt = (ak.num(RecoElectronsFromGen) == 1) & (ak.num(ak.drop_none(
 genEl  = gen_electrons[semiLep_el_evt]
 recoEl  = gen_electrons[semiLep_el_evt & recoSemiLep_el_evt.compute()]
 
+recoMET_el = gmet[semiLep_el_evt & recoSemiLep_el_evt.compute()]
+
 ### Semilep e events which pass triggers 
 #### Gen Events
-genEl_PFMET_120              = genEl[PFMET_120]
-genEl_PFMET_130              = genEl[PFMET_130]
-genEl_PFMET_140              = genEl[PFMET_140]
+genEl_PFMET_120                  = gen_electrons[semiLep_el_evt & PFMET_120.compute()]
+genEl_PFMET_130                  = gen_electrons[semiLep_el_evt & PFMET_130.compute()]
+genEl_PFMET_140                  = gen_electrons[semiLep_el_evt & PFMET_140.compute()]
 
-genEl_MET_105                = genEl[MET_105]
-genEl_MET_120                = genEl[MET_120]
+genMET_el_PFMET_120              = gmet[semiLep_el_evt & PFMET_120.compute()] 
+genMET_el_PFMET_130              = gmet[semiLep_el_evt & PFMET_130.compute()] 
+genMET_el_PFMET_140              = gmet[semiLep_el_evt & PFMET_140.compute()] 
 
-genEl_PFMETNoMu_110_FilterHF = genEl[PFMETNoMu_110_FilterHF]
+genEl_MET_105                    = gen_electrons[semiLep_el_evt & MET_105.compute()]
+genEl_MET_120                    = gen_electrons[semiLep_el_evt & MET_120.compute()]
 
-genEl_PFMETNoMu_120          = genEl[PFMETNoMu_120]
-genEl_PFMETNoMu_130          = genEl[PFMETNoMu_130]
-genEl_PFMETNoMu_140          = genEl[PFMETNoMu_140]
+genMET_el_MET_105                = gmet[semiLep_el_evt & MET_105.compute()]
+genMET_el_MET_120                = gmet[semiLep_el_evt & MET_120.compute()]
 
-genEl_semiLepTrigEl_30       = genEl[semiLepTrigEl_30]
+genEl_PFMETNoMu_110_FilterHF     = gen_electrons[semiLep_el_evt & PFMETNoMu_110_FilterHF.compute()]
+
+genMET_el_PFMETNoMu_110_FilterHF = gmet[semiLep_el_evt & PFMETNoMu_110_FilterHF.compute()]
+
+genEl_PFMETNoMu_120              = gen_electrons[semiLep_el_evt & PFMETNoMu_120.compute()]
+genEl_PFMETNoMu_130              = gen_electrons[semiLep_el_evt & PFMETNoMu_130.compute()]
+genEl_PFMETNoMu_140              = gen_electrons[semiLep_el_evt & PFMETNoMu_140.compute()]
+
+genMET_el_PFMETNoMu_120          = gmet[semiLep_el_evt & PFMETNoMu_120.compute()] 
+genMET_el_PFMETNoMu_130          = gmet[semiLep_el_evt & PFMETNoMu_130.compute()] 
+genMET_el_PFMETNoMu_140          = gmet[semiLep_el_evt & PFMETNoMu_140.compute()] 
+
+genEl_semiLepTrigEl_30           = gen_electrons[semiLep_el_evt & semiLepTrigEl_30.compute()]
+
+genMET_el_semiLepTrigEl_30       = gmet[semiLep_el_evt & semiLepTrigEl_30.compute()]
 
 #### Gen Events that have reco'd e and tau for e
 recoEl_PFMET_120                  = gen_electrons[semiLep_el_evt & recoSemiLep_el_evt.compute() & PFMET_120.compute()]
@@ -129,37 +146,76 @@ recoEl_semiLepTrigEl_30           = gen_electrons[semiLep_el_evt & recoSemiLep_e
 recoMET_el_semiLepTrigEl_30       = gmet[semiLep_el_evt & recoSemiLep_el_evt.compute() & semiLepTrigEl_30.compute()]
 
 ### Trigger Eff vs Pt
-#makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(), recoEl.pt.compute(), recoEl.pt.compute()], [recoEl_PFMET_120.pt.compute(), recoEl_PFMET_130.pt.compute(), recoEl_PFMET_140.pt.compute()], 0, file)
-#makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(), recoEl.pt.compute()], [recoEl_MET_105.pt.compute(), recoEl_MET_120.pt.compute()], 0, file)
-#makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(), recoEl.pt.compute(), recoEl.pt.compute(), recoEl.pt.compute()], [recoEl_PFMETNoMu_110_FilterHF.pt.compute(), recoEl_PFMETNoMu_120.pt.compute(), recoEl_PFMETNoMu_130.pt.compute(), recoEl_PFMETNoMu_140.pt.compute()], 0, file)
-#makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute()], [recoEl_semiLepTrigEl_30.pt.compute()], 0, file) 
-#makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(),]*4, [recoEl_PFMET_120.pt.compute(), recoEl_MET_105.pt.compute(), recoEl_PFMETNoMu_110_FilterHF.pt.compute(), recoEl_semiLepTrigEl_30.pt.compute()], 0, file) 
+makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(), recoEl.pt.compute(), recoEl.pt.compute()], [recoEl_PFMET_120.pt.compute(), recoEl_PFMET_130.pt.compute(), recoEl_PFMET_140.pt.compute()], 0, file)
+makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(), recoEl.pt.compute()], [recoEl_MET_105.pt.compute(), recoEl_MET_120.pt.compute()], 0, file)
+makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(), recoEl.pt.compute(), recoEl.pt.compute(), recoEl.pt.compute()], [recoEl_PFMETNoMu_110_FilterHF.pt.compute(), recoEl_PFMETNoMu_120.pt.compute(), recoEl_PFMETNoMu_130.pt.compute(), recoEl_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute()], [recoEl_semiLepTrigEl_30.pt.compute()], 0, file) 
+makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e pt", 16, 20, 100, 5, "[GeV]", [recoEl.pt.compute(),]*4, [recoEl_PFMET_120.pt.compute(), recoEl_MET_105.pt.compute(), recoEl_PFMETNoMu_110_FilterHF.pt.compute(), recoEl_semiLepTrigEl_30.pt.compute()], 0, file) 
 
-#### Trigger Eff vs Eta
-#makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(), recoEl.eta.compute(), recoEl.eta.compute()], [recoEl_PFMET_120.eta.compute(), recoEl_PFMET_130.eta.compute(), recoEl_PFMET_140.eta.compute()], 0, file)
-#makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(), recoEl.eta.compute()], [recoEl_MET_105.eta.compute(), recoEl_MET_120.eta.compute()], 0, file)
-#makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(), recoEl.eta.compute(), recoEl.eta.compute(), recoEl.eta.compute()], [recoEl_PFMETNoMu_110_FilterHF.eta.compute(), recoEl_PFMETNoMu_120.eta.compute(), recoEl_PFMETNoMu_130.eta.compute(), recoEl_PFMETNoMu_140.eta.compute()], 0, file)
-#makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e #eta", 24, 2.4, 2.4, 0.2, "", [recoEl.eta.compute()], [recoEl_semiLepTrigEl_30.eta.compute()], 0, file) 
-#makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(),]*4, [recoEl_PFMET_120.eta.compute(), recoEl_MET_105.eta.compute(), recoEl_PFMETNoMu_110_FilterHF.eta.compute(), recoEl_semiLepTrigEl_30.eta.compute()], 0, file)
+#### Gen
+makeEffPlot("e", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e pt", 16, 20, 100, 5, "[GeV]", [genEl.pt.compute(), genEl.pt.compute(), genEl.pt.compute()], [genEl_PFMET_120.pt.compute(), genEl_PFMET_130.pt.compute(), genEl_PFMET_140.pt.compute()], 0, file)
+makeEffPlot("e", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e pt", 16, 20, 100, 5, "[GeV]", [genEl.pt.compute(), genEl.pt.compute()], [genEl_MET_105.pt.compute(), genEl_MET_120.pt.compute()], 0, file)
+makeEffPlot("e", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e pt", 16, 20, 100, 5, "[GeV]", [genEl.pt.compute(), genEl.pt.compute(), genEl.pt.compute(), genEl.pt.compute()], [genEl_PFMETNoMu_110_FilterHF.pt.compute(), genEl_PFMETNoMu_120.pt.compute(), genEl_PFMETNoMu_130.pt.compute(), genEl_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot("e", "genXFLAV", ["HLT_Ele30_WPTight_Gsf"], "e pt", 16, 20, 100, 5, "[GeV]", [genEl.pt.compute()], [genEl_semiLepTrigEl_30.pt.compute()], 0, file) 
+makeEffPlot("e", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e pt", 16, 20, 100, 5, "[GeV]", [genEl.pt.compute(),]*4, [genEl_PFMET_120.pt.compute(), genEl_MET_105.pt.compute(), genEl_PFMETNoMu_110_FilterHF.pt.compute(), genEl_semiLepTrigEl_30.pt.compute()], 0, file) 
 
-#### Trigger Eff vs dxy
-#makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(), recoEl.dxy.compute(), recoEl.dxy.compute()], [recoEl_PFMET_120.dxy.compute(), recoEl_PFMET_130.dxy.compute(), recoEl_PFMET_140.dxy.compute()], 0, file)
-#makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(), recoEl.dxy.compute()], [recoEl_MET_105.dxy.compute(), recoEl_MET_120.dxy.compute()], 0, file)
-#makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(), recoEl.dxy.compute(), recoEl.dxy.compute(), recoEl.dxy.compute()], [recoEl_PFMETNoMu_110_FilterHF.dxy.compute(), recoEl_PFMETNoMu_120.dxy.compute(), recoEl_PFMETNoMu_130.dxy.compute(), recoEl_PFMETNoMu_140.dxy.compute()], 0, file)
-#makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute()], [recoEl_semiLepTrigEl_30.dxy.compute()], 0, file) 
-#makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(),]*4, [recoEl_PFMET_120.dxy.compute(), recoEl_MET_105.dxy.compute(), recoEl_PFMETNoMu_110_FilterHF.dxy.compute(), recoEl_semiLepTrigEl_30.dxy.compute()], 0, file)
+### Trigger Eff vs Eta
+#### Reco
+makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(), recoEl.eta.compute(), recoEl.eta.compute()], [recoEl_PFMET_120.eta.compute(), recoEl_PFMET_130.eta.compute(), recoEl_PFMET_140.eta.compute()], 0, file)
+makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(), recoEl.eta.compute()], [recoEl_MET_105.eta.compute(), recoEl_MET_120.eta.compute()], 0, file)
+makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(), recoEl.eta.compute(), recoEl.eta.compute(), recoEl.eta.compute()], [recoEl_PFMETNoMu_110_FilterHF.eta.compute(), recoEl_PFMETNoMu_120.eta.compute(), recoEl_PFMETNoMu_130.eta.compute(), recoEl_PFMETNoMu_140.eta.compute()], 0, file)
+makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e #eta", 24, 2.4, 2.4, 0.2, "", [recoEl.eta.compute()], [recoEl_semiLepTrigEl_30.eta.compute()], 0, file) 
+makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e #eta", 24, -2.4, 2.4, 0.2, "", [recoEl.eta.compute(),]*4, [recoEl_PFMET_120.eta.compute(), recoEl_MET_105.eta.compute(), recoEl_PFMETNoMu_110_FilterHF.eta.compute(), recoEl_semiLepTrigEl_30.eta.compute()], 0, file)
 
-#### Trigger Eff vs lxy
-#makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(), recoEl.lxy.compute(), recoEl.lxy.compute()], [recoEl_PFMET_120.lxy.compute(), recoEl_PFMET_130.lxy.compute(), recoEl_PFMET_140.lxy.compute()], 0, file)
-#makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(), recoEl.lxy.compute()], [recoEl_MET_105.lxy.compute(), recoEl_MET_120.lxy.compute()], 0, file)
-#makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu130_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(), recoEl.lxy.compute(), recoEl.lxy.compute(), recoEl.lxy.compute()], [recoEl_PFMETNoMu_110_FilterHF.lxy.compute(), recoEl_PFMETNoMu_120.lxy.compute(), recoEl_PFMETNoMu_130.lxy.compute(), recoEl_PFMETNoMu_140.lxy.compute()], 0, file)
-#makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute()], [recoEl_semiLepTrigEl_30.lxy.compute()], 0, file) 
-#makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(),]*4, [recoEl_PFMET_120.lxy.compute(), recoEl_MET_105.lxy.compute(), recoEl_PFMETNoMu_110_FilterHF.lxy.compute(), recoEl_semiLepTrigEl_30.lxy.compute()], 0, file)
+### Gen
+makeEffPlot("e", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e #eta", 24, -2.4, 2.4, 0.2, "", [genEl.eta.compute(), genEl.eta.compute(), genEl.eta.compute()], [genEl_PFMET_120.eta.compute(), genEl_PFMET_130.eta.compute(), genEl_PFMET_140.eta.compute()], 0, file)
+makeEffPlot("e", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e #eta", 24, -2.4, 2.4, 0.2, "", [genEl.eta.compute(), genEl.eta.compute()], [genEl_MET_105.eta.compute(), genEl_MET_120.eta.compute()], 0, file)
+makeEffPlot("e", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e #eta", 24, -2.4, 2.4, 0.2, "", [genEl.eta.compute(), genEl.eta.compute(), genEl.eta.compute(), genEl.eta.compute()], [genEl_PFMETNoMu_110_FilterHF.eta.compute(), genEl_PFMETNoMu_120.eta.compute(), genEl_PFMETNoMu_130.eta.compute(), genEl_PFMETNoMu_140.eta.compute()], 0, file)
+makeEffPlot("e", "genXFLAV", ["HLT_Ele30_WPTight_Gsf"], "e #eta", 24, 2.4, 2.4, 0.2, "", [genEl.eta.compute()], [genEl_semiLepTrigEl_30.eta.compute()], 0, file) 
+makeEffPlot("e", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e #eta", 24, -2.4, 2.4, 0.2, "", [genEl.eta.compute(),]*4, [genEl_PFMET_120.eta.compute(), genEl_MET_105.eta.compute(), genEl_PFMETNoMu_110_FilterHF.eta.compute(), genEl_semiLepTrigEl_30.eta.compute()], 0, file)
 
-## Trigger Eff vs MET pt
-makeEffPlot_varBin("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*3, [recoMET_el_PFMET_120.pt.compute(), recoMET_el_PFMET_130.pt.compute(), recoMET_el_PFMET_140.pt.compute()], 0, file)
-makeEffPlot_varBin("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*2, [recoMET_el_MET_105.pt.compute(), recoMET_el_MET_120.pt.compute()], 0, file)
-makeEffPlot_varBin("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*4, [recoMET_el_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_el_PFMETNoMu_120.pt.compute(), recoMET_el_PFMETNoMu_130.pt.compute(), recoMET_el_PFMETNoMu_140.pt.compute()], 0, file)
-makeEffPlot_varBin("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute()], [recoMET_el_semiLepTrigEl_30.pt.compute()], 0, file)
-makeEffPlot_varBin("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"],  "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*4, [recoMET_el_PFMET_120.pt.compute(), recoMET_el_MET_105.pt.compute(), recoMET_el_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_el_semiLepTrigEl_30.pt.compute()], 0, file)
+### Trigger Eff vs dxy
+#### Reco
+makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(), recoEl.dxy.compute(), recoEl.dxy.compute()], [recoEl_PFMET_120.dxy.compute(), recoEl_PFMET_130.dxy.compute(), recoEl_PFMET_140.dxy.compute()], 0, file)
+makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(), recoEl.dxy.compute()], [recoEl_MET_105.dxy.compute(), recoEl_MET_120.dxy.compute()], 0, file)
+makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(), recoEl.dxy.compute(), recoEl.dxy.compute(), recoEl.dxy.compute()], [recoEl_PFMETNoMu_110_FilterHF.dxy.compute(), recoEl_PFMETNoMu_120.dxy.compute(), recoEl_PFMETNoMu_130.dxy.compute(), recoEl_PFMETNoMu_140.dxy.compute()], 0, file)
+makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute()], [recoEl_semiLepTrigEl_30.dxy.compute()], 0, file) 
+makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.dxy.compute(),]*4, [recoEl_PFMET_120.dxy.compute(), recoEl_MET_105.dxy.compute(), recoEl_PFMETNoMu_110_FilterHF.dxy.compute(), recoEl_semiLepTrigEl_30.dxy.compute()], 0, file)
+
+#### Gen
+makeEffPlot("e", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [genEl.dxy.compute(), genEl.dxy.compute(), genEl.dxy.compute()], [genEl_PFMET_120.dxy.compute(), genEl_PFMET_130.dxy.compute(), genEl_PFMET_140.dxy.compute()], 0, file)
+makeEffPlot("e", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [genEl.dxy.compute(), genEl.dxy.compute()], [genEl_MET_105.dxy.compute(), genEl_MET_120.dxy.compute()], 0, file)
+makeEffPlot("e", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [genEl.dxy.compute(), genEl.dxy.compute(), genEl.dxy.compute(), genEl.dxy.compute()], [genEl_PFMETNoMu_110_FilterHF.dxy.compute(), genEl_PFMETNoMu_120.dxy.compute(), genEl_PFMETNoMu_130.dxy.compute(), genEl_PFMETNoMu_140.dxy.compute()], 0, file)
+makeEffPlot("e", "genXFLAV", ["HLT_Ele30_WPTight_Gsf"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [genEl.dxy.compute()], [genEl_semiLepTrigEl_30.dxy.compute()], 0, file) 
+makeEffPlot("e", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e d_{xy}", 15, 0, 15, 1, "[cm]", [genEl.dxy.compute(),]*4, [genEl_PFMET_120.dxy.compute(), genEl_MET_105.dxy.compute(), genEl_PFMETNoMu_110_FilterHF.dxy.compute(), genEl_semiLepTrigEl_30.dxy.compute()], 0, file)
+
+### Trigger Eff vs lxy
+#### Reco
+makeEffPlot("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(), recoEl.lxy.compute(), recoEl.lxy.compute()], [recoEl_PFMET_120.lxy.compute(), recoEl_PFMET_130.lxy.compute(), recoEl_PFMET_140.lxy.compute()], 0, file)
+makeEffPlot("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(), recoEl.lxy.compute()], [recoEl_MET_105.lxy.compute(), recoEl_MET_120.lxy.compute()], 0, file)
+makeEffPlot("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu130_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(), recoEl.lxy.compute(), recoEl.lxy.compute(), recoEl.lxy.compute()], [recoEl_PFMETNoMu_110_FilterHF.lxy.compute(), recoEl_PFMETNoMu_120.lxy.compute(), recoEl_PFMETNoMu_130.lxy.compute(), recoEl_PFMETNoMu_140.lxy.compute()], 0, file)
+makeEffPlot("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute()], [recoEl_semiLepTrigEl_30.lxy.compute()], 0, file) 
+makeEffPlot("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [recoEl.lxy.compute(),]*4, [recoEl_PFMET_120.lxy.compute(), recoEl_MET_105.lxy.compute(), recoEl_PFMETNoMu_110_FilterHF.lxy.compute(), recoEl_semiLepTrigEl_30.lxy.compute()], 0, file)
+
+#### Gen
+makeEffPlot("e", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [genEl.lxy.compute(), genEl.lxy.compute(), genEl.lxy.compute()], [genEl_PFMET_120.lxy.compute(), genEl_PFMET_130.lxy.compute(), genEl_PFMET_140.lxy.compute()], 0, file)
+makeEffPlot("e", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [genEl.lxy.compute(), genEl.lxy.compute()], [genEl_MET_105.lxy.compute(), genEl_MET_120.lxy.compute()], 0, file)
+makeEffPlot("e", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu130_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [genEl.lxy.compute(), genEl.lxy.compute(), genEl.lxy.compute(), genEl.lxy.compute()], [genEl_PFMETNoMu_110_FilterHF.lxy.compute(), genEl_PFMETNoMu_120.lxy.compute(), genEl_PFMETNoMu_130.lxy.compute(), genEl_PFMETNoMu_140.lxy.compute()], 0, file)
+makeEffPlot("e", "genXFLAV", ["HLT_Ele30_WPTight_Gsf"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [genEl.lxy.compute()], [genEl_semiLepTrigEl_30.lxy.compute()], 0, file) 
+makeEffPlot("e", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"], "e l_{xy}", 15, 0, 15, 1, "[cm]", [genEl.lxy.compute(),]*4, [genEl_PFMET_120.lxy.compute(), genEl_MET_105.lxy.compute(), genEl_PFMETNoMu_110_FilterHF.lxy.compute(), genEl_semiLepTrigEl_30.lxy.compute()], 0, file)
+
+### Trigger Eff vs MET pt
+#### Reco
+makeEffPlot_varBin("e", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_el.pt.compute(),]*3, [recoMET_el_PFMET_120.pt.compute(), recoMET_el_PFMET_130.pt.compute(), recoMET_el_PFMET_140.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_el.pt.compute(),]*2, [recoMET_el_MET_105.pt.compute(), recoMET_el_MET_120.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_el.pt.compute(),]*4, [recoMET_el_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_el_PFMETNoMu_120.pt.compute(), recoMET_el_PFMETNoMu_130.pt.compute(), recoMET_el_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "XFLAV", ["HLT_Ele30_WPTight_Gsf"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_el.pt.compute()], [recoMET_el_semiLepTrigEl_30.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"],  "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_el.pt.compute(),]*4, [recoMET_el_PFMET_120.pt.compute(), recoMET_el_MET_105.pt.compute(), recoMET_el_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_el_semiLepTrigEl_30.pt.compute()], 0, file)
+
+#### Gen
+makeEffPlot_varBin("e", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*3, [genMET_el_PFMET_120.pt.compute(), genMET_el_PFMET_130.pt.compute(), genMET_el_PFMET_140.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*2, [genMET_el_MET_105.pt.compute(), genMET_el_MET_120.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*4, [genMET_el_PFMETNoMu_110_FilterHF.pt.compute(), genMET_el_PFMETNoMu_120.pt.compute(), genMET_el_PFMETNoMu_130.pt.compute(), genMET_el_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "genXFLAV", ["HLT_Ele30_WPTight_Gsf"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute()], [genMET_el_semiLepTrigEl_30.pt.compute()], 0, file)
+makeEffPlot_varBin("e", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_Ele30_WPTight_Gsf"],  "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_el.pt.compute(),]*4, [genMET_el_PFMET_120.pt.compute(), genMET_el_MET_105.pt.compute(), genMET_el_PFMETNoMu_110_FilterHF.pt.compute(), genMET_el_semiLepTrigEl_30.pt.compute()], 0, file)
 

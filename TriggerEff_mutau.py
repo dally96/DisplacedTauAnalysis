@@ -76,19 +76,30 @@ recoSemiLep_mu_evt = (ak.num(RecoMuonsFromGen) == 1) & (ak.num(ak.drop_none(Reco
 genMu  = gen_mus[semiLep_mu_evt]
 recoMu  = gen_mus[semiLep_mu_evt & recoSemiLep_mu_evt.compute()]
 
+recoMET_mu = gmet[semiLep_mu_evt & recoSemiLep_mu_evt.compute()]
 
 ### Semilep mu events which pass triggers
 
 #### Gen Events
-genMu_PFMET_120        = genMu[PFMET_120]
-genMu_PFMET_130        = genMu[PFMET_130]
-genMu_PFMET_140        = genMu[PFMET_140]
+genMu_PFMET_120            = gen_mus[semiLep_mu_evt & PFMET_120.compute()]
+genMu_PFMET_130            = gen_mus[semiLep_mu_evt & PFMET_130.compute()]
+genMu_PFMET_140            = gen_mus[semiLep_mu_evt & PFMET_140.compute()]
 
-genMu_MET_105          = genMu[MET_105]
-genMu_MET_120          = genMu[MET_120]
+genMET_mu_PFMET_120        = gmet[semiLep_mu_evt & PFMET_120.compute()]
+genMET_mu_PFMET_130        = gmet[semiLep_mu_evt & PFMET_130.compute()]
+genMET_mu_PFMET_140        = gmet[semiLep_mu_evt & PFMET_140.compute()]
 
-genMu_semiLepTrigMu_30 = genMu[semiLepTrigMu_30]
-genMu_semiLepTrigMu_35 = genMu[semiLepTrigMu_35]
+genMu_MET_105              = gen_mus[semiLep_mu_evt & MET_105.compute()]
+genMu_MET_120              = gen_mus[semiLep_mu_evt & MET_120.compute()]
+
+genMET_mu_MET_105          = gmet[semiLep_mu_evt & MET_105.compute()]
+genMET_mu_MET_120          = gmet[semiLep_mu_evt & MET_120.compute()]
+
+genMu_semiLepTrigMu_30     = gen_mus[semiLep_mu_evt & semiLepTrigMu_30.compute()]
+genMu_semiLepTrigMu_35     = gen_mus[semiLep_mu_evt & semiLepTrigMu_35.compute()]
+
+genMET_mu_semiLepTrigMu_30 = gmet[semiLep_mu_evt & semiLepTrigMu_30.compute()] 
+genMET_mu_semiLepTrigMu_35 = gmet[semiLep_mu_evt & semiLepTrigMu_35.compute()]
 
 #### Gen Events that have reco'd mu and tau for mu
 recoMu_PFMET_120            = gen_mus[semiLep_mu_evt & recoSemiLep_mu_evt.compute() & PFMET_120.compute()]
@@ -112,31 +123,67 @@ recoMET_mu_semiLepTrigMu_30 = gmet[semiLep_mu_evt & recoSemiLep_mu_evt.compute()
 recoMET_mu_semiLepTrigMu_35 = gmet[semiLep_mu_evt & recoSemiLep_mu_evt.compute() & semiLepTrigMu_35.compute()]
 
 ### Trigger Eff vs Pt
-#makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(), recoMu.pt.compute(), recoMu.pt.compute()], [recoMu_PFMET_120.pt.compute(), recoMu_PFMET_130.pt.compute(), recoMu_PFMET_140.pt.compute()], 0, file)
-#makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(), recoMu.pt.compute()], [recoMu_MET_105.pt.compute(), recoMu_MET_120.pt.compute()], 0, file)
-#makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(), recoMu.pt.compute()], [recoMu_semiLepTrigMu_30.pt.compute(), recoMu_semiLepTrigMu_35.pt.compute()], 0, file) 
-#makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(),]*3, [recoMu_PFMET_120.pt.compute(), recoMu_MET_105.pt.compute(), recoMu_semiLepTrigMu_30.pt.compute()], 0, file)
+#### Reco
+makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(), recoMu.pt.compute(), recoMu.pt.compute()], [recoMu_PFMET_120.pt.compute(), recoMu_PFMET_130.pt.compute(), recoMu_PFMET_140.pt.compute()], 0, file)
+makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(), recoMu.pt.compute()], [recoMu_MET_105.pt.compute(), recoMu_MET_120.pt.compute()], 0, file)
+makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(), recoMu.pt.compute()], [recoMu_semiLepTrigMu_30.pt.compute(), recoMu_semiLepTrigMu_35.pt.compute()], 0, file) 
+makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu pt", 16, 20, 100, 5, "[GeV]", [recoMu.pt.compute(),]*3, [recoMu_PFMET_120.pt.compute(), recoMu_MET_105.pt.compute(), recoMu_semiLepTrigMu_30.pt.compute()], 0, file)
 
-#### Trigger Eff vs Eta
-#makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(), recoMu.eta.compute(), recoMu.eta.compute()], [recoMu_PFMET_120.eta.compute(), recoMu_PFMET_130.eta.compute(), recoMu_PFMET_140.eta.compute()], 0, file)
-#makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(), recoMu.eta.compute()], [recoMu_MET_105.eta.compute(), recoMu_MET_120.eta.compute()], 0, file)
-#makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(), recoMu.eta.compute()], [recoMu_semiLepTrigMu_30.eta.compute(), recoMu_semiLepTrigMu_35.eta.compute()], 0, file) 
-#makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(),]*3, [recoMu_PFMET_120.eta.compute(), recoMu_MET_105.eta.compute(), recoMu_semiLepTrigMu_30.eta.compute()], 0, file)
+#### Gen 
+makeEffPlot("mu", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu pt", 16, 20, 100, 5, "[GeV]", [genMu.pt.compute(), genMu.pt.compute(), genMu.pt.compute()], [genMu_PFMET_120.pt.compute(), genMu_PFMET_130.pt.compute(), genMu_PFMET_140.pt.compute()], 0, file)
+makeEffPlot("mu", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu pt", 16, 20, 100, 5, "[GeV]", [genMu.pt.compute(), genMu.pt.compute()], [genMu_MET_105.pt.compute(), genMu_MET_120.pt.compute()], 0, file)
+makeEffPlot("mu", "genXFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu pt", 16, 20, 100, 5, "[GeV]", [genMu.pt.compute(), genMu.pt.compute()], [genMu_semiLepTrigMu_30.pt.compute(), genMu_semiLepTrigMu_35.pt.compute()], 0, file) 
+makeEffPlot("mu", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu pt", 16, 20, 100, 5, "[GeV]", [genMu.pt.compute(),]*3, [genMu_PFMET_120.pt.compute(), genMu_MET_105.pt.compute(), genMu_semiLepTrigMu_30.pt.compute()], 0, file)
 
-#### Trigger Eff vs dxy
-#makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(), recoMu.dxy.compute(), recoMu.dxy.compute()], [recoMu_PFMET_120.dxy.compute(), recoMu_PFMET_130.dxy.compute(), recoMu_PFMET_140.dxy.compute()], 0, file)
-#makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(), recoMu.dxy.compute()], [recoMu_MET_105.dxy.compute(), recoMu_MET_120.dxy.compute()], 0, file)
-#makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(), recoMu.dxy.compute()], [recoMu_semiLepTrigMu_30.dxy.compute(), recoMu_semiLepTrigMu_35.dxy.compute()], 0, file) 
-#makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(),]*3, [recoMu_PFMET_120.dxy.compute(), recoMu_MET_105.dxy.compute(), recoMu_semiLepTrigMu_30.dxy.compute()], 0, file)
+### Trigger Eff vs Eta
+#### Reco
+makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(), recoMu.eta.compute(), recoMu.eta.compute()], [recoMu_PFMET_120.eta.compute(), recoMu_PFMET_130.eta.compute(), recoMu_PFMET_140.eta.compute()], 0, file)
+makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(), recoMu.eta.compute()], [recoMu_MET_105.eta.compute(), recoMu_MET_120.eta.compute()], 0, file)
+makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(), recoMu.eta.compute()], [recoMu_semiLepTrigMu_30.eta.compute(), recoMu_semiLepTrigMu_35.eta.compute()], 0, file) 
+makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu #eta", 24, -2.4, 2.4, 0.2, "", [recoMu.eta.compute(),]*3, [recoMu_PFMET_120.eta.compute(), recoMu_MET_105.eta.compute(), recoMu_semiLepTrigMu_30.eta.compute()], 0, file)
 
-#### Trigger Eff vs lxy
-#makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(), recoMu.lxy.compute(), recoMu.lxy.compute()], [recoMu_PFMET_120.lxy.compute(), recoMu_PFMET_130.lxy.compute(), recoMu_PFMET_140.lxy.compute()], 0, file)
-#makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(), recoMu.lxy.compute()], [recoMu_MET_105.lxy.compute(), recoMu_MET_120.lxy.compute()], 0, file)
-#makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(), recoMu.lxy.compute()], [recoMu_semiLepTrigMu_30.lxy.compute(), recoMu_semiLepTrigMu_35.lxy.compute()], 0, file) 
-#makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(),]*3, [recoMu_PFMET_120.lxy.compute(), recoMu_MET_105.lxy.compute(), recoMu_semiLepTrigMu_30.lxy.compute()], 0, file)
+#### Gen
+makeEffPlot("mu", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [genMu.eta.compute(), genMu.eta.compute(), genMu.eta.compute()], [genMu_PFMET_120.eta.compute(), genMu_PFMET_130.eta.compute(), genMu_PFMET_140.eta.compute()], 0, file)
+makeEffPlot("mu", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [genMu.eta.compute(), genMu.eta.compute()], [genMu_MET_105.eta.compute(), genMu_MET_120.eta.compute()], 0, file)
+makeEffPlot("mu", "genXFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu #eta", 24, -2.4, 2.4, 0.2, "", [genMu.eta.compute(), genMu.eta.compute()], [genMu_semiLepTrigMu_30.eta.compute(), genMu_semiLepTrigMu_35.eta.compute()], 0, file) 
+makeEffPlot("mu", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu #eta", 24, -2.4, 2.4, 0.2, "", [genMu.eta.compute(),]*3, [genMu_PFMET_120.eta.compute(), genMu_MET_105.eta.compute(), genMu_semiLepTrigMu_30.eta.compute()], 0, file)
 
-## Trigger Eff vs MET pt
-makeEffPlot_varBin("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_mu.pt.compute(),]*3, [recoMET_mu_PFMET_120.pt.compute(), recoMET_mu_PFMET_130.pt.compute(), recoMET_mu_PFMET_140.pt.compute()], 0, file)
-makeEffPlot_varBin("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_mu.pt.compute(),]*2, [recoMET_mu_MET_105.pt.compute(), recoMET_mu_MET_120.pt.compute()], 0, file)
-makeEffPlot_varBin("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "MET pT", len(MET_bins) - 1, MET_bins,"[GeV]", [genMET_mu.pt.compute(),]*2, [recoMET_mu_semiLepTrigMu_30.pt.compute(), recoMET_mu_semiLepTrigMu_35.pt.compute()], 0, file)
-makeEffPlot_varBin("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_mu.pt.compute(),]*3, [recoMET_mu_PFMET_120.pt.compute(), recoMET_mu_MET_105.pt.compute(), recoMET_mu_semiLepTrigMu_30.pt.compute()], 0, file)
+### Trigger Eff vs dxy
+#### Reco
+makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(), recoMu.dxy.compute(), recoMu.dxy.compute()], [recoMu_PFMET_120.dxy.compute(), recoMu_PFMET_130.dxy.compute(), recoMu_PFMET_140.dxy.compute()], 0, file)
+makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(), recoMu.dxy.compute()], [recoMu_MET_105.dxy.compute(), recoMu_MET_120.dxy.compute()], 0, file)
+makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(), recoMu.dxy.compute()], [recoMu_semiLepTrigMu_30.dxy.compute(), recoMu_semiLepTrigMu_35.dxy.compute()], 0, file) 
+makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.dxy.compute(),]*3, [recoMu_PFMET_120.dxy.compute(), recoMu_MET_105.dxy.compute(), recoMu_semiLepTrigMu_30.dxy.compute()], 0, file)
+
+#### Gen
+makeEffPlot("mu", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [genMu.dxy.compute(), genMu.dxy.compute(), genMu.dxy.compute()], [genMu_PFMET_120.dxy.compute(), genMu_PFMET_130.dxy.compute(), genMu_PFMET_140.dxy.compute()], 0, file)
+makeEffPlot("mu", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [genMu.dxy.compute(), genMu.dxy.compute()], [genMu_MET_105.dxy.compute(), genMu_MET_120.dxy.compute()], 0, file)
+makeEffPlot("mu", "genXFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [genMu.dxy.compute(), genMu.dxy.compute()], [genMu_semiLepTrigMu_30.dxy.compute(), genMu_semiLepTrigMu_35.dxy.compute()], 0, file) 
+makeEffPlot("mu", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu d_{xy}", 15, 0, 15, 1, "[cm]", [genMu.dxy.compute(),]*3, [genMu_PFMET_120.dxy.compute(), genMu_MET_105.dxy.compute(), genMu_semiLepTrigMu_30.dxy.compute()], 0, file)
+
+### Trigger Eff vs lxy
+#### Reco
+makeEffPlot("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(), recoMu.lxy.compute(), recoMu.lxy.compute()], [recoMu_PFMET_120.lxy.compute(), recoMu_PFMET_130.lxy.compute(), recoMu_PFMET_140.lxy.compute()], 0, file)
+makeEffPlot("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(), recoMu.lxy.compute()], [recoMu_MET_105.lxy.compute(), recoMu_MET_120.lxy.compute()], 0, file)
+makeEffPlot("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(), recoMu.lxy.compute()], [recoMu_semiLepTrigMu_30.lxy.compute(), recoMu_semiLepTrigMu_35.lxy.compute()], 0, file) 
+makeEffPlot("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [recoMu.lxy.compute(),]*3, [recoMu_PFMET_120.lxy.compute(), recoMu_MET_105.lxy.compute(), recoMu_semiLepTrigMu_30.lxy.compute()], 0, file)
+
+#### Gen
+makeEffPlot("mu", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [genMu.lxy.compute(), genMu.lxy.compute(), genMu.lxy.compute()], [genMu_PFMET_120.lxy.compute(), genMu_PFMET_130.lxy.compute(), genMu_PFMET_140.lxy.compute()], 0, file)
+makeEffPlot("mu", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [genMu.lxy.compute(), genMu.lxy.compute()], [genMu_MET_105.lxy.compute(), genMu_MET_120.lxy.compute()], 0, file)
+makeEffPlot("mu", "genXFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [genMu.lxy.compute(), genMu.lxy.compute()], [genMu_semiLepTrigMu_30.lxy.compute(), genMu_semiLepTrigMu_35.lxy.compute()], 0, file) 
+makeEffPlot("mu", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"],  "#mu l_{xy}", 15, 0, 15, 1, "[cm]", [genMu.lxy.compute(),]*3, [genMu_PFMET_120.lxy.compute(), genMu_MET_105.lxy.compute(), genMu_semiLepTrigMu_30.lxy.compute()], 0, file)
+
+### Trigger Eff vs MET pt
+#### Reco
+makeEffPlot_varBin("mu", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_mu.pt.compute(),]*3, [recoMET_mu_PFMET_120.pt.compute(), recoMET_mu_PFMET_130.pt.compute(), recoMET_mu_PFMET_140.pt.compute()], 0, file)
+makeEffPlot_varBin("mu", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_mu.pt.compute(),]*2, [recoMET_mu_MET_105.pt.compute(), recoMET_mu_MET_120.pt.compute()], 0, file)
+makeEffPlot_varBin("mu", "XFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "MET pT", len(MET_bins) - 1, MET_bins,"[GeV]", [recoMET_mu.pt.compute(),]*2, [recoMET_mu_semiLepTrigMu_30.pt.compute(), recoMET_mu_semiLepTrigMu_35.pt.compute()], 0, file)
+makeEffPlot_varBin("mu", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_mu.pt.compute(),]*3, [recoMET_mu_PFMET_120.pt.compute(), recoMET_mu_MET_105.pt.compute(), recoMET_mu_semiLepTrigMu_30.pt.compute()], 0, file)
+
+#### Gen
+makeEffPlot_varBin("mu", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_mu.pt.compute(),]*3, [genMET_mu_PFMET_120.pt.compute(), genMET_mu_PFMET_130.pt.compute(), genMET_mu_PFMET_140.pt.compute()], 0, file)
+makeEffPlot_varBin("mu", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_mu.pt.compute(),]*2, [genMET_mu_MET_105.pt.compute(), genMET_mu_MET_120.pt.compute()], 0, file)
+makeEffPlot_varBin("mu", "genXFLAV", ["HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1"], "MET pT", len(MET_bins) - 1, MET_bins,"[GeV]", [genMET_mu.pt.compute(),]*2, [genMET_mu_semiLepTrigMu_30.pt.compute(), genMET_mu_semiLepTrigMu_35.pt.compute()], 0, file)
+makeEffPlot_varBin("mu", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_mu.pt.compute(),]*3, [genMET_mu_PFMET_120.pt.compute(), genMET_mu_MET_105.pt.compute(), genMET_mu_semiLepTrigMu_30.pt.compute()], 0, file)
+

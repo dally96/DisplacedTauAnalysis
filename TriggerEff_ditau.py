@@ -70,25 +70,43 @@ recoDiTau_evt = (ak.num(ak.drop_none(RecoTausFromGen)) == 2)
 genDiTau = gen_taus[diTau_evt]
 recoDiTau = gen_taus[diTau_evt & recoDiTau_evt.compute()]
 
+recoMET_diTau = gmet[diTau_evt & recoDiTau_evt.compute()]
 
 ### Di-Tau events that pass triggers
 #### Gen Events
-genDiTau_PFMET_120              = genDiTau[PFMET_120]              
-genDiTau_PFMET_130              = genDiTau[PFMET_130]
-genDiTau_PFMET_140              = genDiTau[PFMET_140]
+genDiTau_PFMET_120                  = gen_taus[diTau_evt & PFMET_120.compute()]              
+genDiTau_PFMET_130                  = gen_taus[diTau_evt & PFMET_130.compute()]
+genDiTau_PFMET_140                  = gen_taus[diTau_evt & PFMET_140.compute()]
 
-genDiTau_MET_105                = genDiTau[MET_105]
-genDiTau_MET_120                = genDiTau[MET_120]
+genMET_diTau_PFMET_120              = gmet[diTau_evt & PFMET_120.compute()]               
+genMET_diTau_PFMET_130              = gmet[diTau_evt & PFMET_130.compute()]               
+genMET_diTau_PFMET_140              = gmet[diTau_evt & PFMET_140.compute()]               
 
-genDiTau_PFMETNoMu_110_FilterHF = genDiTau[PFMETNoMu_110_FilterHF]
+genDiTau_MET_105                    = gen_taus[diTau_evt & MET_105.compute()]
+genDiTau_MET_120                    = gen_taus[diTau_evt & MET_120.compute()]
 
-genDiTau_PFMETNoMu_120          = genDiTau[PFMETNoMu_120]
-genDiTau_PFMETNoMu_130          = genDiTau[PFMETNoMu_130]
-genDiTau_PFMETNoMu_140          = genDiTau[PFMETNoMu_140]
+genMET_diTau_MET_105                = gmet[diTau_evt & MET_105.compute()] 
+genMET_diTau_MET_120                = gmet[diTau_evt & MET_120.compute()] 
 
-genDiTau_diTauTrig_35           = genDiTau[diTauTrig_35] 
-genDiTau_diTauTrig_40           = genDiTau[diTauTrig_40] 
-genDiTau_diTauTrig_displaced_32 = genDiTau[diTauTrig_displaced_32]
+genDiTau_PFMETNoMu_110_FilterHF     = gen_taus[diTau_evt & PFMETNoMu_110_FilterHF.compute()]
+
+genMET_diTau_PFMETNoMu_110_FilterHF = gmet[diTau_evt & PFMETNoMu_110_FilterHF.compute()]
+
+genDiTau_PFMETNoMu_120              = gen_taus[diTau_evt & PFMETNoMu_120.compute()]
+genDiTau_PFMETNoMu_130              = gen_taus[diTau_evt & PFMETNoMu_130.compute()]
+genDiTau_PFMETNoMu_140              = gen_taus[diTau_evt & PFMETNoMu_140.compute()]
+
+genMET_diTau_PFMETNoMu_120          = gmet[diTau_evt & PFMETNoMu_120.compute()] 
+genMET_diTau_PFMETNoMu_130          = gmet[diTau_evt & PFMETNoMu_130.compute()] 
+genMET_diTau_PFMETNoMu_140          = gmet[diTau_evt & PFMETNoMu_140.compute()] 
+
+genDiTau_diTauTrig_35               = gen_taus[diTau_evt & diTauTrig_35.compute()] 
+genDiTau_diTauTrig_40               = gen_taus[diTau_evt & diTauTrig_40.compute()] 
+genDiTau_diTauTrig_displaced_32     = gen_taus[diTau_evt & diTauTrig_displaced_32.compute()]
+
+genMET_diTau_diTauTrig_35           = gmet[diTau_evt & diTauTrig_35.compute()]           
+genMET_diTau_diTauTrig_40           = gmet[diTau_evt & diTauTrig_40.compute()]           
+genMET_diTau_diTauTrig_displaced_32 = gmet[diTau_evt & diTauTrig_displaced_32.compute()] 
 
 #### Gen Events that have reco's di tau
 recoDiTau_PFMET_120                  = gen_taus[diTau_evt & recoDiTau_evt.compute() & PFMET_120.compute()]              
@@ -126,36 +144,76 @@ recoMET_diTau_diTauTrig_40           = gmet[diTau_evt & recoDiTau_evt.compute() 
 recoMET_diTau_diTauTrig_displaced_32 = gmet[diTau_evt & recoDiTau_evt.compute() & diTauTrig_displaced_32.compute()] 
 
 ### Trigger Eff vs Pt
+#### Reco
 #makeEffPlot("ditau", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau pt", 16, 20, 100, 5, "[GeV]", [recoDiTau.pt.compute(), recoDiTau.pt.compute(), recoDiTau.pt.compute()], [recoDiTau_PFMET_120.pt.compute(), recoDiTau_PFMET_130.pt.compute(), recoDiTau_PFMET_140.pt.compute()], 0, file)
 #makeEffPlot("ditau", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau pt", 16, 20, 100, 5, "[GeV]", [recoDiTau.pt.compute(), recoDiTau.pt.compute()], [recoDiTau_MET_105.pt.compute(), recoDiTau_MET_120.pt.compute()], 0, file)
 #makeEffPlot("ditau", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau pt", 16, 20, 100, 5, "[GeV]", [recoDiTau.pt.compute(), recoDiTau.pt.compute(), recoDiTau.pt.compute(), recoDiTau.pt.compute()], [recoDiTau_PFMETNoMu_110_FilterHF.pt.compute(), recoDiTau_PFMETNoMu_120.pt.compute(), recoDiTau_PFMETNoMu_130.pt.compute(), recoDiTau_PFMETNoMu_140.pt.compute()], 0, file)
 #makeEffPlot("ditau", "XFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau pt", 16, 20, 100, 5, "[GeV]", [recoDiTau.pt.compute(), recoDiTau.pt.compute(), recoDiTau.pt.compute()], [recoDiTau_diTauTrig_35.pt.compute(), recoDiTau_diTauTrig_40.pt.compute(), recoDiTau_diTauTrig_displaced_32.pt.compute()], 0, file) 
 #makeEffPlot("ditau", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau pt", 16, 20, 100, 5, "[GeV]", [recoDiTau.pt.compute(),]*4, [recoDiTau_PFMET_120.pt.compute(), recoDiTau_MET_105.pt.compute(), recoDiTau_PFMETNoMu_110_FilterHF.pt.compute(), recoDiTau_diTauTrig_displaced_32.pt.compute()], 0, file)
 
-#### Trigger Eff vs Eta
+#### Gen
+makeEffPlot("ditau", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau pt", 16, 20, 100, 5, "[GeV]", [genDiTau.pt.compute(), genDiTau.pt.compute(), genDiTau.pt.compute()], [genDiTau_PFMET_120.pt.compute(), genDiTau_PFMET_130.pt.compute(), genDiTau_PFMET_140.pt.compute()], 0, file)
+makeEffPlot("ditau", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau pt", 16, 20, 100, 5, "[GeV]", [genDiTau.pt.compute(), genDiTau.pt.compute()], [genDiTau_MET_105.pt.compute(), genDiTau_MET_120.pt.compute()], 0, file)
+makeEffPlot("ditau", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau pt", 16, 20, 100, 5, "[GeV]", [genDiTau.pt.compute(), genDiTau.pt.compute(), genDiTau.pt.compute(), genDiTau.pt.compute()], [genDiTau_PFMETNoMu_110_FilterHF.pt.compute(), genDiTau_PFMETNoMu_120.pt.compute(), genDiTau_PFMETNoMu_130.pt.compute(), genDiTau_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot("ditau", "genXFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau pt", 16, 20, 100, 5, "[GeV]", [genDiTau.pt.compute(), genDiTau.pt.compute(), genDiTau.pt.compute()], [genDiTau_diTauTrig_35.pt.compute(), genDiTau_diTauTrig_40.pt.compute(), genDiTau_diTauTrig_displaced_32.pt.compute()], 0, file) 
+makeEffPlot("ditau", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau pt", 16, 20, 100, 5, "[GeV]", [genDiTau.pt.compute(),]*4, [genDiTau_PFMET_120.pt.compute(), genDiTau_MET_105.pt.compute(), genDiTau_PFMETNoMu_110_FilterHF.pt.compute(), genDiTau_diTauTrig_displaced_32.pt.compute()], 0, file)
+
+### Trigger Eff vs Eta
+#### Reco
 #makeEffPlot("ditau", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [recoDiTau.eta.compute(), recoDiTau.eta.compute(), recoDiTau.eta.compute()], [recoDiTau_PFMET_120.eta.compute(), recoDiTau_PFMET_130.eta.compute(), recoDiTau_PFMET_140.eta.compute()], 0, file)
 #makeEffPlot("ditau", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [recoDiTau.eta.compute(), recoDiTau.eta.compute()], [recoDiTau_MET_105.eta.compute(), recoDiTau_MET_120.eta.compute()], 0, file)
 #makeEffPlot("ditau", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [recoDiTau.eta.compute(), recoDiTau.eta.compute(), recoDiTau.eta.compute(), recoDiTau.eta.compute()], [recoDiTau_PFMETNoMu_110_FilterHF.eta.compute(), recoDiTau_PFMETNoMu_120.eta.compute(), recoDiTau_PFMETNoMu_130.eta.compute(), recoDiTau_PFMETNoMu_140.eta.compute()], 0, file)
 #makeEffPlot("ditau", "XFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [recoDiTau.eta.compute(), recoDiTau.eta.compute(), recoDiTau.eta.compute()], [recoDiTau_diTauTrig_35.eta.compute(), recoDiTau_diTauTrig_40.eta.compute(), recoDiTau_diTauTrig_displaced_32.eta.compute()], 0, file) 
 #makeEffPlot("ditau", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [recoDiTau.eta.compute(),]*4, [recoDiTau_PFMET_120.eta.compute(), recoDiTau_MET_105.eta.compute(), recoDiTau_PFMETNoMu_110_FilterHF.eta.compute(), recoDiTau_diTauTrig_displaced_32.eta.compute()], 0, file)
 
-#### Trigger Eff vs dxy
+#### Gen
+makeEffPlot("ditau", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [genDiTau.eta.compute(), genDiTau.eta.compute(), genDiTau.eta.compute()], [genDiTau_PFMET_120.eta.compute(), genDiTau_PFMET_130.eta.compute(), genDiTau_PFMET_140.eta.compute()], 0, file)
+makeEffPlot("ditau", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [genDiTau.eta.compute(), genDiTau.eta.compute()], [genDiTau_MET_105.eta.compute(), genDiTau_MET_120.eta.compute()], 0, file)
+makeEffPlot("ditau", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [genDiTau.eta.compute(), genDiTau.eta.compute(), genDiTau.eta.compute(), genDiTau.eta.compute()], [genDiTau_PFMETNoMu_110_FilterHF.eta.compute(), genDiTau_PFMETNoMu_120.eta.compute(), genDiTau_PFMETNoMu_130.eta.compute(), genDiTau_PFMETNoMu_140.eta.compute()], 0, file)
+makeEffPlot("ditau", "genXFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [genDiTau.eta.compute(), genDiTau.eta.compute(), genDiTau.eta.compute()], [genDiTau_diTauTrig_35.eta.compute(), genDiTau_diTauTrig_40.eta.compute(), genDiTau_diTauTrig_displaced_32.eta.compute()], 0, file) 
+makeEffPlot("ditau", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau #eta", 24, -2.4, 2.4, 0.2, "", [genDiTau.eta.compute(),]*4, [genDiTau_PFMET_120.eta.compute(), genDiTau_MET_105.eta.compute(), genDiTau_PFMETNoMu_110_FilterHF.eta.compute(), genDiTau_diTauTrig_displaced_32.eta.compute()], 0, file)
+
+### Trigger Eff vs dxy
+#### Reco
 #makeEffPlot("ditau", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.dxy.compute(), recoDiTau.dxy.compute(), recoDiTau.dxy.compute()], [recoDiTau_PFMET_120.dxy.compute(), recoDiTau_PFMET_130.dxy.compute(), recoDiTau_PFMET_140.dxy.compute()], 0, file)
 #makeEffPlot("ditau", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.dxy.compute(), recoDiTau.dxy.compute()], [recoDiTau_MET_105.dxy.compute(), recoDiTau_MET_120.dxy.compute()], 0, file)
 #makeEffPlot("ditau", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.dxy.compute(), recoDiTau.dxy.compute(), recoDiTau.dxy.compute(), recoDiTau.dxy.compute()], [recoDiTau_PFMETNoMu_110_FilterHF.dxy.compute(), recoDiTau_PFMETNoMu_120.dxy.compute(), recoDiTau_PFMETNoMu_130.dxy.compute(), recoDiTau_PFMETNoMu_140.dxy.compute()], 0, file)
 #makeEffPlot("ditau", "XFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.dxy.compute(), recoDiTau.dxy.compute(), recoDiTau.dxy.compute()], [recoDiTau_diTauTrig_35.dxy.compute(), recoDiTau_diTauTrig_40.dxy.compute(), recoDiTau_diTauTrig_displaced_32.dxy.compute()], 0, file) 
 #makeEffPlot("ditau", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.dxy.compute(),]*4, [recoDiTau_PFMET_120.dxy.compute(), recoDiTau_MET_105.dxy.compute(), recoDiTau_PFMETNoMu_110_FilterHF.dxy.compute(), recoDiTau_diTauTrig_displaced_32.dxy.compute()], 0, file)
 
-#### Trigger Eff vs lxy
+#### Gen
+makeEffPlot("ditau", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.dxy.compute(), genDiTau.dxy.compute(), genDiTau.dxy.compute()], [genDiTau_PFMET_120.dxy.compute(), genDiTau_PFMET_130.dxy.compute(), genDiTau_PFMET_140.dxy.compute()], 0, file)
+makeEffPlot("ditau", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.dxy.compute(), genDiTau.dxy.compute()], [genDiTau_MET_105.dxy.compute(), genDiTau_MET_120.dxy.compute()], 0, file)
+makeEffPlot("ditau", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.dxy.compute(), genDiTau.dxy.compute(), genDiTau.dxy.compute(), genDiTau.dxy.compute()], [genDiTau_PFMETNoMu_110_FilterHF.dxy.compute(), genDiTau_PFMETNoMu_120.dxy.compute(), genDiTau_PFMETNoMu_130.dxy.compute(), genDiTau_PFMETNoMu_140.dxy.compute()], 0, file)
+makeEffPlot("ditau", "genXFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.dxy.compute(), genDiTau.dxy.compute(), genDiTau.dxy.compute()], [genDiTau_diTauTrig_35.dxy.compute(), genDiTau_diTauTrig_40.dxy.compute(), genDiTau_diTauTrig_displaced_32.dxy.compute()], 0, file) 
+makeEffPlot("ditau", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau d_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.dxy.compute(),]*4, [genDiTau_PFMET_120.dxy.compute(), genDiTau_MET_105.dxy.compute(), genDiTau_PFMETNoMu_110_FilterHF.dxy.compute(), genDiTau_diTauTrig_displaced_32.dxy.compute()], 0, file)
+
+### Trigger Eff vs lxy
+#### Reco
 #makeEffPlot("ditau", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.lxy.compute(), recoDiTau.lxy.compute(), recoDiTau.lxy.compute()], [recoDiTau_PFMET_120.lxy.compute(), recoDiTau_PFMET_130.lxy.compute(), recoDiTau_PFMET_140.lxy.compute()], 0, file)
 #makeEffPlot("ditau", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.lxy.compute(), recoDiTau.lxy.compute()], [recoDiTau_MET_105.lxy.compute(), recoDiTau_MET_120.lxy.compute()], 0, file)
 #makeEffPlot("ditau", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.lxy.compute(), recoDiTau.lxy.compute(), recoDiTau.lxy.compute(), recoDiTau.lxy.compute()], [recoDiTau_PFMETNoMu_110_FilterHF.lxy.compute(), recoDiTau_PFMETNoMu_120.lxy.compute(), recoDiTau_PFMETNoMu_130.lxy.compute(), recoDiTau_PFMETNoMu_140.lxy.compute()], 0, file)
 #makeEffPlot("ditau", "XFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.lxy.compute(), recoDiTau.lxy.compute(), recoDiTau.lxy.compute()], [recoDiTau_diTauTrig_35.lxy.compute(), recoDiTau_diTauTrig_40.lxy.compute(), recoDiTau_diTauTrig_displaced_32.lxy.compute()], 0, file) 
 #makeEffPlot("ditau", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [recoDiTau.lxy.compute(),]*4, [recoDiTau_PFMET_120.lxy.compute(), recoDiTau_MET_105.lxy.compute(), recoDiTau_PFMETNoMu_110_FilterHF.lxy.compute(), recoDiTau_diTauTrig_displaced_32.lxy.compute()], 0, file)
 
-## Trigger Eff vs MET pt
-makeEffPlot_varBin("ditau", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*3, [recoMET_diTau_PFMET_120.pt.compute(), recoMET_diTau_PFMET_130.pt.compute(), recoMET_diTau_PFMET_140.pt.compute()], 0, file)
-makeEffPlot_varBin("ditau", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*2, [recoMET_diTau_MET_105.pt.compute(), recoMET_diTau_MET_120.pt.compute()], 0, file)
-makeEffPlot_varBin("ditau", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*4, [recoMET_diTau_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_diTau_PFMETNoMu_120.pt.compute(), recoMET_diTau_PFMETNoMu_120.pt.compute(), recoMET_diTau_PFMETNoMu_140.pt.compute()], 0, file)
-makeEffPlot_varBin("ditau", "XFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*3, [recoMET_diTau_diTauTrig_35.pt.compute(), recoMET_diTau_diTauTrig_40.pt.compute(), recoMET_diTau_diTauTrig_displaced_32.pt.compute()], 0, file)
-makeEffPlot_varBin("ditau", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*4, [recoMET_diTau_PFMET_120.pt.compute(), recoMET_diTau_MET_105.pt.compute(), recoMET_diTau_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_diTau_diTauTrig_displaced_32.pt.compute()], 0, file)
+#### Gen
+makeEffPlot("ditau", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.lxy.compute(), genDiTau.lxy.compute(), genDiTau.lxy.compute()], [genDiTau_PFMET_120.lxy.compute(), genDiTau_PFMET_130.lxy.compute(), genDiTau_PFMET_140.lxy.compute()], 0, file)
+makeEffPlot("ditau", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.lxy.compute(), genDiTau.lxy.compute()], [genDiTau_MET_105.lxy.compute(), genDiTau_MET_120.lxy.compute()], 0, file)
+makeEffPlot("ditau", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.lxy.compute(), genDiTau.lxy.compute(), genDiTau.lxy.compute(), genDiTau.lxy.compute()], [genDiTau_PFMETNoMu_110_FilterHF.lxy.compute(), genDiTau_PFMETNoMu_120.lxy.compute(), genDiTau_PFMETNoMu_130.lxy.compute(), genDiTau_PFMETNoMu_140.lxy.compute()], 0, file)
+makeEffPlot("ditau", "genXFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.lxy.compute(), genDiTau.lxy.compute(), genDiTau.lxy.compute()], [genDiTau_diTauTrig_35.lxy.compute(), genDiTau_diTauTrig_40.lxy.compute(), genDiTau_diTauTrig_displaced_32.lxy.compute()], 0, file) 
+makeEffPlot("ditau", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "#tau l_{xy}", 15, 0, 15, 1, "[cm]", [genDiTau.lxy.compute(),]*4, [genDiTau_PFMET_120.lxy.compute(), genDiTau_MET_105.lxy.compute(), genDiTau_PFMETNoMu_110_FilterHF.lxy.compute(), genDiTau_diTauTrig_displaced_32.lxy.compute()], 0, file)
+
+### Trigger Eff vs MET pt
+#### Reco
+makeEffPlot_varBin("ditau", "PFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_diTau.pt.compute(),]*3, [recoMET_diTau_PFMET_120.pt.compute(), recoMET_diTau_PFMET_130.pt.compute(), recoMET_diTau_PFMET_140.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "MET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_diTau.pt.compute(),]*2, [recoMET_diTau_MET_105.pt.compute(), recoMET_diTau_MET_120.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "PFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_diTau.pt.compute(),]*4, [recoMET_diTau_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_diTau_PFMETNoMu_120.pt.compute(), recoMET_diTau_PFMETNoMu_120.pt.compute(), recoMET_diTau_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "XFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_diTau.pt.compute(),]*3, [recoMET_diTau_diTauTrig_35.pt.compute(), recoMET_diTau_diTauTrig_40.pt.compute(), recoMET_diTau_diTauTrig_displaced_32.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "ALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [recoMET_diTau.pt.compute(),]*4, [recoMET_diTau_PFMET_120.pt.compute(), recoMET_diTau_MET_105.pt.compute(), recoMET_diTau_PFMETNoMu_110_FilterHF.pt.compute(), recoMET_diTau_diTauTrig_displaced_32.pt.compute()], 0, file)
+
+#### Gen
+makeEffPlot_varBin("ditau", "genPFMET", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_PFMET130_PFMHT130_IDTight", "HLT_PFMET140_PFMHT140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*3, [genMET_diTau_PFMET_120.pt.compute(), genMET_diTau_PFMET_130.pt.compute(), genMET_diTau_PFMET_140.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "genMET", ["HLT_MET105_IsoTrk50", "HLT_MET120_IsoTrk50"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*2, [genMET_diTau_MET_105.pt.compute(), genMET_diTau_MET_120.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "genPFMETNoMu", ["HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight", "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight", "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*4, [genMET_diTau_PFMETNoMu_110_FilterHF.pt.compute(), genMET_diTau_PFMETNoMu_120.pt.compute(), genMET_diTau_PFMETNoMu_120.pt.compute(), genMET_diTau_PFMETNoMu_140.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "genXFLAV", ["HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1", "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*3, [genMET_diTau_diTauTrig_35.pt.compute(), genMET_diTau_diTauTrig_40.pt.compute(), genMET_diTau_diTauTrig_displaced_32.pt.compute()], 0, file)
+makeEffPlot_varBin("ditau", "genALL", ["HLT_PFMET120_PFMHT120_IDTight", "HLT_MET105_IsoTrk50", "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF", "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1"], "MET pT", len(MET_bins) - 1, MET_bins, "[GeV]", [genMET_diTau.pt.compute(),]*4, [genMET_diTau_PFMET_120.pt.compute(), genMET_diTau_MET_105.pt.compute(), genMET_diTau_PFMETNoMu_110_FilterHF.pt.compute(), genMET_diTau_diTauTrig_displaced_32.pt.compute()], 0, file)
