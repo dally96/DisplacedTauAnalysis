@@ -103,6 +103,10 @@ jets = jets[(jets.pt > 20) & (abs(jets.eta) < 2.4) & (jets.genJetIdx >= 0) & (je
 RecoTausFromGen = jets.nearest(gen_taus, threshold = 0.3)
 RecoTausFromGen = RecoTausFromGen[(RecoTausFromGen.pt > GenPtMin) & (abs(RecoTausFromGen.eta) < GenEtaMax)]
 
+makeEffPlot("tau_h", "", [""], "pt", 16, 20, 100, 5, "[GeV]", [gen_taus.pt.compute()], [RecoTausFromGen.pt.compute()], 0, file)
+makeEffPlot("tau_h", "", [""], "dxy", 30, 0, 15, 0.5, "[cm]", [gen_taus.dxy.compute()], [RecoTausFromGen.dxy.compute()], 0, file) 
+
+
 recoSemiLep_mu_evt = (ak.num(RecoMuonsFromGen) == 1) & (ak.num(ak.drop_none(RecoTausFromGen)) == 1)
 recoSemiLep_el_evt = (ak.num(RecoElectronsFromGen) == 1) & (ak.num(ak.drop_none(RecoTausFromGen)) == 1) 
 recoDiTau_evt      = (ak.num(ak.drop_none(RecoTausFromGen)) == 2)

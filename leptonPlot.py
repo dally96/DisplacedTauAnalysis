@@ -21,6 +21,13 @@ GenEtaMax = 2.4
 VisTauDR = 0.3
 
 
+def getMaximum(h_eff, isLog=False):
+    max_factor = 1.1
+    if isLog: max_factor = 10
+    maximum = max(h_eff[i].GetPaintedGraph().GetYaxis().GetXmax() for i in list(h_eff.keys()))
+    print("Maximum of the histo is", maximum)
+    return maximum*max_factor
+
 def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsize, xunit, tot_arr, pass_arr, log_set, file):
   h_eff_dict = {}
   h_eff_num_dict = {}
@@ -29,7 +36,7 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
   
   for ent in range(len(dict_entries)):
     if ".root" in file:
-      h_eff_dict[dict_entries[ent]] = ROOT.TEfficiency("h_eff_"+xvar+"_"+dict_entries[ent], file.split(".")[0]+";"+xvar+" "+xunit+" ; Fraction of gen "+lepton+" which are recon'd", bins, xmin, xmax)
+      h_eff_dict[dict_entries[ent]] = ROOT.TEfficiency("h_eff_"+xvar+"_"+dict_entries[ent], file.split(".")[0]+";"+xvar+" "+xunit+" ; #varepsilon", bins, xmin, xmax)
       h_eff_num_dict[dict_entries[ent]] = ROOT.TH1F("h_eff_num"+xvar+"_"+dict_entries[ent], file.split(".")[0]+";"+xvar+" "+xunit+" ; Number of gen "+lepton+" which are recon'd", bins, xmin, xmax)
       h_eff_den_dict[dict_entries[ent]] = ROOT.TH1F("h_eff_den"+xvar+"_"+dict_entries[ent], file.split(".")[0]+";"+xvar+" "+xunit+" ; Number of gen "+lepton, bins, xmin, xmax)
     else:
@@ -45,7 +52,7 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
       h_eff_num_dict[dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(pass_arr[ent] > (xmin + (i * xbinsize))) & (pass_arr[ent] < (xmin + ((i + 1) * xbinsize)))], axis = None)))      
 
   can.SetLogy(log_set)
-  l_eff = ROOT.TLegend(0.2, 0.5, 0.6, 0.7)
+  l_eff = ROOT.TLegend(0.2, 0.7, 0.45, 0.85)
   l_eff.SetBorderSize(0)
   l_eff.SetFillStyle(0)
   l_eff.SetTextSize(0.025)
@@ -57,11 +64,12 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
     if ent == 0:
       h_eff_dict[dict_entries[ent]].Draw()
       ROOT.gPad.Update()
-      #h_eff_dict[dict_entries[ent]].GetPaintedGraph().GetYaxis().SetRangeUser(0, 1.1)
     else:
       h_eff_dict[dict_entries[ent]].Draw("same")
+      ROOT.gPad.Update()
   if len(dict_entries) > 1:
     l_eff.Draw()
+  h_eff_dict[dict_entries[0]].GetPaintedGraph().GetYaxis().SetRangeUser(0, getMaximum(h_eff_dict, log_set))
   can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+".pdf")
   can.SaveAs("PNG_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+".png")
 
@@ -70,7 +78,6 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
   l_eff_num.SetFillStyle(0)
   for ent in range(len(dict_entries)):
     h_eff_num_dict[dict_entries[ent]].SetLineColor(colors[ent])
-    h_eff_num_dict[dict_entries[ent]].GetHistogram().SetMaximum(0.2)
     #if (ent + 1 >= 5):
     #  h_eff_num_dict[dict_entries[ent]].SetLineColor(ent + 2)
     l_eff_num.AddEntry(h_eff_num_dict[dict_entries[ent]], dict_entries[ent])
@@ -125,7 +132,7 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
       h_eff_num_dict[dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(pass_arr[ent] > (xbins[i])) & (pass_arr[ent] < (xbins[i+1]))], axis = None)))      
 
   can.SetLogy(log_set)
-  l_eff = ROOT.TLegend(0.2, 0.5, 0.6, 0.7)
+  l_eff = ROOT.TLegend(0.1, 0.6, 0.35, 0.8)
   l_eff.SetBorderSize(0)
   l_eff.SetFillStyle(0)
   l_eff.SetTextSize(0.025)
@@ -137,11 +144,12 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
     if ent == 0:
       h_eff_dict[dict_entries[ent]].Draw()
       ROOT.gPad.Update()
-      #h_eff_dict[dict_entries[ent]].GetPaintedGraph().GetYaxis().SetRangeUser(0, 1.1)
     else:
       h_eff_dict[dict_entries[ent]].Draw("same")
+      ROOT.gPad.Update()
   if len(dict_entries) > 1:
     l_eff.Draw()
+  h_eff_dict[dict_entries[0]].GetPaintedGraph().GetYaxis().SetRangeUser(0, getMaximum(h_eff_dict, log_set))
   can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+".pdf")
   can.SaveAs("PNG_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+".png")
 
@@ -180,7 +188,7 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
   can.SaveAs("PNG_plots/Den_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_den.png")
 
 
-def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, yresmax, xbinsize, xvararr, yvardiff, xunit, yunit): 
+def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, yresmax, xbinsize, xvararr, yvardiff, xunit, yunit, file): 
   h_resVsX_y_dict = {}
   
   for ent in range(len(dict_entries)):
@@ -204,7 +212,9 @@ def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, y
 
   for ent in range(len(dict_entries)):
     for x in range(len(xrange)):
+      plt.cla()
       hist, bins, other = plt.hist(ak.flatten(yvardiff[ent][(xvararr[ent] > (xmin + x * xbinsize)) & (xvararr[ent] < (xmin + (x + 1) * xbinsize))]), bins=np.linspace(yresmin, yresmax, 101))
+      plt.savefig("h_resVs"+xvar+"_"+yvar+"_"+dict_entries[ent]+"_"+str(xrange[x])+".pdf")
       for i in range(len(hist)):
         h_resVsX_y_dict[dict_entries[ent]][x].SetBinContent(i+1, hist[i])
   
@@ -219,6 +229,7 @@ def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, y
 
   l_resVsX_y = ROOT.TLegend()
   l_resVsX_y.SetFillStyle(0)
+  l_resVsX_y.SetBorderSize(0)
 
   for ent in range(len(dict_entries)):
     h2_resVsX_y_dict[dict_entries[ent]].SetMinimum(0)
@@ -232,6 +243,64 @@ def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, y
   
   l_resVsX_y.Draw()
   can.SaveAs("Stauto"+lepton+"_resVs"+xvar+"_"+yvar+".pdf")
+  can.SaveAs("PNG_plots/Stauto"+lepton+"_resVs"+xvar+"_"+yvar+".png")
+
+def makeResPlot_varBin(lepton, dict_entries, xvar, yvar, xrange, xbins, yresmin, yresmax, xvararr, yvardiff, xunit, yunit, file): 
+  h_resVsX_y_dict = {}
+  
+  for ent in range(len(dict_entries)):
+    h_resVsX_y_dict[dict_entries[ent]] = []
+  
+  for ent in range(len(dict_entries)):
+    for i in range(len(xrange)):
+      hist = ROOT.TH1F("h_resVs"+xvar+"_"+yvar+"_"+dict_entries[ent]+"_"+str(xrange[i]), ";"+yvar+"residual (reco - gen) "+yunit+";Number of leptons", 100, yresmin, yresmax)
+      h_resVsX_y_dict[dict_entries[ent]].append(hist)
+
+  #for ent in range(len(dict_entries)):
+  #  for mu in range(len(ak.flatten(xvararr[ent]))):
+  #    for x in range(len(xrange)):
+  #      if ((ak.flatten(xvararr[ent])[mu] > (xmin + x * xbinsize)) & (ak.flatten(xvararr[ent])[mu] < (xmin + (x + 1) * xbinsize))):
+  #        h_resVsX_y_dict[dict_entries[ent]][x].Fill(ak.flatten(yvardiff[ent])[mu])
+
+  #for ent in range(len(dict_entries)):
+  #  for x in range(len(xrange)):
+  #    for mu in range(len(ak.flatten(xvararr[ent][(xvararr[ent] > (xmin + x * xbinsize)) & (xvararr[ent] < (xmin + (x + 1) * xbinsize))]))):
+  #      h_resVsX_y_dict[dict_entries[ent]][x].Fill(ak.flatten(yvardiff[ent][(xvararr[ent] > (xmin + x * xbinsize)) & (xvararr[ent] < (xmin + (x + 1) * xbinsize))])[mu])
+
+  for ent in range(len(dict_entries)):
+    for x in range(len(xrange)):
+      plt.cla()
+      hist, bins, other = plt.hist(ak.flatten(yvardiff[ent][(xvararr[ent] > (xbins[x])) & (xvararr[ent] < (xbins[x + 1]))]), bins=np.linspace(yresmin, yresmax, 101))
+      plt.savefig("h_resVs"+xvar+"_"+yvar+"_"+dict_entries[ent]+"_"+str(xrange[x])+".pdf")
+      for i in range(len(hist)):
+        h_resVsX_y_dict[dict_entries[ent]][x].SetBinContent(i+1, hist[i])
+  
+  h2_resVsX_y_dict = {}
+  for ent in range(len(dict_entries)):
+    h2_resVsX_y_dict[dict_entries[ent]] = ROOT.TH1F("h2_resVsX_y_"+dict_entries[ent], file.split(".")[0]+";gen "+lepton+" "+xvar+" "+xunit+";"+yvar+" resolution "+yunit, len(xrange), xbins)
+
+  for ent in range(len(dict_entries)):
+    for i in range(len(xrange)): 
+      h2_resVsX_y_dict[dict_entries[ent]].SetBinContent(i + 1, h_resVsX_y_dict[dict_entries[ent]][i].GetRMS())
+      h2_resVsX_y_dict[dict_entries[ent]].SetBinError(i + 1, h_resVsX_y_dict[dict_entries[ent]][i].GetRMSError())
+
+  l_resVsX_y = ROOT.TLegend()
+  l_resVsX_y.SetFillStyle(0)
+  l_resVsX_y.SetBorderSize(0)
+
+  for ent in range(len(dict_entries)):
+    h2_resVsX_y_dict[dict_entries[ent]].SetMinimum(0)
+    h2_resVsX_y_dict[dict_entries[ent]].SetMarkerStyle(20)
+    h2_resVsX_y_dict[dict_entries[ent]].SetMarkerColor(ent + 1)
+    l_resVsX_y.AddEntry(h2_resVsX_y_dict[dict_entries[ent]], dict_entries[ent])
+    if ent == 0:
+      h2_resVsX_y_dict[dict_entries[ent]].Draw("p")
+    else:
+      h2_resVsX_y_dict[dict_entries[ent]].Draw("psame")
+  
+  l_resVsX_y.Draw()
+  can.SaveAs("Stauto"+lepton+"_resVs"+xvar+"_"+yvar+".pdf")
+  can.SaveAs("PNG_plots/Stauto"+lepton+"_resVs"+xvar+"_"+yvar+".png")
 
 def makeEffPlotEta(lepton, dict_entries, xvar, xunit, tot_arr, etatot_arr, pass_arr, etapass_arr, pass_arr_end, etapass_arr_end, log_set, file, bins):
   h_eff_dict = {}

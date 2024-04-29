@@ -34,7 +34,7 @@ lxyRANGE = ["0-0.5", "0.5-1", "1-1.5", "1.5-2", "2-2.5","2.5-3", "3-3.5", "3.5-4
 ROOT.gStyle.SetOptStat(0)
 
 #file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_DisMuon_GenPartMatch.root" 
-file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_lpcdisptau_NanoAOD_ExtraMuonBranches.root"
+file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_lpcdisptau_NanoAOD_ExtraDisMuonBranches.root"
 
 rootFile = uproot.open(file)
 Events = rootFile["Events"]
@@ -48,17 +48,17 @@ for key in Events.keys():
   if "GenPart_" in key:
     genBranches[key] = Events[key].array()
 
-genBranches["GenMuon_dxy"] = ak.from_parquet("Stau_GenMuon_dxy.parquet")
-genBranches["GenMuon_lxy"] = ak.from_parquet("Stau_GenMuon_lxy.parquet")
+genBranches["GenMuon_dxy"] = ak.from_parquet("Stau_GenMuon_dxy_"+file.split('.')[0]+".parquet")
+genBranches["GenMuon_lxy"] = ak.from_parquet("Stau_GenMuon_lxy_"+file.split('.')[0]+".parquet")
 
-muFromZ    = ak.from_parquet("genDisMuon.parquet")
-allMuFromZ = ak.from_parquet("allGenDisMuon.parquet")
+muFromZ    = ak.from_parquet("genDisMuon_"+file.split('.')[0]+".parquet")
+allMuFromZ = ak.from_parquet("allGenDisMuon_"+file.split('.')[0]+".parquet")
 
-eFromZ = ak.from_parquet("genDisElectron.parquet")
-allEFromZ =  ak.from_parquet("allGenDisElectron.parquet")
+eFromZ = ak.from_parquet("genDisElectron_"+file.split('.')[0]+".parquet")
+allEFromZ =  ak.from_parquet("allGenDisElectron_"+file.split('.')[0]+".parquet")
 
-genBranches["GenElectron_dxy"] = ak.from_parquet("Stau_GenElectron_dxy.parquet")
-genBranches["GenElectron_lxy"] = ak.from_parquet("Stau_GenElectron_lxy.parquet")
+genBranches["GenElectron_dxy"] = ak.from_parquet("Stau_GenElectron_dxy_"+file.split('.')[0]+".parquet")
+genBranches["GenElectron_lxy"] = ak.from_parquet("Stau_GenElectron_lxy_"+file.split('.')[0]+".parquet")
 
 GenMu_pt  = genBranches["GenPart_pt"][muFromZ] 
 GenMu_eta = genBranches["GenPart_eta"][muFromZ]
@@ -259,7 +259,7 @@ Hand3RecoElectrons_dxy = RecoElectrons_dxy[RecoElectronsFromGenEtaCut & RecoElec
 ### Efficiency Plots
 #makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "pt", 16, 20, 100, 5, "[GeV]", GenMu_pt, [RecoMuonsFromGen_pt, TightRecoMuonsFromGen_pt, MediumRecoMuonsFromGen_pt, LooseRecoMuonsFromGen_pt], 0, file)
 #makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "eta", 24, -2.4, 2.4, 0.2, " ", GenMu_eta, [RecoMuonsFromGen_eta, TightRecoMuonsFromGen_eta, MediumRecoMuonsFromGen_eta, LooseRecoMuonsFromGen_eta], 0, file)
-#makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "dxy", 30, 0, 15, 0.5, "[cm]", GenMu_dxy, [RecoMuonsFromGen_dxy, TightRecoMuonsFromGen_dxy, MediumRecoMuonsFromGen_dxy, LooseRecoMuonsFromGen_dxy], 0, file)
+makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "dxy", 30, 0, 15, 0.5, "[cm]", GenMu_dxy, [RecoMuonsFromGen_dxy, TightRecoMuonsFromGen_dxy, MediumRecoMuonsFromGen_dxy, LooseRecoMuonsFromGen_dxy], 0, file)
 #makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "lxy", 30, 0, 15, 0.5, "[cm]", GenMu_lxy, [RecoMuonsFromGen_lxy, TightRecoMuonsFromGen_lxy, MediumRecoMuonsFromGen_lxy, LooseRecoMuonsFromGen_lxy], 0, file) 
 #
 #makeEffPlot("e", "ID", ["No ID", "Tight", "Med", "Loose"], "pt", 16, 20, 100, 5, "[GeV]", GenE_pt, [RecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt], 0, file)
@@ -268,4 +268,4 @@ Hand3RecoElectrons_dxy = RecoElectrons_dxy[RecoElectronsFromGenEtaCut & RecoElec
 #makeEffPlot("e", "ID", ["No ID", "Tight", "Med", "Loose"], "lxy", 30, 0, 15, 0.5, "[cm]", GenE_lxy, [RecoElectronsFromGen_lxy, TightRecoElectronsFromGen_lxy, MediumRecoElectronsFromGen_lxy, LooseRecoElectronsFromGen_lxy], 0, file) 
 
 #makeEffPlotEta("e", ["no ID", "convVeto & lostHits","Veto", "Loose ID", "Medium ID", "Tight ID"], "pt", "[GeV]", GenE_pt, GenE_eta,[RecoElectronsFromGen_pt, Hand2RecoElectronsFromGen_pt, VetoRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt], [RecoElectronsFromGen_eta, Hand2RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], [RecoElectronsFromGen_pt, Hand3RecoElectronsFromGen_pt, VetoRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt], [RecoElectronsFromGen_eta, Hand3RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0, file)
-makeEffPlotEta("e", ["no ID", "convVeto & lostHits","Veto", "Loose ID", "Medium ID", "Tight ID"], "dxy", "[cm]", GenE_dxy, GenE_eta,[RecoElectronsFromGen_dxy, Hand2RecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy], [RecoElectronsFromGen_eta, Hand2RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], [RecoElectronsFromGen_dxy, Hand3RecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy], [RecoElectronsFromGen_eta, Hand3RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0, file, np.linspace(0,15,16))
+#makeEffPlotEta("e", ["no ID", "convVeto & lostHits","Veto", "Loose ID", "Medium ID", "Tight ID"], "dxy", "[cm]", GenE_dxy, GenE_eta,[RecoElectronsFromGen_dxy, Hand2RecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy], [RecoElectronsFromGen_eta, Hand2RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], [RecoElectronsFromGen_dxy, Hand3RecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy], [RecoElectronsFromGen_eta, Hand3RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0, file, np.linspace(0,15,16))
