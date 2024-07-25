@@ -40,13 +40,13 @@ for file in SIG:
   signal_file = ak.from_parquet("my_skim_electron_" + file + "/part0.parquet")
   LowPtElectron_ID = ak.flatten(signal_file["electron_ID"], axis = None)
   for bdt in LowPtElectron_ID:
-    h_LPE_ID_SIG.Fill(bdt, xsecs[file]*38.01*1000/len(signal_file))
+    h_LPE_ID_SIG.Fill(bdt, xsecs[file]*38.01*1000*signal_file["weight"][0])
 
 for file in BKG:
   background_file = ak.from_parquet("my_skim_electron_" + file + "/part0.parquet")
   LowPtElectron_ID = ak.flatten(background_file["electron_ID"], axis = None)
   for bdt in LowPtElectron_ID:
-    h_LPE_ID_BKG.Fill(bdt, xsecs[file]*38.01*1000/len(background_file))
+    h_LPE_ID_BKG.Fill(bdt, xsecs[file]*38.01*1000*background_file["weight"][0])
 
 h_LPE_ID_BKG.SetLineColor(ROOT.kBlue)
 h_LPE_ID_SIG.SetLineColor(ROOT.kRed)
@@ -60,5 +60,6 @@ l_LPE_ID.AddEntry(h_LPE_ID_BKG, "QCD bkgd")
 l_LPE_ID.AddEntry(h_LPE_ID_SIG, "Stau 100 GeV 100mm")
 l_LPE_ID.Draw()
 h_LPE_ID_BKG.SetTitle("LowPtElectron BDT_ID, L = 38.01 fb^{-1}")
+can.SetLogy(1)
 can.SaveAs("SvB_LowPtElectron_ID.pdf")
   
