@@ -9,20 +9,20 @@ import numpy as np
 from array import array
 import tau_selections as ts
 import tau_func as tf
-import Run3NanoAOD_Dict
+import NanoAOD_Dict
 
-Files = Run3NanoAOD_Dict.Run3_Dict
+Files = NanoAOD_Dict.Nano_Dict
 file_keys = Files.keys()
 rt.gStyle.SetPalette(55)
 colors = [rt.kBlue, rt.kRed, rt.kGreen, rt.kMagenta]
 
 binningVars = ["pt", "eta", "lxy"]
-binningVarsUnits = ["[GeV]", "", "[cm]"]
+binningVarsUnits = ["GeV", "", "cm"]
 
 ptBins_500  = (20, 30, 40, 60, 100, 120, 200, 300, 400, 600)
-ptBins_100  = (20, 30, 40, 60, 100, 120, 200, 300, 400)
-etaBins     = (-2.4, -2.2, -1.4, -1.2, 1.2, 1.4, 2.2, 2.4)
-lxyBins_100 = (0, 1E-3, 1E-2, 5E-2, 1E-1, 1, 5, 10, 20) 
+ptBins_100  = (20, 30, 40, 50, 60, 100, 200, 400)
+etaBins     = (-2.4, -1.6, -1.2, 1.2, 1.6, 2.4)
+lxyBins_100 = (0, 1E-3, 1E-2, 1E-1, 1, 10, 20) 
 lxyBins_10  = (0, 1E-3, 1E-2, 5E-2, 1E-1, 1, 5, 10)
 
 workingPoints = [0.65, 0.80, 0.90, 0.98]
@@ -32,7 +32,6 @@ print(len(scoreSpace))
 
 histDict = {}
 colorDict = {}
-branchDict = {}
 leafDict = {}
 arrayDict = {}
 mGraphDict = {}
@@ -47,7 +46,7 @@ for file in Files:
   histDict[file]["pt"] = {}
   histDict[file]["eta"] = {}
   histDict[file]["lxy"] = {}
-  if "100GeV" in file:
+  if "100GeV" in file or "400GeV" in file:
     for pt in range(len(ptBins_100)-1):
       histDict[file]["pt"][str(ptBins_100[pt]) + "-" + str(ptBins_100[pt+1])]  = rt.TEfficiency(file+"_eff_pt"+str(ptBins_100[pt]), "Tau efficiency binned for "+str(ptBins_100[pt])+" <  p_{T} <= "+str(ptBins_100[pt+1]) + "; score; Tau Efficiency", 250, scoreSpace)
   if "500GeV" in file:
@@ -69,6 +68,7 @@ for file in Files:
   print("Opening file ", file)
 
   sampleFile = rt.TFile.Open(Files[file])
+  branchDict = {}
   Events = sampleFile.Get("Events")
   nevt = Events.GetEntriesFast()
   
@@ -165,7 +165,7 @@ for file in Files:
       for jet_idx in range(len(jetDict["Jet_pt"][evt])):  
         if jetDict["Jet_pt"][evt][jet_idx] <= ts.jetPtMin or abs(jetDict["Jet_eta"][evt][jet_idx]) >= ts.jetEtaMax: continue
         if jetDict["Jet_genJetIdx"][evt][jet_idx] == -1 or jetDict["Jet_genJetIdx"][evt][jet_idx] >= len(genJetDict["GenJet_pt"][evt]): continue
-        if genJetDict["GenJet_pt"][evt][jetDict["Jet_genJetIdx"][evt][jet_idx]] <= ts.genJetPtMin or abs(genJetDict["GenJet_eta"][evt][jetDict["Jet_genJetIdx"][evt][jet_idx]]) >= ts.genJetEtaMax: continue
+        #if genJetDict["GenJet_pt"][evt][jetDict["Jet_genJetIdx"][evt][jet_idx]] <= ts.genJetPtMin or abs(genJetDict["GenJet_eta"][evt][jetDict["Jet_genJetIdx"][evt][jet_idx]]) >= ts.genJetEtaMax: continue
         dphi = abs(genVisTauDict["GenVisTau_phi"][evt][tau_idx]-jetDict["Jet_phi"][evt][jet_idx])
             
         if (dphi > math.pi) :
@@ -242,7 +242,7 @@ for file in Files:
 
   matchedJet_df = pd.DataFrame(data = matchedJetDict)
 
-  if "100GeV" in file:
+  if "100GeV" in file or "400GeV" in file:
    for pt_idx in range(1, len(ptBins_100)):
       matchedTauCount_pt = []
       totalTauCount_pt = []
@@ -317,7 +317,50 @@ for file in Files:
 #    aveDict[file]["lxy"].Add(histDict[file]["lxy"][str(workingPoints[score_idx])])  
 
 histDict_keys = list(histDict.keys())
+
+print(histDict_keys)
+
+for bins in list(histDict[histDict_keys[0]]["pt"].keys()):
+  mGraphDict[bins] = rt.TMultiGraph("pt_" + bins, "pt_" + bins)
+  mGraphDict[bins].SetTitle("Tau efficiency for pt bin " + bins + binningVarsUnits[binningVars.index("pt")] + "; score; Tau Efficiency")
+  ptLegend = rt.TLegend()
+
+  for file in histDict_keys:
+    graph = histDict[file]["pt"][bins].CreateGraph()
+    graph.SetLineColor(colors[histDict_keys.index(file)])
+    mGraphDict[bins].Add(graph)    
+    ptLegend.AddEntry(graph, file)
+  mGraphDict[bins].Draw("A")
+  ptLegend.Draw()
+  can.SaveAs("taueff400100_pt_"+bins+".pdf")
   
+for bins in list(histDict[histDict_keys[0]]["eta"].keys()):
+  mGraphDict[bins] = rt.TMultiGraph("eta_" + bins, "eta_" + bins)
+  mGraphDict[bins].SetTitle("Tau efficiency for eta bin " + bins + binningVarsUnits[binningVars.index("eta")] + "; score; Tau Efficiency")
+  etaLegend = rt.TLegend()
+
+  for file in histDict_keys:
+    graph = histDict[file]["eta"][bins].CreateGraph()
+    graph.SetLineColor(colors[histDict_keys.index(file)])
+    mGraphDict[bins].Add(graph)    
+    etaLegend.AddEntry(graph, file)
+  mGraphDict[bins].Draw("A")
+  etaLegend.Draw()
+  can.SaveAs("taueff400100_eta_"+bins+".pdf")
+
+for bins in list(histDict[histDict_keys[0]]["lxy"].keys()):
+  mGraphDict[bins] = rt.TMultiGraph("lxy_" + bins, "lxy_" + bins)
+  mGraphDict[bins].SetTitle("Tau efficiency for lxy bin " + bins + binningVarsUnits[binningVars.index("lxy")] + "; score; Tau Efficiency")
+  lxyLegend = rt.TLegend()
+
+  for file in histDict_keys:
+    graph = histDict[file]["lxy"][bins].CreateGraph()
+    graph.SetLineColor(colors[histDict_keys.index(file)])
+    mGraphDict[bins].Add(graph)    
+    lxyLegend.AddEntry(graph, file)
+  mGraphDict[bins].Draw("A")
+  lxyLegend.Draw()
+  can.SaveAs("taueff400100_lxy_"+bins+".pdf")
 
 for file in histDict_keys:
   pt_keys = list(histDict[file]["pt"].keys())
@@ -335,7 +378,7 @@ for file in histDict_keys:
     ptLegend.AddEntry(graph, bins)
   mGraphDict["pt"].Draw("A")
   ptLegend.Draw()
-  can.SaveAs("taueff_pt_"+file+".pdf")
+  #can.SaveAs("taueff_pt_"+file+".pdf")
 
   mGraphDict["eta"] = rt.TMultiGraph("eta_"+file, "eta_"+file)
   mGraphDict["eta"].SetTitle("Tau efficiency for eta for " + file + "; score; Tau Efficiency")
@@ -348,7 +391,7 @@ for file in histDict_keys:
     etaLegend.AddEntry(graph, bins)
   mGraphDict["eta"].Draw("A")
   etaLegend.Draw()
-  can.SaveAs("taueff_eta_"+file+".pdf")
+  #can.SaveAs("taueff_eta_"+file+".pdf")
 
 
   mGraphDict["lxy"] = rt.TMultiGraph("lxy_"+file, "lxy_"+file)
@@ -362,7 +405,7 @@ for file in histDict_keys:
     lxyLegend.AddEntry(graph, bins)
   mGraphDict["lxy"].Draw("A")
   lxyLegend.Draw()
-  can.SaveAs("taueff_lxy_"+file+".pdf")
+  #can.SaveAs("taueff_lxy_"+file+".pdf")
 
 
 #  for score in workingPoints:

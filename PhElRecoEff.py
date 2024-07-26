@@ -341,6 +341,9 @@ RecoPhotonsFromGen   = pixelSeedPhotons.matched_gen
 RecoPhotonsFromGen   = RecoPhotonsFromGen[abs(RecoPhotonsFromGen.pdgId) == 11]
 RecoPhotonsFromGen   = RecoPhotonsFromGen[abs(RecoPhotonsFromGen.distinctParent.distinctParent.pdgId) == 1000015]
 RecoPhotonsFromGen   = RecoPhotonsFromGen[(RecoPhotonsFromGen.pt > GenPtMin) & (abs(RecoPhotonsFromGen.eta) < GenEtaMax)]
+dpt_pt = abs(ak.flatten(RecoPhotonsFromGen.pt, axis = None) - ak.flatten(RecoPhotons.pt, axis = None))/ak.flatten(RecoPhotonsFromGen.pt, axis = None)
+dpt_pt_mask = dpt_pt < 0.3
+RecoPhotonsFromGen = RecoPhotonsFromGen[dpt_pt_mask]
 
 RecoPhotons_pt = ak.flatten(RecoPhotonsFromGen.pt.compute(), axis = None)
 photoelectrons_pt = ak.flatten(photoelectrons.pt.compute(), axis = None)
@@ -356,6 +359,7 @@ RecoLowPtElecFromGen = gpart[lowptelectrons.genPartIdx.compute()]
 RecoLowPtElecFromGen = RecoLowPtElecFromGen[abs(RecoLowPtElecFromGen.distinctParent.distinctParent.pdgId) == 1000015]
 RecoLowPtElecFromGen = RecoLowPtElecFromGen[(RecoLowPtElecFromGen.pt > GenPtMin) & (abs(RecoLowPtElecFromGen.eta) < GenEtaMax)]
 
+makeEffPlot("e", "gammacomp_pixelseed_energyassoc", ["Electrons", "LowPtElectrons", "Photons"], "pt", 16, 20, 100, 5, "[GeV]", [gen_electrons.pt.compute(),] * 3, [RecoElectronsFromGen.pt.compute(), RecoLowPtElecFromGen.pt.compute(), RecoPhotonsFromGen.pt.compute()], 0, file)
 RecoLowPtElec = lowptelectrons[(abs(gpart[lowptelectrons.genPartIdx.compute()].pdgId) == 11)
                               & (abs(gpart[lowptelectrons.genPartIdx.compute()].distinctParent.distinctParent.pdgId) == 1000015)
                               & (gpart[lowptelectrons.genPartIdx.compute()].pt > GenPtMin) & (abs(gpart[lowptelectrons.genPartIdx.compute()].eta) < GenEtaMax)]

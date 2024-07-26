@@ -10,7 +10,8 @@ from treeVariables_PF import branches
 
 # Get ahold of the events
 files = [ #"ntuples/SUS-RunIISummer20UL18GEN-stau100_lsp1_ctau100mm_v6_cms-xrd-global.root",
-          "ntuples/Staus_M_100_100mm_13p6TeV_Run3Summer22EE_cms-xrd-global.root"
+          #"ntuples/Staus_M_100_100mm_13p6TeV_Run3Summer22EE_cms-xrd-global.root"
+          "Staus_M_400_100mm_13p6TeV_Run3Summer22_cms-xrd-global.root",
         ] 
 events = Events(files)
 
@@ -24,13 +25,13 @@ handle_genJet = Handle('std::vector<reco::GenJet>')
 handle_PF     = Handle('std::vector<pat::PackedCandidate>')
 
 handles = {}
-if "22" in files[0]:
+if "22EE" in files[0]:
   handles['jets']     = [('slimmedJets', '', "RECO") , handle_jet, False]
   handles['genPart']  = [('prunedGenParticles', '', "RECO"), handle_genPart, False]
   handles["PF"]       = [('packedPFCandidates', '', "RECO"), handle_PF, False]
   handles["genJet"]   = [("slimmedGenJets", "", "RECO"), handle_genJet, False]        
 
-if "18" in files[0]:
+else:
   handles['jets']     = [('slimmedJets', '', "PAT") , handle_jet, False]
   handles['genPart']  = [('prunedGenParticles', '', "PAT"), handle_genPart, False]
   handles["PF"]       = [('packedPFCandidates', '', "PAT"), handle_PF, False]
@@ -60,9 +61,10 @@ for i, ev in enumerate(events):
         v[2] = False
 
   for pf, pfcand in enumerate(ev.PF):
-    if pfcand.pt() <  0.5 and pfcand.charge() != 0:
-      print("For event ", i, " and PF Cand number ", pf, " its pt is ", pfcand.pt(), " charge ", pfcand.charge(), " hasTrackDets ", pfcand.hasTrackDetails(), " eta is ", pfcand.eta(), "phi is ", pfcand.phi())
+    #if pfcand.pt() <  0.5 and pfcand.charge() != 0:
+      #print("For event ", i, " and PF Cand number ", pf, " its pt is ", pfcand.pt(), " charge ", pfcand.charge(), " hasTrackDets ", pfcand.hasTrackDetails(), " eta is ", pfcand.eta(), "phi is ", pfcand.phi())
       #h_charged_pt.Fill(pfcand.hasTrackDetails())
-
+    if not pfcand.hasTrackDetails() and pfcand.charge() != 0:
+        print("For event ", i, " and PF Cand number ", pf, " its pt is ", pfcand.pt(), " charge ", pfcand.charge(), " hasTrackDets ", pfcand.hasTrackDetails(), " eta is ", pfcand.eta(), "phi is ", pfcand.phi())
 #h_charged_pt.Draw("HISTE")
 #can.SaveAs("charged_PFCand_pt1.pdf")

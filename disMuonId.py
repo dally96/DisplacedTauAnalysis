@@ -76,7 +76,7 @@ def isMedium(mu):
     return False
   else:
     goodGlob = mu.isGlobalMuon() & (mu.globalTrack().normalizedChi2() < 3) & (mu.combinedQuality().chi2LocalPosition < 12) & (mu.combinedQuality().trkKink < 20)
-    isMedium = isLoose(mu) & (mu.innerTrack().validFraction() > 0.8) & (mu.segmentCompatibility() > (0.303 if goodGlob else 0.451))
+    isMedium = isLoose(mu) & (mu.innerTrack().validFraction() > 0.8) & (mu.segmentCompatibility() > (0.303 if goodGlob else 0.451)) 
     return isMedium
 
 def isTight(mu):

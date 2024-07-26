@@ -64,6 +64,7 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
     if ent == 0:
       h_eff_dict[dict_entries[ent]].Draw()
       ROOT.gPad.Update()
+      h_eff_dict[dict_entries[ent]].GetPaintedGraph().GetYaxis().SetRangeUser(0, 1.1)
     else:
       h_eff_dict[dict_entries[ent]].Draw("same")
       ROOT.gPad.Update()
@@ -144,6 +145,7 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
     if ent == 0:
       h_eff_dict[dict_entries[ent]].Draw()
       ROOT.gPad.Update()
+>>>>>>> main
     else:
       h_eff_dict[dict_entries[ent]].Draw("same")
       ROOT.gPad.Update()
@@ -167,8 +169,8 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
       h_eff_num_dict[dict_entries[ent]].Draw("samehist")
   if len(dict_entries) > 1:
     l_eff_num.Draw()
-  can.SaveAs("Num_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_num.pdf")
-  can.SaveAs("PNG_plots/Num_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_num.png")
+  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_num.pdf")
+  can.SaveAs("PNG_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_num.png")
 
   l_eff_den = ROOT.TLegend()
   l_eff_den.SetBorderSize(0)
@@ -184,9 +186,8 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
       h_eff_den_dict[dict_entries[ent]].Draw("samehist")
   if len(dict_entries) > 1:
     l_eff_den.Draw()
-  can.SaveAs("Den_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_den.pdf")
-  can.SaveAs("PNG_plots/Den_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_den.png")
-
+  can.SaveAs("Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_den.pdf")
+  can.SaveAs("PNG_plots/Stauto"+lepton+"_eff_"+plot_type+"_"+xvar+"_den.png")
 
 def makeResPlot(lepton, dict_entries, xvar, yvar, xrange, xmin, xmax, yresmin, yresmax, xbinsize, xvararr, yvardiff, xunit, yunit, file): 
   h_resVsX_y_dict = {}

@@ -26,7 +26,11 @@ import numpy as np
 from array import array
 
 #file = "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_106X_upgrade2018_realistic_v16_L1v1-v2_with-disTauTagScore.root"
-file = "SUS-RunIISummer20UL18GEN-stau100_lsp1_ctau100mm_v6_with-disTauTagScore.root"
+#file = "SUS-RunIISummer20UL18GEN-stau100_lsp1_ctau100mm_v6_with-disTauTagScore.root"
+#file = "Staus_M_400_100mm_13p6TeV_Run3Summer22_NanoAOD.root"
+#file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_NanoAOD.root"
+#file = "Stau_M_100_100mm_Summer18UL_NanoAOD.root"
+file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_lpcdisptau_NanoAOD_ExtraDisMuonBranches.root"
 nano_file = uproot.open(file)
 nano_file_evt = nano_file["Events"]
 
@@ -74,7 +78,7 @@ Branches = {
 
 tau_count = 0 
 jet_count = 0 
-
+print("Total number of gh taus are: ", len(ak.flatten(nano_file_evt["GenVisTau_pt"].array())))
 lepton_selection = ((abs(Branches["GenPart_pdgId"]) == 11) | (abs(Branches["GenPart_pdgId"]) == 13) | (abs(Branches["GenPart_pdgId"]) == 15))
 prompt_selection = (Branches["GenPart_statusFlags"] & 1 == 1)
 first_selection  = ((Branches["GenPart_statusFlags"] & 4096) == 4096)
@@ -122,7 +126,7 @@ for evt in range(len(Branches["GenPart_pt"])):
     if isLastfromFirst(evt, part, Branches["GenPart_genPartIdxMother"][evt][part]):
       LastGenLeptons_evt.append(part)
   LastGenLeptons.append(LastGenLeptons_evt)
-print(len(ak.flatten(LastGenLeptons)))
+#print(len(ak.flatten(LastGenLeptons)))
 #Check how many daughters a particle has
 def numberOfDaughters(part, evt):
   daughters = []
@@ -199,24 +203,26 @@ GenPart_firstlastLep = Branches["GenPart_eta"][lepton_selection & (last_selectio
 
 nevt = nano_file_evt.num_entries
 
-for jet_idx in range(len(Branches["Jet_pt"][965])):
-  for part_idx in range(len(Branches["GenPart_pdgId"][965])):
-    if abs(Branches["GenPart_pdgId"][965][part_idx]) == 11:
-      if not (Branches["Jet_pt"][965][jet_idx] > jetPtMin and abs(Branches["Jet_eta"][965][jet_idx]) < jetEtaMax): continue
-      if not (Branches["Jet_genJetIdx"][965][jet_idx] >= 0 and Branches["Jet_genJetIdx"][965][jet_idx] < len(Branches["GenJet_partonFlavour"][evt])): continue
-      jet_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["Jet_pt"][965][jet_idx], Branches["Jet_eta"][965][jet_idx], Branches["Jet_phi"][965][jet_idx], Branches["Jet_mass"][965][jet_idx])
-      part_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["GenPart_pt"][965][part_idx], Branches["GenPart_eta"][965][part_idx], Branches["GenPart_phi"][965][part_idx], Branches["GenPart_mass"][965][part_idx])
-      if (ROOT.Math.VectorUtil.DeltaR(jet_p4,part_p4) < 0.3):
-        print("The jet and the elec idx that are together are ", jet_idx, "with jet pt ", Branches["Jet_pt"][965][jet_idx], "and ", part_idx)
-
+#for jet_idx in range(len(Branches["Jet_pt"][965])):
+#  for part_idx in range(len(Branches["GenPart_pdgId"][965])):
+#    if abs(Branches["GenPart_pdgId"][965][part_idx]) == 11:
+#      if not (Branches["Jet_pt"][965][jet_idx] > jetPtMin and abs(Branches["Jet_eta"][965][jet_idx]) < jetEtaMax): continue
+#      if not (Branches["Jet_genJetIdx"][965][jet_idx] >= 0 and Branches["Jet_genJetIdx"][965][jet_idx] < len(Branches["GenJet_partonFlavour"][evt])): continue
+#      jet_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["Jet_pt"][965][jet_idx], Branches["Jet_eta"][965][jet_idx], Branches["Jet_phi"][965][jet_idx], Branches["Jet_mass"][965][jet_idx])
+#      part_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["GenPart_pt"][965][part_idx], Branches["GenPart_eta"][965][part_idx], Branches["GenPart_phi"][965][part_idx], Branches["GenPart_mass"][965][part_idx])
+#      if (ROOT.Math.VectorUtil.DeltaR(jet_p4,part_p4) < 0.3):
+#        print("The jet and the elec idx that are together are ", jet_idx, "with jet pt ", Branches["Jet_pt"][965][jet_idx], "and ", part_idx)
+jet_pt = []
+gvistau_pt = []
 for evt in range(nevt):
   if len(Branches["Jet_pt"][evt]) > 0 :
     for jet_idx in range(len(Branches["Jet_pt"][evt])):
         has_genTau = False
         if (len(Branches["GenVisTau_pt"][evt])== 0): continue
         for tau_idx in range(len(Branches["GenVisTau_pt"][evt])):
-
+            if has_genTau: continue
             if not (Branches["Jet_pt"][evt][jet_idx] > jetPtMin and abs(Branches["Jet_eta"][evt][jet_idx]) < jetEtaMax): continue
+            #if not (Branches["Jet_pt"][evt][jet_idx] > jetPtMin): continue
             if not (Branches["Jet_genJetIdx"][evt][jet_idx] >= 0 and Branches["Jet_genJetIdx"][evt][jet_idx] < len(Branches["GenJet_partonFlavour"][evt])): continue
             jet_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["Jet_pt"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], Branches["Jet_phi"][evt][jet_idx], Branches["Jet_mass"][evt][jet_idx])
             mthrTau_idx = Branches["GenVisTau_genPartIdxMother"][evt][tau_idx]
@@ -226,54 +232,59 @@ for evt in range(nevt):
             visTau_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["GenVisTau_pt"][evt][tau_idx], Branches["GenVisTau_eta"][evt][tau_idx], Branches["GenVisTau_phi"][evt][tau_idx],  Branches["GenVisTau_mass"][evt][tau_idx])
 
             if (ROOT.Math.VectorUtil.DeltaR(jet_p4,visTau_p4) < 0.3): 
+              jet_pt.append(Branches["Jet_pt"][evt][jet_idx])
+              gvistau_pt.append(Branches["GenVisTau_pt"][evt][tau_idx])
               has_genTau = True
-              if evt == 965:
-                print("The jet and the tau idx that are together are ", jet_idx, "with jet pt ", Branches["Jet_pt"][evt][jet_idx], "and ", Branches["GenVisTau_genPartIdxMother"][evt][tau_idx])
+              #if evt == 965:
+                #print("The jet and the tau idx that are together are ", jet_idx, "with jet pt ", Branches["Jet_pt"][evt][jet_idx], "and ", Branches["GenVisTau_genPartIdxMother"][evt][tau_idx])
 
         if has_genTau:
             tau_count+=1 
-  Jet_matchedGenJetIdx = []
-  if len(Branches["Jet_pt"][evt]) > 0 :
-    for jet_idx in range(len(Branches["Jet_pt"][evt])):
-      for genJet_idx in range(len(Branches["GenJet_pt"][evt])):
-        if (len(Jet_matchedGenJetIdx) - 1) == jet_idx: continue
-        if genJet_idx in Jet_matchedGenJetIdx : continue
-        dphi = abs(Branches["GenJet_phi"][evt][genJet_idx] - Branches["Jet_phi"][evt][jet_idx])
-        if (dphi > math.pi) : dphi -= 2 * math.pi
-        deta = Branches["GenJet_eta"][evt][genJet_idx] - Branches["Jet_eta"][evt][jet_idx]
-        dR2 = dphi ** 2 + deta ** 2
-        if (dR2 <= 0.4 ** 2):
-          Jet_matchedGenJetIdx.append(genJet_idx)
-      if (len(Jet_matchedGenJetIdx) - 1 < jet_idx): Jet_matchedGenJetIdx.append(-1)
-  Branches["Jet_matchedGenJetIdx"].append(Jet_matchedGenJetIdx)      
-  if len(Branches["Jet_pt"][evt]) > 0 :
-    for jet_idx in range(len(Branches["Jet_pt"][evt])):
-        lepVeto = False
-        
-        
-        #if Branches["Jet_nElectrons"][evt][jet_idx] > 0 or Branches["Jet_nMuons"][evt][jet_idx] > 0: continue 
-        if not (Branches["Jet_pt"][evt][jet_idx] > jetPtMin and abs(Branches["Jet_eta"][evt][jet_idx]) < jetEtaMax): continue
-        #if not (Branches["Jet_genJetIdx"][evt][jet_idx] >= 0 and Branches["Jet_genJetIdx"][evt][jet_idx] < len(Branches["GenJet_partonFlavour"][evt])): continue
-
-        if (Branches["Jet_matchedGenJetIdx"][evt][jet_idx] == -1): continue
-        if Branches["GenJet_pt"][evt][Branches["Jet_matchedGenJetIdx"][evt][jet_idx]] < genJetPtMin  or abs(Branches["GenJet_eta"][evt][Branches["Jet_matchedGenJetIdx"][evt][jet_idx]]) > genJetEtaMax: continue
-        jet_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["Jet_pt"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], Branches["Jet_phi"][evt][jet_idx], Branches["Jet_mass"][evt][jet_idx])
-        if len(GenLep_vis_p4[evt]) > 0:
-          for tau_idx in range(len(GenLep_vis_p4[evt])):
-            #visible_tau = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(GenPart_genLeptons_pt[evt][tau_idx], GenPart_genLeptons_eta[evt][tau_idx], GenPart_genLeptons_phi[evt][tau_idx], GenPart_genLeptons_mass[evt][tau_idx])
-            #lep_dphi = abs(Branches["Jet_phi"][evt][jet_idx] - GenPart_genLeptons_phi[evt][tau_idx])
-            #if (lep_dphi > math.pi) : dphi -= 2 * math.pi
-            #lep_deta = Branches["Jet_eta"][evt][jet_idx] - GenPart_genLeptons_eta[evt][tau_idx]
-            #lep_dR2 = lep_dphi ** 2 + lep_deta ** 2
-            #if lep_dR2 < 0.4**2:
-            #  lepVeto = True
-            lep_dR = ROOT.Math.VectorUtil.DeltaR(jet_p4, GenLep_vis_p4[evt][tau_idx])
-            if lep_dR < genLepton_iso_dR:
-              lepVeto = True 
-        if lepVeto: continue
-#        print("For event", evt, "and jet", jet_idx, "this jet remains and has pt:", Branches["Jet_pt"][evt][jet_idx])
-        jet_count += 1 
-print(jet_count)
+ak.to_parquet(jet_pt, "dR_jet_pt.parquet")
+ak.to_parquet(gvistau_pt, "dR_gvistau_pt.parquet")
+#  Jet_matchedGenJetIdx = []
+#  if len(Branches["Jet_pt"][evt]) > 0 :
+#    for jet_idx in range(len(Branches["Jet_pt"][evt])):
+#      for genJet_idx in range(len(Branches["GenJet_pt"][evt])):
+#        if (len(Jet_matchedGenJetIdx) - 1) == jet_idx: continue
+#        if genJet_idx in Jet_matchedGenJetIdx : continue
+#        dphi = abs(Branches["GenJet_phi"][evt][genJet_idx] - Branches["Jet_phi"][evt][jet_idx])
+#        if (dphi > math.pi) : dphi -= 2 * math.pi
+#        deta = Branches["GenJet_eta"][evt][genJet_idx] - Branches["Jet_eta"][evt][jet_idx]
+#        dR2 = dphi ** 2 + deta ** 2
+#        if (dR2 <= 0.4 ** 2):
+#          Jet_matchedGenJetIdx.append(genJet_idx)
+#      if (len(Jet_matchedGenJetIdx) - 1 < jet_idx): Jet_matchedGenJetIdx.append(-1)
+#  Branches["Jet_matchedGenJetIdx"].append(Jet_matchedGenJetIdx)      
+#  if len(Branches["Jet_pt"][evt]) > 0 :
+#    for jet_idx in range(len(Branches["Jet_pt"][evt])):
+#        lepVeto = False
+#        
+#        
+#        #if Branches["Jet_nElectrons"][evt][jet_idx] > 0 or Branches["Jet_nMuons"][evt][jet_idx] > 0: continue 
+#        if not (Branches["Jet_pt"][evt][jet_idx] > jetPtMin and abs(Branches["Jet_eta"][evt][jet_idx]) < jetEtaMax): continue
+#        #if not (Branches["Jet_genJetIdx"][evt][jet_idx] >= 0 and Branches["Jet_genJetIdx"][evt][jet_idx] < len(Branches["GenJet_partonFlavour"][evt])): continue
+#
+#        if (Branches["Jet_matchedGenJetIdx"][evt][jet_idx] == -1): continue
+#        if Branches["GenJet_pt"][evt][Branches["Jet_matchedGenJetIdx"][evt][jet_idx]] < genJetPtMin  or abs(Branches["GenJet_eta"][evt][Branches["Jet_matchedGenJetIdx"][evt][jet_idx]]) > genJetEtaMax: continue
+#        jet_p4 = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(Branches["Jet_pt"][evt][jet_idx], Branches["Jet_eta"][evt][jet_idx], Branches["Jet_phi"][evt][jet_idx], Branches["Jet_mass"][evt][jet_idx])
+#        if len(GenLep_vis_p4[evt]) > 0:
+#          for tau_idx in range(len(GenLep_vis_p4[evt])):
+#            #visible_tau = ROOT.Math.LorentzVector("ROOT::Math::PtEtaPhiM4D<double>")(GenPart_genLeptons_pt[evt][tau_idx], GenPart_genLeptons_eta[evt][tau_idx], GenPart_genLeptons_phi[evt][tau_idx], GenPart_genLeptons_mass[evt][tau_idx])
+#            #lep_dphi = abs(Branches["Jet_phi"][evt][jet_idx] - GenPart_genLeptons_phi[evt][tau_idx])
+#            #if (lep_dphi > math.pi) : dphi -= 2 * math.pi
+#            #lep_deta = Branches["Jet_eta"][evt][jet_idx] - GenPart_genLeptons_eta[evt][tau_idx]
+#            #lep_dR2 = lep_dphi ** 2 + lep_deta ** 2
+#            #if lep_dR2 < 0.4**2:
+#            #  lepVeto = True
+#            lep_dR = ROOT.Math.VectorUtil.DeltaR(jet_p4, GenLep_vis_p4[evt][tau_idx])
+#            if lep_dR < genLepton_iso_dR:
+#              lepVeto = True 
+#        if lepVeto: continue
+##        print("For event", evt, "and jet", jet_idx, "this jet remains and has pt:", Branches["Jet_pt"][evt][jet_idx])
+#        jet_count += 1 
+print("taus:", tau_count)
+#print(jet_count)
 #for i in range(nevt):
 #  if not (np.array_equal(Branches["Jet_matchedGenJetIdx"][i], Branches["Jet_genJetIdx"][i])):
 #    print("Event ", i, " does not match")
