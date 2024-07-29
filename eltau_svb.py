@@ -25,6 +25,11 @@ BKG = [
       'QCD800_1000',
       'QCD80_120',
       'QCD470_600',
+      "TToLNu2Q", 
+      "TTto4Q",   
+      "TTto2L2Nu",
+      "DYtoLL",   
+      "WtoLNu-2J",
       ]
 
 SIG = [
