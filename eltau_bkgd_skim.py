@@ -129,7 +129,7 @@ def main():
                 "dphi": leadingel.delta_phi(leadingjet),
                 "dR" : leadingel.delta_r(leadingjet),
                 
-                "MET_pT": events.PFMET.pt,
+                "MET_pT": events.MET.pt,
                 "NJets": ak.num(events.Jet),
                 "NGoodElectrons": ak.num(events.LowPtElectron),
                 "weight": weights, #*valsf,

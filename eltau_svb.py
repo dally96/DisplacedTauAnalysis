@@ -6,7 +6,6 @@ import scipy
 import array
 import pandas as pd
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
-from leptonPlot import *
 import matplotlib  as mpl
 from  matplotlib import pyplot as plt
 from xsec import *
@@ -25,11 +24,11 @@ BKG = [
       'QCD800_1000',
       'QCD80_120',
       'QCD470_600',
-      "TToLNu2Q", 
+      "TTtoLNu2Q", 
       "TTto4Q",   
       "TTto2L2Nu",
-      "DYtoLL",   
-      "WtoLNu-2J",
+      "DYJetsToLL",   
+      "WtoLNu2Jets",
       ]
 
 SIG = [
@@ -38,33 +37,52 @@ SIG = [
 
 can = ROOT.TCanvas("can", "can")
 
-h_LPE_ID_SIG = ROOT.TH1F('h_LPE_ID_SIG', ';BDT ID; A.U.', 100, 0, 10)
-h_LPE_ID_BKG = ROOT.TH1F('h_LPE_ID_BKG', ';BDT ID; A.U.', 100, 0, 10)
+def sig_v_bkg(decay: str, var: str, legend: list, var_low: float, var_hi: float, nbins: int, unit: str, log_set: bool):
 
-for file in SIG:
-  signal_file = ak.from_parquet("my_skim_electron_" + file + "/part0.parquet")
-  LowPtElectron_ID = ak.flatten(signal_file["electron_ID"], axis = None)
-  for bdt in LowPtElectron_ID:
-    h_LPE_ID_SIG.Fill(bdt, xsecs[file]*38.01*1000*signal_file["weight"][0])
+    hs_BKG = ROOT.THStack('hs_bkg', '')
+    h_SIG = ROOT.TH1F('h_' + decay + '_' + var + '_SIG', ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
+    h_QCD_BKG = ROOT.TH1F('h_' + decay + '_' + var + '_QCD_BKG', ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
+    h_TT_BKG = ROOT.TH1F('h_' + decay + '_' + var + '_TT_BKG', ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
+    h_EWK_BKG = ROOT.TH1F('h_' + decay + '_' + var + '_EWK_BKG', ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
 
-for file in BKG:
-  background_file = ak.from_parquet("my_skim_electron_" + file + "/part0.parquet")
-  LowPtElectron_ID = ak.flatten(background_file["electron_ID"], axis = None)
-  for bdt in LowPtElectron_ID:
-    h_LPE_ID_BKG.Fill(bdt, xsecs[file]*38.01*1000*background_file["weight"][0])
+    for file in SIG:
+        print("Now plotting: " + file)
+        signal_file = ak.from_parquet("my_skim_" + decay + "_" + file + "/*.parquet")
+        plot_var = ak.flatten(signal_file[var], axis = None)
+        for val in plot_var:
+            h_SIG.Fill(val, xsecs[file]*38.01*1000*1/num_events[file])
 
-h_LPE_ID_BKG.SetLineColor(ROOT.kBlue)
-h_LPE_ID_SIG.SetLineColor(ROOT.kRed)
+    for file in BKG:
+        print("Now plotting: " + file)
+        background_file = ak.from_parquet("my_skim_" + decay + "_" + file + "/*.parquet")
+        plot_var = ak.flatten(background_file[var], axis = None)
+        for val in plot_var:
+            if 'QCD' in file:
+                h_QCD_BKG.Fill(val, xsecs[file]*38.01*1000*1/num_events[file])
+            if 'TT' in file:
+                h_TT_BKG.Fill(val, xsecs[file]*38.01*1000*1/num_events[file])
+            if 'Jets' in file:
+                h_EWK_BKG.Fill(val, xsecs[file]*38.01*1000*1/num_events[file])
 
-l_LPE_ID = ROOT.TLegend(0.5,0.5,0.75,0.75)
+    l_svb = ROOT.TLegend()
+    
+    if len(legend) > 0:
+        l_svb = ROOT.TLegend(legend[0], legend[2], legend[1], legend[3])
+    
+    hs_BKG.Add(h_QCD_BKG)
+    hs_BKG.Add(h_TT_BKG)
+    hs_BKG.Add(h_EWK_BKG)
 
-h_LPE_ID_BKG.Draw("histe")
-h_LPE_ID_SIG.Draw("samehiste")
+    hs_BKG.Draw("histe")
+    h_SIG.Draw("samehiste")
 
-l_LPE_ID.AddEntry(h_LPE_ID_BKG, "QCD bkgd")
-l_LPE_ID.AddEntry(h_LPE_ID_SIG, "Stau 100 GeV 100mm")
-l_LPE_ID.Draw()
-h_LPE_ID_BKG.SetTitle("LowPtElectron BDT_ID, L = 38.01 fb^{-1}")
-can.SetLogy(1)
-can.SaveAs("SvB_LowPtElectron_ID.pdf")
-  
+    l_svb.AddEntry(h_QCD_BKG, "QCD bkgd")
+    l_svb.AddEntry(h_TT_BKG, "TT bkgd")
+    l_svb.AddEntry(h_EWK_BKG, "DY + W bkgd")
+    l_svb.AddEntry(h_SIG, "Stau 100 GeV 100mm")
+    l_svb.Draw()
+    hs_BKG.SetTitle(decay + "_" + var + ", L = 38.01 fb^{-1}")
+    can.SetLogy(log_set)
+    can.SaveAs(decay + "_" + var + "_sigvbkg.pdf")
+
+sig_v_bkg("electron", "electron_pt", [], 0, 100, 25, "[GeV]", 1) 
