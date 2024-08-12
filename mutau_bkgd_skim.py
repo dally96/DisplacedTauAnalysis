@@ -138,7 +138,7 @@ def main():
                 "dphi": leadingmu.delta_phi(leadingjet),
                 "dR" : leadingmu.delta_r(leadingjet),
     
-                "MET_pT": events.PFMET.pt,
+                "MET_pT": events.MET.pt,
                 "NJets": ak.num(events.Jet),
                 "NGoodMuons": ak.num(events.DisMuon),
                 "NGoodTaus": ak.num(events.Tau),
