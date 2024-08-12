@@ -86,8 +86,21 @@ def main():
             num_good_jets = ak.count_nonzero(good_jet_mask, axis=1)
             events = events[num_good_jets >= 1]
             logger.info("Cut jets")
+
+            #Noise filter
+            noise_mask = (
+                         (events.Flag.goodVertices == 1) 
+                         & (events.Flag.globalSuperTightHalo2016Filter == 1)
+                         & (events.Flag.EcalDeadCellTriggerPrimitiveFilter == 1)
+                         & (events.Flag.BadPFMuonFilter == 1)
+                         & (events.Flag.BadPFMuonDzFilter == 1)
+                         & (events.Flag.hfNoisyHitsFilter == 1)
+                         & (events.Flag.eeBadScFilter == 1)
+                         & (events.Flag.ecalBadCalibFilter == 1)
+                         )
+
+            events = events[noise_mask] 
     
-            
             events['DisMuon'] = events.DisMuon[ak.argsort(events.DisMuon.pt, ascending=False)]
             events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
             leadingmu = ak.firsts(events.DisMuon)

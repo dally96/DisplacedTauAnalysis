@@ -58,9 +58,9 @@ num_events = {
              "QCD1800_2400":     693521,
              "QCD2400_3200":     195024,
              "QCD3200":          82392,
-             "TTtoLNu2Q":        80599090,
+             "TTtoLNu2Q":        79911735,
              "TTto4Q":           53926016,
-             "TTto2L2Nu":        23850145,
-             "DYJetsToLL":       27208920,
+             "TTto2L2Nu":        23745994,
+             "DYJetsToLL":       27055949,
              "WtoLNu2Jets":      82197865,
              }

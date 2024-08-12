@@ -71,6 +71,20 @@ def main():
             events = events[num_good_jets >= 2]
             logger.info("Cut jets")
             #charged_sel = events.Jet.constituents.pf.charge != 0
+
+            #Noise filter
+            noise_mask = (
+                         (events.Flag.goodVertices == 1) 
+                         & (events.Flag.globalSuperTightHalo2016Filter == 1)
+                         & (events.Flag.EcalDeadCellTriggerPrimitiveFilter == 1)
+                         & (events.Flag.BadPFMuonFilter == 1)
+                         & (events.Flag.BadPFMuonDzFilter == 1)
+                         & (events.Flag.hfNoisyHitsFilter == 1)
+                         & (events.Flag.eeBadScFilter == 1)
+                         & (events.Flag.ecalBadCalibFilter == 1)
+                         )
+
+            events = events[noise_mask] 
             
             # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]

@@ -91,6 +91,20 @@ def main():
             logger.info("Cut jets")
             #print("Number of remaining events:", ak.num(events.Jet.pt, axis=0).compute())
             #charged_sel = events.Jet.constituents.pf.charge != 0
+
+            #Noise filter
+            noise_mask = (
+                         (events.Flag.goodVertices == 1) 
+                         & (events.Flag.globalSuperTightHalo2016Filter == 1)
+                         & (events.Flag.EcalDeadCellTriggerPrimitiveFilter == 1)
+                         & (events.Flag.BadPFMuonFilter == 1)
+                         & (events.Flag.BadPFMuonDzFilter == 1)
+                         & (events.Flag.hfNoisyHitsFilter == 1)
+                         & (events.Flag.eeBadScFilter == 1)
+                         & (events.Flag.ecalBadCalibFilter == 1)
+                         )
+
+            events = events[noise_mask] 
     
             events['LowPtElectron'] = events.LowPtElectron[ak.argsort(events.LowPtElectron.pt, ascending=False)]
             events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
@@ -103,8 +117,7 @@ def main():
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
             logger.info("Performed overlap removal")
-    
-    
+   
             if is_MC: weights = events.genWeight / sumWeights 
             ele: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
             logger.info("Defined weights")
