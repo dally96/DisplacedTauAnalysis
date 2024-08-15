@@ -3,7 +3,6 @@ import argparse
 import json
 import numpy as np
 from coffea import processor
-
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
 from coffea.dataset_tools import (
     apply_to_fileset,
@@ -20,7 +19,6 @@ import dask_awkward as dak
 from dask.distributed import Client, wait, progress, LocalCluster 
 from distributed import Client
 from fileset import *
-
 import ROOT
 import warnings
 import logging
