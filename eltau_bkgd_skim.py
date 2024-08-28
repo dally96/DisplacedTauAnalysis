@@ -64,13 +64,13 @@ def main():
             
             # Define the "good muon" condition for each muon per event
             good_electron_mask = (
-                (events.LowPtElectron.pt > 20)
-                & (abs(events.LowPtElectron.eta) < 2.4) 
+                (events.Electron.pt > 20)
+                & (abs(events.Electron.eta) < 2.4) 
             )
             logger.info("Defined good electrons")
     
-            events['LowPtElectron'] = ak.drop_none(events.LowPtElectron[good_electron_mask])
-            logger.info("Applied mask to LowPtElectron")
+            events['Electron'] = ak.drop_none(events.Electron[good_electron_mask])
+            logger.info("Applied mask to Electron")
             num_evts = ak.num(events, axis=0)
             logger.info("Counted the number of original events")
             num_good_electrons = ak.count_nonzero(good_electron_mask, axis=1)
@@ -105,38 +105,53 @@ def main():
                          )
 
             events = events[noise_mask] 
-    
-            events['LowPtElectron'] = events.LowPtElectron[ak.argsort(events.LowPtElectron.pt, ascending=False)]
-            events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
-            leadingel = ak.firsts(events.LowPtElectron)
-            leadingjet = ak.firsts(events.Jet)
-            logger.info("Defined leading electrons and jets")
-    
             # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
             logger.info("Performed overlap removal")
+    
+            events['Electron'] = events.Electron[ak.argsort(events.Electron.pt, ascending=False)]
+            events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
+            leadingel = ak.firsts(events.Electron)
+            leadingjet = ak.firsts(events.Jet)
+            logger.info("Defined leading electrons and jets")
+    
    
             if is_MC: weights = events.genWeight / sumWeights 
             ele: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
             logger.info("Defined weights")
             out = ak.zip({
-                "electron_pt": events.LowPtElectron.pt,
-                "electron_eta": events.LowPtElectron.eta,
-                "electron_phi": events.LowPtElectron.phi,
-                "electron_charge": events.LowPtElectron.charge,
-                "electron_dxy": events.LowPtElectron.dxy,
-                "electron_dxyErr": events.LowPtElectron.dxyErr,
-                "electron_dz": events.LowPtElectron.dz,
-                "electron_dzErr": events.LowPtElectron.dzErr,
-                "electron_ID": events.LowPtElectron.ID,
+                "electron_pt": events.Electron.pt,
+                "electron_eta": events.Electron.eta,
+                "electron_phi": events.Electron.phi,
+                "electron_charge": events.Electron.charge,
+                "electron_dxy": events.Electron.dxy,
+                "electron_dxyErr": events.Electron.dxyErr,
+                "electron_dz": events.Electron.dz,
+                "electron_dzErr": events.Electron.dzErr,
     
                 "jet_pt": events.Jet.pt, 
                 "jet_eta": events.Jet.eta,
                 "jet_phi": events.Jet.phi,
                 #"jet_d0" : ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis=-1).compute(),
                 "jet_score": events.Jet.disTauTag_score1,
+                "jet_partonFlavor": events.Jet.partonFlavour,
+
+                "leadingjet_pt": leadingjet.pt,
+                "leadingjet_eta": leadingjet.eta,
+                "leadingjet_phi": leadingjet.phi,
+                "leadingjet_score": leadingjet.disTauTag_score1,
+                "leadingjet_partonFlavor": leadingjet.partonFlavour,
+
+                "leadingelectron_pt": leadingel.pt,
+                "leadingelectron_eta": leadingel.eta,
+                "leadingelectron_phi": leadingel.phi,
+                "leadingelectron_charge": leadingel.charge,
+                "leadingelectron_dxy": leadingel.dxy,
+                "leadingelectron_dxyErr": leadingel.dxyErr,
+                "leadingelectron_dz": leadingel.dz,
+                "leadingelectron_dzErr": leadingel.dzErr,
     
                 "deta": leadingel.eta - leadingjet.eta,
                 "dphi": leadingel.delta_phi(leadingjet),
@@ -144,7 +159,7 @@ def main():
                 
                 "MET_pT": events.MET.pt,
                 "NJets": ak.num(events.Jet),
-                "NGoodElectrons": ak.num(events.LowPtElectron),
+                "NGoodElectrons": ak.num(events.Electron),
                 "weight": weights, #*valsf,
                 "intLumi": ak.ones_like(weights)*lumi,
             }, depth_limit = 1)

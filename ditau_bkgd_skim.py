@@ -90,6 +90,10 @@ def main():
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
             logger.info("Performed overlap removal") 
  
+            events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
+            leadingjet = ak.firsts(events.Jet)
+            logger.info("Defined leading jets")
+
             if is_MC: weights = events.genWeight / sumWeights 
             else: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
     
@@ -100,7 +104,14 @@ def main():
                 "jet_phi": events.Jet.phi,
                 #"jet_d0" : ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis=-1),
                 "jet_score": events.Jet.disTauTag_score1,
+                "jet_partonFlavor": events.Jet.partonFlavour,
     
+                "leadingjet_pt": leadingjet.pt,
+                "leadingjet_eta": leadingjet.eta,
+                "leadingjet_phi": leadingjet.phi,
+                "leadingjet_score": leadingjet.disTauTag_score1,
+                "leadingjet_partonFlavor": leadingjet.partonFlavour,
+
                 "MET_pT": events.MET.pt,
                 "NJets": ak.num(events.Jet),
                 "weight": weights, #*valsf,

@@ -100,18 +100,18 @@ def main():
                          )
 
             events = events[noise_mask] 
-    
-            events['DisMuon'] = events.DisMuon[ak.argsort(events.DisMuon.pt, ascending=False)]
-            events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
-            leadingmu = ak.firsts(events.DisMuon)
-            leadingjet = ak.firsts(events.Jet)
-            logger.info("Defined leading muons and jets")
             
             # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
             events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
             logger.info("Performed overlap removal")
+    
+            events['DisMuon'] = events.DisMuon[ak.argsort(events.DisMuon.pt, ascending=False)]
+            events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
+            leadingmu = ak.firsts(events.DisMuon)
+            leadingjet = ak.firsts(events.Jet)
+            logger.info("Defined leading muons and jets")
     
             if is_MC: weights = events.genWeight / sumWeights 
             else: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
@@ -133,7 +133,24 @@ def main():
                 "jet_phi": events.Jet.phi,
                 #"jet_d0": ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis=-1), 
                 "jet_score": events.Jet.disTauTag_score1, 
+                "jet_partonFlavor": events.Jet.partonFlavour,
     
+                "leadingjet_pt": leadingjet.pt,
+                "leadingjet_eta": leadingjet.eta,
+                "leadingjet_phi": leadingjet.phi,
+                "leadingjet_score": leadingjet.disTauTag_score1,
+                "leadingjet_partonFlavor": leadingjet.partonFlavour,
+
+                "leadingmuon_pt": leadingmu.pt,
+                "leadingmuon_eta": leadingmu.eta,
+                "leadingmuon_phi": leadingmu.phi,
+                "leadingmuon_charge": leadingmu.charge,
+                "leadingmuon_dxy": leadingmu.dxy,
+                "leadingmuon_dxyErr": leadingmu.dxyErr,
+                "leadingmuon_dz": leadingmu.dz,
+                "leadingmuon_dzErr": leadingmu.dzErr,
+                "leadingmuon_ntrk": leadingmu.nTrackerLayers,
+
                 "deta": leadingmu.eta - leadingjet.eta,
                 "dphi": leadingmu.delta_phi(leadingjet),
                 "dR" : leadingmu.delta_r(leadingjet),
