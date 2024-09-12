@@ -15,8 +15,8 @@ BKG = [
 #      'QCD80_120',
 #      'QCD120_170',
 #      'QCD170_300',
-#      'QCD300_470',
-#      'QCD470_600',
+      'QCD300_470',
+      'QCD470_600',
       'QCD600_800',
       'QCD800_1000',
       'QCD1000_1400',
@@ -38,6 +38,7 @@ SIG = [
 can = ROOT.TCanvas("can", "can")
 
 #ROOT.gStyle.SetOptStat(0)
+ROOT.TH1F.SetDefaultSumw2(kTRUE);
 
 def getMaximum(h_eff, isLog=False):
     if h_eff.GetNhists() > 0:
@@ -86,6 +87,9 @@ def sig_v_bkg(decay: str, var: str, legend: list, var_low: float, var_hi: float,
     h_TT_BKG = ROOT.TH1F('h_' + decay + '_' + var + '_TT_BKG', ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
     h_EWK_BKG = ROOT.TH1F('h_' + decay + '_' + var + '_EWK_BKG', ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
 
+    h_QCD_BKG.Sumw2()
+    h_TT_BKG.Sumw2()
+    h_EWK_BKG.Sumw2()
 
     for file in SIG:
         print("Now plotting: " + file)
@@ -120,9 +124,6 @@ def sig_v_bkg(decay: str, var: str, legend: list, var_low: float, var_hi: float,
     h_TT_BKG.SetFillColor(ROOT.kRed)
     h_EWK_BKG.SetFillColor(ROOT.kGreen)
     h_SIG.SetLineColor(ROOT.kBlack)    
-    h_QCD_BKG.Sumw2()
-    h_TT_BKG.Sumw2()
-    h_EWK_BKG.Sumw2()
 
     hs_BKG.Add(h_QCD_BKG)
     hs_BKG.Add(h_TT_BKG)
@@ -153,6 +154,8 @@ def sig_v_bkg(decay: str, var: str, legend: list, var_low: float, var_hi: float,
 def sample(bkgd: str, decay: str, var: str, legend: list, var_low: float, var_hi: float, nbins: int, unit: str, log_set: bool):
     h_BKG = ROOT.TH1F('h_' + bkgd + '_' + decay + '_' + var, ';' + var + ' ' + unit + '; A.U.', nbins, var_low, var_hi)
 
+    h_BKG.Sumw2()
+
     for file in BKG:
         if bkgd in file: 
             background_file = ak.from_parquet("my_skim_" + decay + "_" + file + "/*.parquet")
@@ -165,7 +168,6 @@ def sample(bkgd: str, decay: str, var: str, legend: list, var_low: float, var_hi
     if len(legend) > 0:
         l_svb = ROOT.TLegend(legend[0], legend[2], legend[1], legend[3])
     
-    h_BKG.Sumw2()
     h_BKG.Draw("histe")
 
     if log_set:
@@ -187,15 +189,15 @@ sample("QCD","electron", "electron_dxy", [], -1, 1, 200, "", 1)
 #sample("TT", "electron", "electron_dxy", [], -1, 1, 200, "", 1)
 #sample("Jets",  "electron", "electron_dxy", [], -1, 1, 200, "", 1)
 
-sample("QCD","electron", "electron_dz", [], -1, 1, 200, "", 1)
+#sample("QCD","electron", "electron_dz", [], -1, 1, 200, "", 1)
 #sample("TT", "electron", "electron_dz", [], -1, 1, 200, "", 1)
 #sample("Jets",  "electron", "electron_dz", [], -1, 1, 200, "", 1)
 
-sample("QCD","muon", "muon_dxy", [], -1, 1, 200, "", 1)
+#sample("QCD","muon", "muon_dxy", [], -1, 1, 200, "", 1)
 #sample("TT", "muon", "muon_dxy", [], -1, 1, 200, "", 1)
 #sample("Jets",  "muon", "muon_dxy", [], -1, 1, 200, "", 1)
 
-sample("QCD","muon", "muon_dz", [], -1, 1, 200, "", 1)
+#sample("QCD","muon", "muon_dz", [], -1, 1, 200, "", 1)
 #sample("TT", "muon", "muon_dz", [], -1, 1, 200, "", 1)
 #sample("Jets",  "muon", "muon_dz", [], -1, 1, 200, "", 1)
  
