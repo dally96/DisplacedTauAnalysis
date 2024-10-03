@@ -78,6 +78,12 @@ def main():
             events = events[num_good_electrons >= 1]
             logger.info("Counted the number of events with one or more good electrons")
             logger.info("Cut electrons")
+
+            # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.DisMuon, 0.4)]
+            logger.info("Performed overlap removal")
     
             good_jet_mask = (
                 (events.Jet.pt > 20)
@@ -105,11 +111,6 @@ def main():
                          )
 
             events = events[noise_mask] 
-            # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
-            logger.info("Performed overlap removal")
     
             events['Electron'] = events.Electron[ak.argsort(events.Electron.pt, ascending=False)]
             events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
@@ -130,6 +131,7 @@ def main():
                 "electron_dxyErr": events.Electron.dxyErr,
                 "electron_dz": events.Electron.dz,
                 "electron_dzErr": events.Electron.dzErr,
+                "electron_cutBased": events.Electron.cutBased,
     
                 "jet_pt": events.Jet.pt, 
                 "jet_eta": events.Jet.eta,
@@ -162,6 +164,7 @@ def main():
                 "NGoodElectrons": ak.num(events.Electron),
                 "weight": weights, #*valsf,
                 "intLumi": ak.ones_like(weights)*lumi,
+                "generator_scalePDF": events.Generator.scalePDF,
             }, depth_limit = 1)
             logger.info("Send only some tuples out")
     

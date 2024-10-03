@@ -75,6 +75,11 @@ def main():
             logger.info("Counted the number of events with one or more good muons")
             logger.info("Cut muons")
     
+            # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.DisMuon, 0.4)]
+            logger.info("Performed overlap removal")
     
             good_jet_mask = (
                 (events.Jet.pt > 20)
@@ -101,11 +106,6 @@ def main():
 
             events = events[noise_mask] 
             
-            # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
-            logger.info("Performed overlap removal")
     
             events['DisMuon'] = events.DisMuon[ak.argsort(events.DisMuon.pt, ascending=False)]
             events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
@@ -127,6 +127,12 @@ def main():
                 "muon_dz": events.DisMuon.dz,
                 "muon_dzErr": events.DisMuon.dzErr,
                 "muon_ntrk": events.DisMuon.nTrackerLayers,
+                "muon_looseId": events.DisMuon.looseId,
+                "muon_mediumId": events.DisMuon.mediumId,
+                "muon_tightId": events.DisMuon.tightId,
+                "muon_pfRelIso03_all": events.DisMuon.pfRelIso03_all,
+                "muon_pfRelIso03_chg": events.DisMuon.pfRelIso03_chg,
+                "muon_pfRelIso04_all": events.DisMuon.pfRelIso04_all,
     
                 "jet_pt": events.Jet.pt, 
                 "jet_eta": events.Jet.eta,
@@ -158,9 +164,9 @@ def main():
                 "MET_pT": events.MET.pt,
                 "NJets": ak.num(events.Jet),
                 "NGoodMuons": ak.num(events.DisMuon),
-                "NGoodTaus": ak.num(events.Tau),
                 "weight": weights, #*valsf,
                 "intLumi": ak.ones_like(weights)*lumi,
+                "generator_scalePDF": events.Generator.scalePDF,
             }, depth_limit = 1)
     
             #out = dak.from_awkward(out, npartitions = 1)

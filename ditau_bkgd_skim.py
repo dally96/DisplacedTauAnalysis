@@ -57,6 +57,11 @@ def main():
             # Trigger requirement
             # events = events[events.HLT.IsoMu24 == True]
     
+            # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
+            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.DisMuon, 0.4)]
+            logger.info("Performed overlap removal") 
     
             good_jet_mask = (
                 (events.Jet.pt > 20)
@@ -84,12 +89,6 @@ def main():
 
             events = events[noise_mask] 
             
-            # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
-            events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
-            logger.info("Performed overlap removal") 
- 
             events['Jet'] = events.Jet[ak.argsort(events.Jet.pt, ascending=False)] ## why not order by tagger?
             leadingjet = ak.firsts(events.Jet)
             logger.info("Defined leading jets")
@@ -116,6 +115,7 @@ def main():
                 "NJets": ak.num(events.Jet),
                 "weight": weights, #*valsf,
                 "intLumi": ak.ones_like(weights)*lumi,
+                "generator_scalePDF": events.Generator.scalePDF,
             }, depth_limit = 1)
             logger.info("Send only some tuples out")  
             logger.info("Write tuple out") 
