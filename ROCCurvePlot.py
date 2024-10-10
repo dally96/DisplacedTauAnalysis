@@ -17,7 +17,6 @@ score_legend = ROOT.TLegend(0.7,0.6,0.8,0.8)
 dict_idx = 0
 scoreSpace = np.linspace(0.0,0.995,200)
 scoreSpace = np.append(scoreSpace, np.linspace(0.9951, 1.0001, 51))
-print(scoreSpace)
 score_dict = {}
 
 Files = Nano_Dict
