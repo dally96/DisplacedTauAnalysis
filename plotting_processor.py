@@ -35,7 +35,7 @@ SAMP = [
       #'QCD3200',
       #"DYJetsToLL",   
       #"WtoLNu2Jets",
-      "TTtoLNu2Q", 
+      #"TTtoLNu2Q", 
       #"TTto4Q",   
       #"TTto2L2Nu",
       ]
@@ -71,7 +71,7 @@ class ExampleProcessor(processor.ProcessorABC):
         for var, bin_info in self.variables_with_bins.items():
             print(f"Creating histogram for {var} with bin_info {bin_info}")
             print(f"Processing sample {sample_file} with electron_pt shape: {ak.num(events['electron_pt']).compute()}")
-            histograms[var] = hda.Hist(hist.axis.Regular(*bin_info, name=var, label = 'pt [GeV]'), hist.storage.Weight(),)
+            histograms[var] = hda.Hist(hist.axis.Regular(*bin_info, name=var, label = 'pt [GeV]'),)
             print(f"Successfully created histogram for {var}")
         return histograms
 
@@ -86,21 +86,22 @@ class ExampleProcessor(processor.ProcessorABC):
 
         num_electrons = ak.num(events["electron_pt"][good_electrons])
         electron_event_mask = num_electrons > 0
-        events = events[electron_event_mask]
+        #events = events[electron_event_mask]
 
-        for branch in events.fields:
-            if ("electron_" in branch) and ("leading" not in branch): 
-                events[branch] = events[branch][good_electrons[electron_event_mask]]
+        #for branch in events.fields:
+        #    if ("electron_" in branch) and ("leading" not in branch): 
+        #        events[branch] = events[branch][good_electrons[electron_event_mask]]
                 
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
         for var in histograms:
             print(f'The array that should be filling the histo is {dak.flatten(events[var]).compute()}')
             histograms[var].fill(
-                **{var: dak.flatten(events[var])},
-                weight = weights
+                electron_pt = dak.flatten(events[var], axis = None).compute(),
+                #weights
             )
             print(f'{var} histogram: {histograms[var]}')
+            print(f'{var} histogram entries: {histograms[var][0]}')
         output = {"histograms": histograms}
         print(output)
         return output
@@ -109,7 +110,7 @@ class ExampleProcessor(processor.ProcessorABC):
         pass
 
 variables_with_bins = {
-    "electron_pt": (245, 20, 1000),
+    "electron_pt": (1, 20, 1000),
     }
 
 background_samples = {} 
@@ -139,7 +140,7 @@ for background, samples in background_samples.items():
             print(f'Starting {sample_file} histogram')         
 
             processor_instance = ExampleProcessor(variables_with_bins)
-            output = dask.compute(processor_instance.process(events, sample_weight))
+            output = processor_instance.process(events, sample_weight)
             print(f'{sample_file} finished successfully')
             for var, histo in output["histograms"].items():
                 if var not in background_histograms[background]:
@@ -149,12 +150,12 @@ for background, samples in background_samples.items():
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
 
-for background, histograms in background_histograms.items():
-    for var, histo in histograms.items():
-        #hist.plot1d(stack=True, histtype="fill", label=["QCD", "TT", "DY+W"])
-        histo.plot()
-        #plt.legend()
-plt.savefig("test_electron_pt.pdf")
+#for background, histograms in background_histograms.items():
+#    for var, histo in histograms.items():
+#        #hist.plot1d(stack=True, histtype="fill", label=["QCD", "TT", "DY+W"])
+#        histo.plot()
+#        #plt.legend()
+#plt.savefig("test_electron_pt.pdf")
 
 end_time = time.time()
 
