@@ -117,27 +117,30 @@ for file in Files:
     unmatchedJets_score = []  
 
     for evt in range(nevt):
-      if isLeptonic(evt, Branches["GenPart_pdgId"], Branches["GenPart_genPartIdxMother"]): continue 
+      #if isLeptonic(evt, Branches["GenPart_pdgId"], Branches["GenPart_genPartIdxMother"]): continue 
       #if Branches["event"][evt] not in eventDict["event"] or  Branches["lumiBlock"][evt] not in eventDict["lumiBlock"] or  Branches["run"][evt] not in eventDict["run"]: continue
       unmatchedJetsPassScore_evt = []
       unmatchedJets_score_evt = []  
       if (len(Branches["GenVisTau_pt"][evt])== 0):
+        print("Event has no taus")
+        print("THere are", len(Branches["Jet_pt"][evt]), "in event")
         for jet_idx in range(len(Branches["Jet_pt"][evt])):
           if Branches["Jet_pt"][evt][jet_idx] < tau_selections.jetPtMin or abs(Branches["Jet_eta"][evt][jet_idx]) > tau_selections.jetEtaMax: continue
           if Branches["Jet_genJetIdx"][evt][jet_idx] == -1 or Branches["Jet_genJetIdx"][evt][jet_idx] >= len(Branches["GenJet_partonFlavour"][evt]): continue
           if Branches["GenJet_pt"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]] < tau_selections.genJetPtMin  or abs(Branches["GenJet_eta"][evt][Branches["Jet_genJetIdx"][evt][jet_idx]]) > tau_selections.genJetEtaMax: continue
+          print("jet_idx", jet_idx, "has passed selections")
           ###Start of lepton veto
           lepVeto = False
           if len(Branches["GenLep_pt"][evt]) > 0:
             for lep_idx in range(len(Branches["GenLep_pt"][evt])):
               lep_dphi = abs(Branches["Jet_phi"][evt][jet_idx] - Branches["GenLep_phi"][evt][lep_idx])
-              if (lep_dphi > math.pi) : dphi -= 2 * math.pi
+              if (lep_dphi > math.pi) : lep_dphi -= 2 * math.pi
               lep_deta = Branches["Jet_eta"][evt][jet_idx] - Branches["GenLep_eta"][evt][lep_idx]              
               lep_dR2 = lep_dphi ** 2 + lep_deta ** 2
               if lep_dR2 < 0.4**2:
                 lepVeto = True
           if lepVeto:continue        
-
+          print("For event with no taus, jet", jet_idx, "is part of fake rate")
           unmatchedJetsPassScore_evt.append(jet_idx)   
           unmatchedJets_score_evt.append(Branches["Jet_disTauTag_score1"][evt][jet_idx])
       for tau_idx in range(len(Branches["GenVisTau_pt"][evt])):
@@ -152,7 +155,7 @@ for file in Files:
           if len(Branches["GenLep_pt"][evt]) > 0:
             for lep_idx in range(len(Branches["GenLep_pt"][evt])):
               lep_dphi = abs(Branches["Jet_phi"][evt][jet_idx] - Branches["GenLep_phi"][evt][lep_idx])
-              if (lep_dphi > math.pi) : dphi -= 2 * math.pi
+              if (lep_dphi > math.pi) : lep_dphi -= 2 * math.pi
               lep_deta = Branches["Jet_eta"][evt][jet_idx] - Branches["GenLep_eta"][evt][lep_idx]              
               lep_dR2 = lep_dphi ** 2 + lep_deta ** 2
               if lep_dR2 < 0.4**2:
@@ -166,6 +169,7 @@ for file in Files:
           deta = Branches["GenVisTau_eta"][evt][tau_idx]-Branches["Jet_eta"][evt][jet_idx]
           dR2  = dphi ** 2 + deta ** 2
           if (dR2 > tau_selections.dR_squ):
+            print("If the fake jets are being matched print here")
             if jet_idx in unmatchedJetsPassScore_evt: continue
             unmatchedJetsPassScore_evt.append(jet_idx)
             unmatchedJets_score_evt.append(Branches["Jet_disTauTag_score1"][evt][jet_idx])
@@ -176,7 +180,7 @@ for file in Files:
     unmatchedJet_dict =  {"score": ak.flatten(unmatchedJets_score)}
 
     unmatchedJet_df = pd.DataFrame(data = unmatchedJet_dict)
-    #print(unmatchedJet_df) 
+    print(unmatchedJet_df) 
 
 ### Count the number of jets for each score ###
     fakeJetCount = []
@@ -192,6 +196,7 @@ for file in Files:
 ### Make TEfficiency plot ###
     BG[file] = ROOT.TEfficiency("e_fakerate", "M = 100 GeV, Lxy = 100mm; DisTauTagger_Score1; Fraction of jets that are not a tau", 200, -0.0025, 0.9975) 
     for score_idx in range(len(scoreSpace)):
+      print("For scoreidx", score_idx, "the bkgd jet count is", fakeJetCount[score_idx])
       BG[file].SetTotalEvents(score_idx+1, fullJetCount)
       BG[file].SetPassedEvents(score_idx+1, fakeJetCount[score_idx])
 
@@ -381,6 +386,7 @@ for file in Files:
     if "TT" in file:
       Run3_Fake[file] = array( 'd' ) 
       for score_idx in range(len(scoreSpace)):
+        print("For score_idx", score_idx, "the fake rate is", BG[file].GetEfficiency(score_idx+1))
         Run3_Fake[file].append(BG[file].GetEfficiency(score_idx+1))
 
 
@@ -399,36 +405,36 @@ for file in Files:
       for score_idx in range(len(scoreSpace)):
         Run2_Fake[file].append(BG[file].GetEfficiency(score_idx+1))
 
-#Run3_ROC["TauEff"] = array( 'd' ) 
-#Run3_ROC["FakeRate"] = array( 'd' ) 
-#Run2_ROC["TauEff"] = array( 'd' ) 
-#Run2_ROC["FakeRate"] = array( 'd' )  
-#for file in Files:
-#  if "Run3" in file:    
-#    if "Stau" in file:
-#      #print(file)
-#      #print(colorIdx3)
-#      #colorDict[file] = colors[colorIdx3]
-#      #colorIdx3+=1
-#      for score_idx in range(len(scoreSpace)):
-#        Run3_ROC["TauEff"].append(Sample[file].GetEfficiency(score_idx+1))
-#    if "TT" in file:
-#      for score_idx in range(len(scoreSpace)):
-#        Run3_ROC["FakeRate"].append(BG[file].GetEfficiency(score_idx+1))
-#
-#
-#  if "Run2" in file:
-#    if "Stau" in file:
-#      #print(file)
-#      #print(colorIdx2)
-#      #colorDict[file] = colors[colorIdx2]
-#      #colorIdx2+=1
-#      for score_idx in range(len(scoreSpace)):
-#        Run2_ROC["TauEff"].append(Sample[file].GetEfficiency(score_idx+1))
-#        print(Sample[file].GetEfficiency(score_idx+1))
-#    if "TT" in file:
-#      for score_idx in range(len(scoreSpace)):
-#        Run2_ROC["FakeRate"].append(BG[file].GetEfficiency(score_idx+1))
+Run3_ROC["TauEff"] = array( 'd' ) 
+Run3_ROC["FakeRate"] = array( 'd' ) 
+Run2_ROC["TauEff"] = array( 'd' ) 
+Run2_ROC["FakeRate"] = array( 'd' )  
+for file in Files:
+  if "Run3" in file:    
+    if "Stau" in file:
+      #print(file)
+      #print(colorIdx3)
+      #colorDict[file] = colors[colorIdx3]
+      #colorIdx3+=1
+      for score_idx in range(len(scoreSpace)):
+        Run3_ROC["TauEff"].append(Sample[file].GetEfficiency(score_idx+1))
+    if "TT" in file:
+      for score_idx in range(len(scoreSpace)):
+        Run3_ROC["FakeRate"].append(BG[file].GetEfficiency(score_idx+1))
+
+
+  if "Run2" in file:
+    if "Stau" in file:
+      #print(file)
+      #print(colorIdx2)
+      #colorDict[file] = colors[colorIdx2]
+      #colorIdx2+=1
+      for score_idx in range(len(scoreSpace)):
+        Run2_ROC["TauEff"].append(Sample[file].GetEfficiency(score_idx+1))
+        print(Sample[file].GetEfficiency(score_idx+1))
+    if "TT" in file:
+      for score_idx in range(len(scoreSpace)):
+        Run2_ROC["FakeRate"].append(BG[file].GetEfficiency(score_idx+1))
 #
 #print(Run2_ROC["TauEff"])
 #

@@ -12,6 +12,7 @@ from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 #from coffea import hist
 import hist
 from hist import Hist
+import hist.dask as hda
 import matplotlib  as mpl
 from  matplotlib import pyplot as plt
 from xsec import *
@@ -354,33 +355,33 @@ def sig_v_bkg(decay: str, var: str, legend: list, var_low: float, var_hi: float,
     
     #hist_SIG = hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_' + decay + '_' + var + '_SIG', label = var + ' ' + unit))
     hist_SIG = hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_SIG', label = var + ' ' + unit))
-    #hist_QCD_BKG = hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_QCD', label = var + ' ' + unit))
-    #hist_TT_BKG = hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_TT', label = var + ' ' + unit))
-    #hist_EWK_BKG = hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_EWK', label = var + ' ' + unit))
+    hist_QCD_BKG = hda.hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_QCD', label = var + ' ' + unit))
+    hist_TT_BKG = hda.hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_TT', label = var + ' ' + unit))
+    hist_EWK_BKG = hda.hist.Hist(hist.axis.Regular(nbins, var_low, var_hi, name = 'h_EWK', label = var + ' ' + unit))
 
-    hist_BKG = (
-                Hist.new
-                .StrCat(["QCD", "TT", "EWK"], name = "category", label = "Category")
-                .Reg(nbins, var_low, var_hi, name = 'h_BKG', label = var + ' ' + unit)            
-                .Double()
-            )
+    #hist_BKG = (
+    #            Hist.new
+    #            .StrCat(["QCD", "TT", "EWK"], name = "category", label = "Category")
+    #            .Reg(nbins, var_low, var_hi, name = 'h_BKG', label = var + ' ' + unit)            
+    #            .Double()
+    #        )
 
     for file in SAMP:
         print("Now plotting: " + file)
         plot_var = SAMP_DICT[file][decay][var]
         plot_var = dak.flatten(plot_var, axis = None)
         weights = np.array([xsecs[file] * lumi * 1000 * 1/num_events[file],] * len(plot_var.compute()))
-        if 'Stau' in file:
-            hist_SIG.fill(h_SIG = plot_var.compute(), weight = weights)
+        #if 'Stau' in file:
+        #    hist_SIG.fill(h_SIG = plot_var.compute(), weight = weights)
         if 'QCD' in file:
-            #hist_QCD_BKG.fill(h_QCD = plot_var.compute(), weight = weights)
-            hist_BKG.fill(category="QCD", h_BKG = plot_var.compute(), weight = weights)
+            hist_QCD_BKG.fill(h_QCD = plot_var, weight = weights)
+            #hist_BKG.fill(category="QCD", h_BKG = plot_var.compute(), weight = weights)
         if 'TT' in file:
-            #hist_TT_BKG.fill(h_TT = plot_var.compute(), weight = weights)
-            hist_BKG.fill(category="TT", h_BKG = plot_var.compute(), weight = weights)
+            hist_TT_BKG.fill(h_TT = plot_var, weight = weights)
+            #hist_BKG.fill(category="TT", h_BKG = plot_var.compute(), weight = weights)
         if 'Jets' in file:
-            #hist_EWK_BKG.fill(h_EWK = plot_var.compute(), weight = weights)
-            hist_BKG.fill(category="EWK", h_BKG = plot_var.compute(), weight = weights)
+            hist_EWK_BKG.fill(h_EWK = plot_var, weight = weights)
+            #hist_BKG.fill(category="EWK", h_BKG = plot_var.compute(), weight = weights)
         #for val in plot_var:
         #    if 'Stau' in file:
         #        h_SIG.Fill(val, 1E5*xsecs[file]*lumi*1000*1/num_events[file])
@@ -411,15 +412,15 @@ def sig_v_bkg(decay: str, var: str, legend: list, var_low: float, var_hi: float,
     #l_svb.SetFillStyle(0)    
     #h_QCD_BKG.SetLineColor(ROOT.TColor.GetColor(colors[0]))
     
-    #plt.hist(
-    #    [hist_QCD_BKG, hist_TT_BKG, hist_EWK_BKG],
-    #    bin_edges,
-    #    histtype = 'bar',
-    #    color = [colors[0], colors[14], colors[15]],
-    #    label = ["QCD", "TT", "DY + W"],
-    #    stacked = True,
-    #    )
-    hist_BKG.plot(stack=True, color = [colors[0], colors[14], colors[15]])
+    plt.hist(
+        [hist_QCD_BKG.compute(), hist_TT_BKG.compute(), hist_EWK_BKG.compute()],
+        bin_edges,
+        histtype = 'bar',
+        color = [colors[0], colors[14], colors[15]],
+        label = ["QCD", "TT", "DY + W"],
+        stacked = True,
+        )
+    #hist_BKG.plot(stack=True, color = [colors[0], colors[14], colors[15]])
     plt.xlabel(var + ' ' + unit)
     plt.ylabel('A.U.')
     plt.ylim(1, 1E8)

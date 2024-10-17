@@ -61,9 +61,12 @@ def isLeptonic(event, genPart, genPartIdxMother):
   lepton_pdgId = [11, 12, 13, 14, 15, 16]
   leptonic_evt = 0
   for lepton in range(len(genPart[event])):
+    print("Inb this event her are the pdgIds", genPart[event][lepton])
     if abs(genPart[event][lepton]) in lepton_pdgId:
+      print("In this case, the particle is a lepton")
     #Get the index of the mother particle to the lepton
       motherIdx = genPartIdxMother[event][lepton]
+      print("The mother of this lepton is", genPart[event][motherIdx])
       if abs(genPart[event][motherIdx]) == 24:
         leptonic_evt = 1
   return leptonic_evt
