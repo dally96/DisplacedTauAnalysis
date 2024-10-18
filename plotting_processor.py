@@ -21,26 +21,27 @@ start_time = time.time()
 SAMP = [
       #'Stau_100_100mm',
       'QCD50_80',
-      #'QCD80_120',
-      #'QCD120_170',
-      #'QCD170_300',
-      #'QCD300_470',
-      #'QCD470_600',
-      #'QCD600_800',
-      #'QCD800_1000',
-      #'QCD1000_1400',
-      #'QCD1400_1800',
-      #'QCD1800_2400',
-      #'QCD2400_3200',
-      #'QCD3200',
-      #"DYJetsToLL",   
-      #"WtoLNu2Jets",
-      #"TTtoLNu2Q", 
-      #"TTto4Q",   
-      #"TTto2L2Nu",
+      'QCD80_120',
+      'QCD120_170',
+      'QCD170_300',
+      'QCD300_470',
+      'QCD470_600',
+      'QCD600_800',
+      'QCD800_1000',
+      'QCD1000_1400',
+      'QCD1400_1800',
+      'QCD1800_2400',
+      'QCD2400_3200',
+      'QCD3200',
+      "DYJetsToLL",   
+      "WtoLNu2Jets",
+      "TTtoLNu2Q", 
+      "TTto4Q",   
+      "TTto2L2Nu",
       ]
 
 lumi = 38.01 ##fb-1
+colors = ['#56CBF9', '#6abecc', '#64b0bf', '#5da2b3', '#5694a8', '#4f879d', '#477a93', '#3f6d89', '#386180', '#2f5477', '#27486e', '#1d3c65', '#13315c', '#BF98A0', '#FDCA40', '#5DFDCB', '#3A5683', '#FF773D']
 selections = {
               "electron_pt":                30,  ##GeV 
               "electron_eta":               1.44, 
@@ -71,7 +72,7 @@ class ExampleProcessor(processor.ProcessorABC):
         for var, bin_info in self.variables_with_bins.items():
             print(f"Creating histogram for {var} with bin_info {bin_info}")
             print(f"Processing sample {sample_file} with electron_pt shape: {ak.num(events['electron_pt']).compute()}")
-            histograms[var] = hda.Hist(hist.axis.Regular(*bin_info, name=var, label = 'pt [GeV]'),)
+            histograms[var] = hda.hist.Hist(hist.axis.Regular(*bin_info, name=var, label = 'pt [GeV]'),)
             print(f"Successfully created histogram for {var}")
         return histograms
 
@@ -97,11 +98,9 @@ class ExampleProcessor(processor.ProcessorABC):
         for var in histograms:
             print(f'The array that should be filling the histo is {dak.flatten(events[var]).compute()}')
             histograms[var].fill(
-                electron_pt = dak.flatten(events[var], axis = None).compute(),
-                #weights
+                **{var: dak.flatten(events[var])},
+                weight = weights
             )
-            print(f'{var} histogram: {histograms[var]}')
-            print(f'{var} histogram entries: {histograms[var][0]}')
         output = {"histograms": histograms}
         print(output)
         return output
@@ -110,7 +109,7 @@ class ExampleProcessor(processor.ProcessorABC):
         pass
 
 variables_with_bins = {
-    "electron_pt": (1, 20, 1000),
+    "electron_pt": (245, 20, 1000),
     }
 
 background_samples = {} 
@@ -126,6 +125,7 @@ for samples in SAMP:
     if "Jets" in samples:
         background_samples["W+DY"].append(("my_skim_electron_" + samples + "/*.parquet", xsecs[samples] * lumi * 1000 * 1/num_events[samples]))
             
+
 # Initialize dictionary to hold accumulated histograms for each background
 background_histograms = {}
 # Process each background
@@ -144,18 +144,39 @@ for background, samples in background_samples.items():
             print(f'{sample_file} finished successfully')
             for var, histo in output["histograms"].items():
                 if var not in background_histograms[background]:
-                    background_histograms[background][var] = histo
+                    background_histograms[background][var] = histo.compute()
                 else:
-                    background_histograms[background][var] += histo
+                    background_histograms[background][var] += histo.compute()
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
 
-#for background, histograms in background_histograms.items():
-#    for var, histo in histograms.items():
-#        #hist.plot1d(stack=True, histtype="fill", label=["QCD", "TT", "DY+W"])
-#        histo.plot()
+# Now, for plotting all variables
+for var in variables_with_bins:
+    stacked_histograms = []
+    labels = []
+
+    # Collect histograms for this variable across all backgrounds
+    for background in background_histograms:
+        if var in background_histograms[background]:
+            stacked_histograms.append(background_histograms[background][var])
+            print(background_histograms[background][var])
+            labels.append(background)
+
+    if stacked_histograms:
+        print(f"Plotting for {var}")
+        plt.hist(stacked_histograms, stacked_histograms[0].axes[0].edges, stacked=True, histtype="step", color = [colors[0], colors[14], colors[15]], label=labels)
+        plt.legend()
+        plt.xlabel(var)  # Set x-axis label to the variable name
+        plt.ylabel('A.U.')  # Set y-axis label
+        plt.title(f"Stacked Histogram for {var}")
+        plt.savefig(f"test_stacked_histogram_{var}.pdf")
+
+#for var, histo in histograms.items():
+#    #hist.plot1d(stack=True, histtype="fill", label=["QCD", "TT", "DY+W"])
+#    plt.hist(background_histograms
+#    #histo.plot()
 #        #plt.legend()
-#plt.savefig("test_electron_pt.pdf")
+#        #plt.savefig("test_electron_pt.pdf")
 
 end_time = time.time()
 
