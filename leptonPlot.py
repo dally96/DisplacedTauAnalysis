@@ -145,7 +145,6 @@ def makeEffPlot_varBin(lepton, plot_type, dict_entries, xvar, bins, xbins, xunit
     if ent == 0:
       h_eff_dict[dict_entries[ent]].Draw()
       ROOT.gPad.Update()
->>>>>>> main
     else:
       h_eff_dict[dict_entries[ent]].Draw("same")
       ROOT.gPad.Update()
