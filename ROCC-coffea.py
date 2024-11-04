@@ -11,4 +11,4 @@ events = NanoEventsFactory.from_root(
   metadata = {"dataset": "signal"},
 ).events
 
-events.Generator.id1.compute()
+events.Generator.fields
