@@ -7,8 +7,8 @@ fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTtoLNu2Q_TuneCP5_
 
 events = NanoEventsFactory.from_root(
   {fname: "Events"},
-  schemaclass = NanoAODSchema,
-  metadata = {"dataset": "signal"},
+  schemaclass=NanoAODSchema,
+  metadata={"dataset": "signal"},
 ).events
 
 events.Generator.fields
