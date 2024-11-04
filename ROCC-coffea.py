@@ -1,5 +1,5 @@
 import awkward as ak
-from coffea.nanoevents import NanoEventsFactory, NanoAODDSchema
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
 NanoAODSchema.warn_missing_crossrefs = False
 
