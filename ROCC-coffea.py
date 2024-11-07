@@ -10,4 +10,4 @@ events = NanoEventsFactory.from_root(
     metadata={"dataset": "DYJets"},
 ).events()
 
-events.Generator.fields
+print(events.Generator.fields)
