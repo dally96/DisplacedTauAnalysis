@@ -60,30 +60,32 @@ selections = {
               "muon_dxy_displaced_min":     100E-4, ##cm
               "muon_dxy_displaced_max":     10, ##cm
 
-              "jet_score":                  0,9, 
+              "jet_score":                  0.9, 
               "jet_pt":                     32, ##GeV
 
               "MET_pt":                     105, ##GeV
              }
 
 variables_with_bins = {
-    "electron_pt": [(245, 20, 1000), "GeV"],
-    "electron_eta": [(50, -2.5, 2.5), ""],
-    "electron_phi": [(64, -3.2, 3.2), ""],
-    "electron_dxy": [(200, -1, 1), "cm"],
-    "electron_dz" : [(200, -1, 1), "cm"],
-    "electron_cutBased" : [(5, 0, 5), ""],
+    "muon_pt": [(245, 20, 1000), "GeV"],
+    "muon_eta": [(50, -2.5, 2.5), ""],
+    "muon_phi": [(64, -3.2, 3.2), ""],
+    "muon_dxy": [(200, -1, 1), "cm"],
+    "muon_dz" : [(200, -1, 1), "cm"],
+    "muon_pfRelIso03_all": [(100, 0, 10), ""],
+    "muon_pfRelIso03_chg": [(100, 0, 10), ""],
+    "muon_pfRelIso04_all": [(100, 0, 10), ""],
 
     "jet_pt" : [(245, 20, 1000), "GeV"],
     "jet_eta": [(48, -2.4, 2.4), ""],
     "jet_phi": [(64, -3.2, 3.2), ""],
     "jet_score": [(20, 0, 1), ""],
 
-    "leadingelectron_pt": [(245, 20, 1000), "GeV"],
-    "leadingelectron_eta": [(50, -2.5, 2.5), ""],
-    "leadingelectron_phi": [(64, -3.2, 3.2), ""],
-    "leadingelectron_dxy": [(200, -1, 1), "cm"],
-    "leadingelectron_dz" : [(200, -1, 1), "cm"],
+    "leadingmuon_pt": [(245, 20, 1000), "GeV"],
+    "leadingmuon_eta": [(50, -2.5, 2.5), ""],
+    "leadingmuon_phi": [(64, -3.2, 3.2), ""],
+    "leadingmuon_dxy": [(200, -1, 1), "cm"],
+    "leadingmuon_dz" : [(200, -1, 1), "cm"],
 
     "leadingjet_pt" : [(245, 20, 1000), "GeV"],
     "leadingjet_eta": [(48, -2.4, 2.4), ""],
@@ -95,14 +97,6 @@ variables_with_bins = {
     "dphi": [(64, -3.2, 3.2), ""],
     "MET_pt": [(225, 100, 1000), "GeV"],
     }
-
-def get_stack_maximum(stack):
-    max_value = 0 
-
-    for hist in stack:
-        max_value = max(max_value, hist.view().max())
-
-    return max_value 
 
 def get_histogram_minimum(hist_dict, var):
     """Returns the minimum non-zero value of a ROOT histogram (TH1) by checking each bin."""
@@ -119,6 +113,14 @@ def get_histogram_minimum(hist_dict, var):
     
     # Return min_value, or 0 if all bins were zero
     return min_value if min_value != float('inf') else 1E-8
+
+def get_stack_maximum(stack):
+    max_value = 0 
+
+    for hist in stack:
+        max_value = max(max_value, hist.view().max())
+
+    return max_value 
 
 
 class ExampleProcessor(processor.ProcessorABC):
@@ -139,28 +141,28 @@ class ExampleProcessor(processor.ProcessorABC):
 
     def process(self, events, weights):
         # Object selection
-        good_electrons = ((events["electron_pt"] > selections["electron_pt"]) 
-                         & (events["electron_cutBased"] == selections["electron_cutBased"])
-                         #& (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
-                         #& (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
+        good_muons = ((events["muon_pt"] > selections["muon_pt"]) 
+                         &(events["muon_tightId"] ==  1)
+                         & (abs(events["muon_dxy"]) > selections["muon_dxy_displaced_min"])
+                         & (abs(events["muon_dxy"]) < selections["muon_dxy_displaced_max"])
                          )        
         good_jets = (events["jet_score"] > selections["jet_score"]
                     & events["jet_pt"] > selections["jet_pt"])
         
         good_events = (events["MET_pt"] > selections["MET_pt"])
 
-        num_electrons = ak.num(events["electron_pt"][good_electrons])
+        num_muons = ak.num(events["muon_pt"][good_muons])
         num_jets = ak.num(events["jet_pt"][good_jets])
-        electron_event_mask = num_electrons > 0
+        muon_event_mask = num_muons > 0
         jet_event_mask = num_jets > 0
-        events = events[electron_event_mask & jet_event_mask & good_events]
+        events = events[muon_event_mask & jet_event_mask & good_events]
 
 
         for branch in self.vars_with_bins:
-            if ("electron_" in branch) and ("leading" not in branch): 
-                events[branch] = events[branch][good_electrons[electron_event_mask & jet_event_maski & good_events]]
+            if ("muon_" in branch) and ("leading" not in branch): 
+                events[branch] = events[branch][good_muons[muon_event_mask & jet_event_mask & good_events]]
             if ("jet_" in branch) and ("leading" not in branch):
-                events[branch] = events[branch][good_jets[jet_event_mask & electron_event_mask & good_events]]
+                events[branch] = events[branch][good_jets[jet_event_mask & muon_event_mask & good events]]
                     
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
@@ -169,6 +171,7 @@ class ExampleProcessor(processor.ProcessorABC):
                 **{var: dak.flatten(events[var], axis = None)},
                 weight = weights
             )
+            
             
         output = {"histograms": histograms}
         print(output)
@@ -185,13 +188,13 @@ background_samples["W+DY"] = []
 #
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Jets" in samples[0]:
-        background_samples["W+DY"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W+DY"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples[samples[0]] = [("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -202,7 +205,7 @@ for background, samples in background_samples.items():
     background_histograms[background] = {}
     for var in variables_with_bins:
         background_histograms[background][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
-        
+
     print(f"For {background} here are samples {samples}") 
     for sample_file, sample_weight in samples:
         try:
@@ -217,15 +220,18 @@ for background, samples in background_samples.items():
             # Loop through each variable's histogram in the output
             for var, dask_histo in output["histograms"].items():
                 background_histograms[background][var]  = background_histograms[background][var] + dask_histo.compute()
-            
+
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
+            
 
 for var in variables_with_bins:
+    plt.cla()
     s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
                                   "TT" : background_histograms["TT"][var],
                                   "W+DY": background_histograms["W+DY"][var],
                                 })
+    print(s.show())
 
     s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2]])
     for sample in background_samples:
@@ -237,7 +243,9 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"el_stacked_histogram_{var}_111111.pdf")
+    plt.savefig(f"mu_stacked_histogram_{var}_111111.pdf")
+
+
 
 
 end_time = time.time()
