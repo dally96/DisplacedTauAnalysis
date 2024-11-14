@@ -3,7 +3,7 @@ import uproot
 import scipy
 import numpy
 import awkward as ak
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, PFNanoAODSchema
 
 NanoAODSchema.warn_missing_crossrefs = False
 
@@ -11,7 +11,7 @@ fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTtoLNu2Q_TuneCP5_
 
 events = NanoEventsFactory.from_root(
     {fname: "Events"},
-    schemaclass=NanoAODSchema,
+    schemaclass=PFNanoAODSchema,
     metadata={"dataset": "signal"},
     delayed = False).events()
 
