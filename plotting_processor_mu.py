@@ -162,7 +162,7 @@ class ExampleProcessor(processor.ProcessorABC):
             if ("muon_" in branch) and ("leading" not in branch): 
                 events[branch] = events[branch][good_muons[muon_event_mask & jet_event_mask & good_events]]
             if ("jet_" in branch) and ("leading" not in branch):
-                events[branch] = events[branch][good_jets[jet_event_mask & muon_event_mask & good events]]
+                events[branch] = events[branch][good_jets[jet_event_mask & muon_event_mask & good_events]]
                     
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
