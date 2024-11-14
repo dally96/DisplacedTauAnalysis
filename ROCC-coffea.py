@@ -1,3 +1,7 @@
+import coffea
+import uproot
+import scipy
+import numpy
 import awkward as ak
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
@@ -11,10 +15,11 @@ events = NanoEventsFactory.from_root(
     metadata={"dataset": "signal"},
     delayed = False).events()
 
-firstPass = []
 gpart = events.GenPart # Sara is smart https://github.com/sarafiorendi/displacedTausCoffea/blob/main/study_recojet_to_GEN.py
 lepIds = [11, 13, 15]
-firstPass['leptons'] = gpart[ (abs(gpart.pdgId) in lepIds) ]
+events['leptons'] = gpart[ (abs(gpart.pdgId) in lepIds) ]
+
+firstPass = events['leptons']
 
 print( len(firstPass), "leptons out of " )
 print( len(events), "total things" )
