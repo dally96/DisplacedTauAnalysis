@@ -1,10 +1,10 @@
+import sys
 import coffea
 import uproot
 import scipy
 import numpy
 import awkward as ak
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, PFNanoAODSchema
-from coffea.analysis_tools import PackedSelection
 
 NanoAODSchema.warn_missing_crossrefs = False
 
@@ -16,13 +16,11 @@ events = NanoEventsFactory.from_root(
     metadata={"dataset": "signal"},
     delayed = False).events()
 
-selection = PackedSelection()
+gpart = events.GenPart # Sara is smart https://github.com/sarafiorendi/displacedTausCoffea/blob/main/study_recojet_to_GEN.py
 
-selection.add("electron", ak.num(events.Electron))
-selection.add("muon", ak.num(events.Muon))
-selection.add("tau", ak.num(events.Tau))
-
-selection.require(("electron" | "tau" | "muon") = true)
-
-print( len(selection), "leptons out of " )
-print( len(events), "total things" )
+stdout = sys.stdout
+file = open("bits-output-test.txt", "a")
+sys.stdout = file
+print(gpart.pdgId)
+sys.stdout = stdout
+file.close()
