@@ -16,8 +16,10 @@ events = NanoEventsFactory.from_root(
     delayed = False).events()
 
 gpart = events.GenPart # Sara is smart https://github.com/sarafiorendi/displacedTausCoffea/blob/main/study_recojet_to_GEN.py
-lepIds = [11, 13, 15]
-events['leptons'] = gpart[ (abs(gpart.pdgId) in lepIds) ]
+events['leptons'] = gpart[
+        (abs(gpart.pdgId) == 11)
+        | (abs(gpart.pdgId) == 13)
+        | (abs(gpart.pdgId) == 15)]
 
 firstPass = events['leptons']
 
