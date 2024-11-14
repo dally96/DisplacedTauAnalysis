@@ -60,7 +60,7 @@ selections = {
               "muon_dxy_displaced_min":     100E-4, ##cm
               "muon_dxy_displaced_max":     10, ##cm
 
-              "jet_score":                  0,9, 
+              "jet_score":                  0.9, 
               "jet_pt":                     32, ##GeV
 
               "MET_pt":                     105, ##GeV
