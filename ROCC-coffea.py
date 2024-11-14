@@ -9,6 +9,12 @@ events = NanoEventsFactory.from_root(
     {fname: "Events"},
     schemaclass=NanoAODSchema,
     metadata={"dataset": "signal"},
-).events()
+    delayed = False).events()
 
-print(events.Generator.fields)
+firstPass = []
+gpart = events.GenPart # Sara is smart https://github.com/sarafiorendi/displacedTausCoffea/blob/main/study_recojet_to_GEN.py
+lepIds = [11, 13, 15]
+firstPass['leptons'] = gpart[ (abs(gpart.pdgId) in lepIds) ]
+
+print( len(firstPass), "leptons out of " )
+print( len(events), "total things" )
