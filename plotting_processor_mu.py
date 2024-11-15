@@ -63,7 +63,7 @@ selections = {
               "jet_score":                  0.9, 
               "jet_pt":                     32, ##GeV
 
-              "MET_pt":                     105, ##GeV
+              "MET_pT":                     105, ##GeV
              }
 
 variables_with_bins = {
@@ -95,7 +95,7 @@ variables_with_bins = {
     "dR" : [(20, 0, 1), ""],
     "deta": [(100, -5, 5), ""],
     "dphi": [(64, -3.2, 3.2), ""],
-    "MET_pt": [(225, 100, 1000), "GeV"],
+    "MET_pT": [(225, 100, 1000), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -146,10 +146,11 @@ class ExampleProcessor(processor.ProcessorABC):
                          & (abs(events["muon_dxy"]) > selections["muon_dxy_displaced_min"])
                          & (abs(events["muon_dxy"]) < selections["muon_dxy_displaced_max"])
                          )        
-        good_jets = (events["jet_score"] > selections["jet_score"]
-                    & events["jet_pt"] > selections["jet_pt"])
-        
-        good_events = (events["MET_pt"] > selections["MET_pt"])
+        good_jets = ((events["jet_score"] > selections["jet_score"])
+                    & (events["jet_pt"] > selections["jet_pt"])
+                    )        
+
+        good_events = (events["MET_pT"] > selections["MET_pT"])
 
         num_muons = ak.num(events["muon_pt"][good_muons])
         num_jets = ak.num(events["jet_pt"][good_jets])

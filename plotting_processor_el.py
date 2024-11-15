@@ -42,7 +42,7 @@ SAMP = [
       ]
 
 lumi = 38.01 ##fb-1
-colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#3A5683', '#FF773D']
+colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 selections = {
               "electron_pt":                30,  ##GeV 
               "electron_eta":               1.44, 
@@ -63,37 +63,37 @@ selections = {
               "jet_score":                  0.9, 
               "jet_pt":                     32, ##GeV
 
-              "MET_pt":                     105, ##GeV
+              "MET_pT":                     105, ##GeV
              }
 
 variables_with_bins = {
     "electron_pt": [(245, 20, 1000), "GeV"],
-    "electron_eta": [(50, -2.5, 2.5), ""],
-    "electron_phi": [(64, -3.2, 3.2), ""],
-    "electron_dxy": [(200, -1, 1), "cm"],
-    "electron_dz" : [(200, -1, 1), "cm"],
-    "electron_cutBased" : [(5, 0, 5), ""],
+    #"electron_eta": [(50, -2.5, 2.5), ""],
+    #"electron_phi": [(64, -3.2, 3.2), ""],
+    #"electron_dxy": [(200, -1, 1), "cm"],
+    #"electron_dz" : [(200, -1, 1), "cm"],
+    #"electron_cutBased" : [(5, 0, 5), ""],
 
-    "jet_pt" : [(245, 20, 1000), "GeV"],
-    "jet_eta": [(48, -2.4, 2.4), ""],
-    "jet_phi": [(64, -3.2, 3.2), ""],
-    "jet_score": [(20, 0, 1), ""],
+    #"jet_pt" : [(245, 20, 1000), "GeV"],
+    #"jet_eta": [(48, -2.4, 2.4), ""],
+    #"jet_phi": [(64, -3.2, 3.2), ""],
+    #"jet_score": [(20, 0, 1), ""],
 
-    "leadingelectron_pt": [(245, 20, 1000), "GeV"],
-    "leadingelectron_eta": [(50, -2.5, 2.5), ""],
-    "leadingelectron_phi": [(64, -3.2, 3.2), ""],
-    "leadingelectron_dxy": [(200, -1, 1), "cm"],
-    "leadingelectron_dz" : [(200, -1, 1), "cm"],
+    #"leadingelectron_pt": [(245, 20, 1000), "GeV"],
+    #"leadingelectron_eta": [(50, -2.5, 2.5), ""],
+    #"leadingelectron_phi": [(64, -3.2, 3.2), ""],
+    #"leadingelectron_dxy": [(200, -1, 1), "cm"],
+    #"leadingelectron_dz" : [(200, -1, 1), "cm"],
 
-    "leadingjet_pt" : [(245, 20, 1000), "GeV"],
-    "leadingjet_eta": [(48, -2.4, 2.4), ""],
-    "leadingjet_phi": [(64, -3.2, 3.2), ""],
-    "leadingjet_score": [(20, 0, 1), ""],
+    #"leadingjet_pt" : [(245, 20, 1000), "GeV"],
+    #"leadingjet_eta": [(48, -2.4, 2.4), ""],
+    #"leadingjet_phi": [(64, -3.2, 3.2), ""],
+    #"leadingjet_score": [(20, 0, 1), ""],
 
-    "dR" : [(20, 0, 1), ""],
-    "deta": [(100, -5, 5), ""],
-    "dphi": [(64, -3.2, 3.2), ""],
-    "MET_pt": [(225, 100, 1000), "GeV"],
+    #"dR" : [(20, 0, 1), ""],
+    #"deta": [(100, -5, 5), ""],
+    #"dphi": [(64, -3.2, 3.2), ""],
+    #"MET_pT": [(225, 100, 1000), "GeV"],
     }
 
 def get_stack_maximum(stack):
@@ -144,10 +144,12 @@ class ExampleProcessor(processor.ProcessorABC):
                          #& (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
                          #& (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
                          )        
-        good_jets = (events["jet_score"] > selections["jet_score"]
-                    & events["jet_pt"] > selections["jet_pt"])
-        
-        good_events = (events["MET_pt"] > selections["MET_pt"])
+
+        good_jets = ((events["jet_score"] > selections["jet_score"])
+                    & (events["jet_pt"] > selections["jet_pt"])
+                    )
+
+        good_events = (events["MET_pT"] > selections["MET_pT"])
 
         num_electrons = ak.num(events["electron_pt"][good_electrons])
         num_jets = ak.num(events["jet_pt"][good_jets])
@@ -158,7 +160,7 @@ class ExampleProcessor(processor.ProcessorABC):
 
         for branch in self.vars_with_bins:
             if ("electron_" in branch) and ("leading" not in branch): 
-                events[branch] = events[branch][good_electrons[electron_event_mask & jet_event_maski & good_events]]
+                events[branch] = events[branch][good_electrons[electron_event_mask & jet_event_mask & good_events]]
             if ("jet_" in branch) and ("leading" not in branch):
                 events[branch] = events[branch][good_jets[jet_event_mask & electron_event_mask & good_events]]
                     
@@ -181,15 +183,18 @@ class ExampleProcessor(processor.ProcessorABC):
 background_samples = {} 
 background_samples["QCD"] = []
 background_samples["TT"] = []
-background_samples["W+DY"] = []
+background_samples["W"] = []
+background_samples["DY"] = []
 #
 for samples in SAMP:
     if "QCD" in samples[0]:
         background_samples["QCD"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
         background_samples["TT"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if "Jets" in samples[0]:
-        background_samples["W+DY"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if "W" in samples[0]:
+        background_samples["W"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if "DY" in samples[0]:
+        background_samples["DY"].append(("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
         background_samples[samples[0]] = [("my_skim_electron_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
@@ -223,11 +228,12 @@ for background, samples in background_samples.items():
 
 for var in variables_with_bins:
     s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
-                                  "TT" : background_histograms["TT"][var],
-                                  "W+DY": background_histograms["W+DY"][var],
+                              "TT" : background_histograms["TT"][var],
+                              "W": background_histograms["W"][var],
+                              "DY": background_histograms["DY"][var],       
                                 })
 
-    s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2]])
+    s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2], colors[3]])
     for sample in background_samples:
         if "Stau" in sample: 
             background_histograms[sample][var].plot(color = '#B80C09')
