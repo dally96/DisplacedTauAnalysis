@@ -141,12 +141,13 @@ class ExampleProcessor(processor.ProcessorABC):
         # Object selection
         good_electrons = ((events["electron_pt"] > selections["electron_pt"]) 
                          & (events["electron_cutBased"] == selections["electron_cutBased"])
-                         #& (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
-                         #& (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
+                         & (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
+                         & (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
                          )        
-        good_jets = (events["jet_score"] > selections["jet_score"]
-                    & events["jet_pt"] > selections["jet_pt"])
-        
+        good_jets = ((events["jet_score"] > selections["jet_score"])
+                    & (events["jet_pt"] > selections["jet_pt"])
+                    )       
+
         good_events = (events["MET_pt"] > selections["MET_pt"])
 
         num_electrons = ak.num(events["electron_pt"][good_electrons])
@@ -237,7 +238,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"el_stacked_histogram_{var}_111111.pdf")
+    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105/el_stacked_histogram_{var}_111111.png")
 
 
 end_time = time.time()
