@@ -56,82 +56,30 @@ output = processor_instance.process(events)
 
 ### --- debugging --- ###
 # print(output["n_leptons"])
+print(output)
 
-# Reconstructed leptons and generator-level matching
-reco_leptons = events.Muon
+# Scoring
 gen_parts = events.GenPart
 gen_jets = events.GenJet
-
 
 # True labels using GenPart (prompt leptons)
 is_prompt = (gen_parts.statusFlags & (1 << 13) != 0) & (gen_parts.statusFlags & (1 << 0) != 0)
 true_prompt = gen_parts[is_prompt]
 
-### --- return_metric error debug --- ###
 # Match leptons to true prompts
-#dr2_prompt = reco_leptons.metric_table(true_prompt, return_metric=True)[1] ** 2
-#dr2_prompt_matched = np.min(dr2_prompt, axis=1) < 0.01  
+dr2_prompt = output.metric_table(true_prompt, return_metric=True)[1] ** 2
+dr2_prompt_matched = np.min(dr2_prompt, axis=1) < 0.01  # Adjust threshold as needed
 
 # Match leptons to background jets
-#dr2_jet = reco_leptons.metric_table(gen_jets, return_metric=True)[1] ** 2
-#dr2_jet_matched = np.min(dr2_jet, axis=1) < 0.01  
+dr2_jet = output.metric_table(gen_jets, return_metric=True)[1] ** 2
+dr2_jet_matched = np.min(dr2_jet, axis=1) < 0.01  # Adjust threshold as needed
 
 # True labels
-#labels = dr2_prompt_matched  # 1 for prompt leptons, 0 for background
+labels = dr2_prompt_matched  # 1 for prompt leptons, 0 for background
 
 # Delta R^2 scores for ROC
-#scores = np.min(dr2_prompt, axis=1)  # Use delta R^2 as the score
-### --- return_metric error debug --- ###
-
-### --- NEW STUFF 
-
-# Convert reco_leptons to Lorentz vectors
-reco_leptons = LorentzVector({
-    "pt": reco_leptons.pt,
-    "eta": reco_leptons.eta,
-    "phi": reco_leptons.phi,
-    "mass": reco_leptons.mass,
-})
-
-# Convert gen_parts (true_prompt) to Lorentz vectors
-true_prompt = LorentzVector({
-    "pt": true_prompt.pt,
-    "eta": true_prompt.eta,
-    "phi": true_prompt.phi,
-    "mass": true_prompt.mass,
-})
-
-# Convert gen_jets to Lorentz vectors
-gen_jets = LorentzVector({
-    "pt": gen_jets.pt,
-    "eta": gen_jets.eta,
-    "phi": gen_jets.phi,
-    "mass": gen_jets.mass,
-})
-
-# Calculate delta eta and delta phi
-delta_eta = reco_leptons.eta[:, None] - true_prompt.eta
-delta_phi = reco_leptons.phi[:, None] - true_prompt.phi
-delta_phi = (delta_phi + np.pi) % (2 * np.pi) - np.pi  # Wrap delta_phi to [-π, π]
-
-# Compute delta R^2
-dr2_prompt = delta_eta**2 + delta_phi**2
-min_dr2_prompt = np.min(dr2_prompt, axis=1)
-
-# Repeat for jets
-delta_eta_jet = reco_leptons.eta[:, None] - gen_jets.eta
-delta_phi_jet = reco_leptons.phi[:, None] - gen_jets.phi
-delta_phi_jet = (delta_phi_jet + np.pi) % (2 * np.pi) - np.pi
-
-dr2_jet = delta_eta_jet**2 + delta_phi_jet**2
-min_dr2_jet = np.min(dr2_jet, axis=1)
-
-# Labels and scores
-labels = min_dr2_prompt < 0.01  # True prompt leptons
-scores = min_dr2_prompt  # Use delta R^2 as scores
-
-### --- END OF NEW STUFF
-
+scores = np.min(dr2_prompt, axis=1)  # Use delta R^2 as the score
+# --- end scoring
 
 # Histograms for ROC computation
 bins = np.linspace(0, 0.5, 50)  
