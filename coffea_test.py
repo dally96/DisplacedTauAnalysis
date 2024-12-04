@@ -7,6 +7,7 @@ from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, PFNanoAODSchema
 from coffea.nanoevents.methods.vector import LorentzVector
 from hist import Hist
 import matplotlib.pyplot as plt
+import vector
 
 NanoAODSchema.warn_missing_crossrefs = False
 
@@ -84,23 +85,40 @@ true_prompt = gen_parts[is_prompt]
 
 ### --- NEW STUFF 
 
-# Ensure reco_leptons and gen_parts have LorentzVector properties
-reco_leptons = reco_leptons.to_lorentzvector()
-true_prompt = true_prompt.to_lorentzvector()
+# Convert reco_leptons to Lorentz vectors
+reco_leptons = LorentzVector({
+    "pt": reco_leptons.pt,
+    "eta": reco_leptons.eta,
+    "phi": reco_leptons.phi,
+    "mass": reco_leptons.mass,
+})
+
+# Convert gen_parts (true_prompt) to Lorentz vectors
+true_prompt = LorentzVector({
+    "pt": true_prompt.pt,
+    "eta": true_prompt.eta,
+    "phi": true_prompt.phi,
+    "mass": true_prompt.mass,
+})
+
+# Convert gen_jets to Lorentz vectors
+gen_jets = LorentzVector({
+    "pt": gen_jets.pt,
+    "eta": gen_jets.eta,
+    "phi": gen_jets.phi,
+    "mass": gen_jets.mass,
+})
 
 # Calculate delta eta and delta phi
 delta_eta = reco_leptons.eta[:, None] - true_prompt.eta
 delta_phi = reco_leptons.phi[:, None] - true_prompt.phi
-delta_phi = (delta_phi + np.pi) % (2 * np.pi) - np.pi  # Ensure delta_phi is in [-π, π]
+delta_phi = (delta_phi + np.pi) % (2 * np.pi) - np.pi  # Wrap delta_phi to [-π, π]
 
 # Compute delta R^2
 dr2_prompt = delta_eta**2 + delta_phi**2
-
-# Minimum delta R^2 for prompt leptons
 min_dr2_prompt = np.min(dr2_prompt, axis=1)
 
-# Repeat similar computation for jets
-gen_jets = gen_jets.to_lorentzvector()
+# Repeat for jets
 delta_eta_jet = reco_leptons.eta[:, None] - gen_jets.eta
 delta_phi_jet = reco_leptons.phi[:, None] - gen_jets.phi
 delta_phi_jet = (delta_phi_jet + np.pi) % (2 * np.pi) - np.pi
@@ -108,9 +126,9 @@ delta_phi_jet = (delta_phi_jet + np.pi) % (2 * np.pi) - np.pi
 dr2_jet = delta_eta_jet**2 + delta_phi_jet**2
 min_dr2_jet = np.min(dr2_jet, axis=1)
 
-# Use the min_dr2_prompt and min_dr2_jet for subsequent logic
+# Labels and scores
 labels = min_dr2_prompt < 0.01  # True prompt leptons
-scores = min_dr2_prompt  # Delta R^2 as scores
+scores = min_dr2_prompt  # Use delta R^2 as scores
 
 ### --- END OF NEW STUFF
 
