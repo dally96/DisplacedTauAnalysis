@@ -321,7 +321,7 @@ for file in Files:
 Run2_TauEff = ROOT.TMultiGraph("run2_taueff", "run2_taueff")
 Run2_TauEff_legend = ROOT.TLegend(0.7, 0.5, 0.88, 0.65)
 Run3_TauEff = ROOT.TMultiGraph("run3_taueff", "run3_taueff")
-Run3_TauEff_legend = ROOT.TLegend(0.7, 0.5, 0.88, 0.65)
+Run3_TauEff_legend = ROOT.TLegend(0.7, 0.7, 0.88, 0.85)
 Run2_TauEff_TGraph = {}
 Run3_TauEff_TGraph = {}
 for file in Run2_Eff:
