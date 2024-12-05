@@ -42,7 +42,7 @@ SAMP = [
       ]
 
 lumi = 38.01 ##fb-1
-colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#3A5683', '#FF773D']
+colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 selections = {
               "electron_pt":                30,  ##GeV 
               "electron_eta":               1.44, 
@@ -185,15 +185,18 @@ class ExampleProcessor(processor.ProcessorABC):
 background_samples = {} 
 background_samples["QCD"] = []
 background_samples["TT"] = []
-background_samples["W+DY"] = []
+background_samples["W"] = []
+background_samples["DY"] = []
 #
 for samples in SAMP:
     if "QCD" in samples[0]:
         background_samples["QCD"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
         background_samples["TT"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if "Jets" in samples[0]:
-        background_samples["W+DY"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if "W" in samples[0]:
+        background_samples["W"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if "DY" in samples[0]:
+        background_samples["DY"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
         background_samples[samples[0]] = [("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
@@ -228,23 +231,23 @@ for background, samples in background_samples.items():
 
 for var in variables_with_bins:
     plt.cla()
+    plt.clf()
     s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
-                                  "TT" : background_histograms["TT"][var],
-                                  "W+DY": background_histograms["W+DY"][var],
+                              "TT" : background_histograms["TT"][var],
+                              "W": background_histograms["W"][var],
+                              "DY": background_histograms["DY"][var],       
                                 })
-    print(s.show())
-
     s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2]])
     for sample in background_samples:
         if "Stau" in sample: 
-            background_histograms[sample][var].plot(color = '#B80C09')
+            background_histograms[sample][var].plot(color = '#B80C09', label = sample)
 
     plt.xlabel(var + ' ' + variables_with_bins[var][1])
     plt.ylabel("A.U.")
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"mu_stacked_histogram_{var}_111111.pdf")
+    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105/mu_stacked_histogram_{var}_111111.png")
 
 
 

@@ -68,32 +68,32 @@ selections = {
 
 variables_with_bins = {
     "electron_pt": [(245, 20, 1000), "GeV"],
-    #"electron_eta": [(50, -2.5, 2.5), ""],
-    #"electron_phi": [(64, -3.2, 3.2), ""],
-    #"electron_dxy": [(200, -1, 1), "cm"],
-    #"electron_dz" : [(200, -1, 1), "cm"],
-    #"electron_cutBased" : [(5, 0, 5), ""],
+    "electron_eta": [(50, -2.5, 2.5), ""],
+    "electron_phi": [(64, -3.2, 3.2), ""],
+    "electron_dxy": [(200, -1, 1), "cm"],
+    "electron_dz" : [(200, -1, 1), "cm"],
+    "electron_cutBased" : [(5, 0, 5), ""],
 
-    #"jet_pt" : [(245, 20, 1000), "GeV"],
-    #"jet_eta": [(48, -2.4, 2.4), ""],
-    #"jet_phi": [(64, -3.2, 3.2), ""],
-    #"jet_score": [(20, 0, 1), ""],
+    "jet_pt" : [(245, 20, 1000), "GeV"],
+    "jet_eta": [(48, -2.4, 2.4), ""],
+    "jet_phi": [(64, -3.2, 3.2), ""],
+    "jet_score": [(20, 0, 1), ""],
 
-    #"leadingelectron_pt": [(245, 20, 1000), "GeV"],
-    #"leadingelectron_eta": [(50, -2.5, 2.5), ""],
-    #"leadingelectron_phi": [(64, -3.2, 3.2), ""],
-    #"leadingelectron_dxy": [(200, -1, 1), "cm"],
-    #"leadingelectron_dz" : [(200, -1, 1), "cm"],
+    "leadingelectron_pt": [(245, 20, 1000), "GeV"],
+    "leadingelectron_eta": [(50, -2.5, 2.5), ""],
+    "leadingelectron_phi": [(64, -3.2, 3.2), ""],
+    "leadingelectron_dxy": [(200, -1, 1), "cm"],
+    "leadingelectron_dz" : [(200, -1, 1), "cm"],
 
-    #"leadingjet_pt" : [(245, 20, 1000), "GeV"],
-    #"leadingjet_eta": [(48, -2.4, 2.4), ""],
-    #"leadingjet_phi": [(64, -3.2, 3.2), ""],
-    #"leadingjet_score": [(20, 0, 1), ""],
+    "leadingjet_pt" : [(245, 20, 1000), "GeV"],
+    "leadingjet_eta": [(48, -2.4, 2.4), ""],
+    "leadingjet_phi": [(64, -3.2, 3.2), ""],
+    "leadingjet_score": [(20, 0, 1), ""],
 
-    #"dR" : [(20, 0, 1), ""],
-    #"deta": [(100, -5, 5), ""],
-    #"dphi": [(64, -3.2, 3.2), ""],
-    #"MET_pT": [(225, 100, 1000), "GeV"],
+    "dR" : [(20, 0, 1), ""],
+    "deta": [(100, -5, 5), ""],
+    "dphi": [(64, -3.2, 3.2), ""],
+    "MET_pT": [(225, 100, 1000), "GeV"],
     }
 
 def get_stack_maximum(stack):
@@ -141,8 +141,8 @@ class ExampleProcessor(processor.ProcessorABC):
         # Object selection
         good_electrons = ((events["electron_pt"] > selections["electron_pt"]) 
                          & (events["electron_cutBased"] == selections["electron_cutBased"])
-                         #& (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
-                         #& (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
+                         & (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
+                         & (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
                          )        
 
         good_jets = ((events["jet_score"] > selections["jet_score"])
@@ -227,6 +227,8 @@ for background, samples in background_samples.items():
             print(f"Error processing {sample_file}: {e}")
 
 for var in variables_with_bins:
+    plt.cla()
+    plt.clf()
     s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
                               "TT" : background_histograms["TT"][var],
                               "W": background_histograms["W"][var],
@@ -236,14 +238,14 @@ for var in variables_with_bins:
     s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2], colors[3]])
     for sample in background_samples:
         if "Stau" in sample: 
-            background_histograms[sample][var].plot(color = '#B80C09')
+            background_histograms[sample][var].plot(color = '#B80C09', label = sample)
 
     plt.xlabel(var + ' ' + variables_with_bins[var][1])
     plt.ylabel("A.U.")
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"el_stacked_histogram_{var}_111111.pdf")
+    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105/el_stacked_histogram_{var}_111111.png")
 
 
 end_time = time.time()
