@@ -22,14 +22,14 @@ events = NanoEventsFactory.from_root(
 # Selection cut parameters
 min_pT = 20
 max_eta = 2.4
-dr2 = 0.3**2
+max_dR2 = 0.3**2
 
 # Prompt and signal selection
 #prompt_sig_mask = events[events.GenPart.hasFlags(['isPrompt', 'isLastCopy'])]
 dR2_mask = events[(
     (events.Jet.phi - events.GenPart.phi)**2 +
     (events.Jet.eta - events.GenPart.eta)**2)
-    < 0.4**2]
+    < max_dR2]
 
 # Lepton selection
 electrons = events.Electron
