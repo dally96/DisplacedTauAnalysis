@@ -31,7 +31,7 @@ gpart = events.GenPart
 #dr_mask = events.Jet.nearest(gpart, threshold = dr_max) 
 
 # Tau stuff
-taus = events.GenPart[events.GenVisTau.genPartIdxMother]
+taus = events.Tau
 #tau_selection = taus[
 #        (numpy.abs(taus.eta) < max_eta) &
 #        (taus.pt > min_pT)]
