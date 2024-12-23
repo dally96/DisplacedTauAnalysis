@@ -35,10 +35,10 @@ taus = events.Tau
 #tau_selection = taus[
 #        (numpy.abs(taus.eta) < max_eta) &
 #        (taus.pt > min_pT)]
-stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015]
+#stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015]
 
 # Jet stuff
-tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max)
+tau_jets = taus.nearest(events.Jet, threshold = dr_max)
 matched_scores = tau_jets.disTauTag_score1
 
 # Convert to a flat array for histogram
