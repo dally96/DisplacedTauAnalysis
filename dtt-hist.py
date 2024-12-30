@@ -11,7 +11,9 @@ from coffea.analysis_tools import PackedSelection
 NanoAODSchema.warn_missing_crossrefs = False
 
 # Import dataset
-fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215454/0000/nanoaod_output_1.root"
+# TODO: after testing, use both files and produce hists simultaneously
+#fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215454/0000/nanoaod_output_1.root" # signal
+fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-1.root" # background
 
 # Pass dataset info to coffea object
 events = NanoEventsFactory.from_root(
@@ -48,9 +50,18 @@ flattened_scores = ak.flatten(matched_scores, axis=None)
 bins = numpy.linspace(0, 1, 50)
 
 # Plot the histogram
-plt.hist(flattened_scores, bins=bins, histtype='step', label='Truth Distribution')
+#--- Truth ---#
+#plt.hist(flattened_scores, bins=bins, histtype='step', label='Truth Distribution')
+#plt.xlabel('disTauTag_score1')
+#plt.ylabel('Frequency')
+#plt.title('Truth Histogram of disTauTag_score1')
+#plt.legend()
+# plt.savefig("tau-truth-hist.png")
+
+#--- Fake ---#
+plt.hist(flattened_scores, bins=bins, histtype='step', label='Fake Distribution')
 plt.xlabel('disTauTag_score1')
 plt.ylabel('Frequency')
-plt.title('Truth Histogram of disTauTag_score1')
+plt.title('Fake Rate Histogram of disTauTag_score1')
 plt.legend()
-plt.savefig("tau-truth-hist.png")
+plt.savefig("tau-fake-hist.png")
