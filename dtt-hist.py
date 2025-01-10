@@ -19,7 +19,7 @@ fname = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_ctau-100
 # Pass dataset info to coffea object
 events = NanoEventsFactory.from_root(
     {fname: "Events"},
-    schemaclass=PFNanoAODSchema,
+    schemaclass=NanoAODSchema,
     metadata={"dataset": "signal"},
     delayed = False).events()
 
