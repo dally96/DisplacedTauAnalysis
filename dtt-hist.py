@@ -11,9 +11,10 @@ from coffea.analysis_tools import PackedSelection
 NanoAODSchema.warn_missing_crossrefs = False
 
 # Import dataset
-# TODO: after testing, use both files and produce hists simultaneously
-#fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215454/0000/nanoaod_output_1.root" # signal
-fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-1.root" # background
+
+fname = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root" # signal
+#fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-1.root" # background
+
 
 # Pass dataset info to coffea object
 events = NanoEventsFactory.from_root(
@@ -33,14 +34,14 @@ gpart = events.GenPart
 #dr_mask = events.Jet.nearest(gpart, threshold = dr_max) 
 
 # Tau stuff
-taus = events.Tau
+taus = events.GenPart[events.GenVisTau.genPartIdxMother]
 #tau_selection = taus[
 #        (numpy.abs(taus.eta) < max_eta) &
 #        (taus.pt > min_pT)]
-#stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015]
+stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015]
 
 # Jet stuff
-tau_jets = taus.nearest(events.Jet, threshold = dr_max)
+tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max)
 matched_scores = tau_jets.disTauTag_score1
 
 # Convert to a flat array for histogram
@@ -50,18 +51,9 @@ flattened_scores = ak.flatten(matched_scores, axis=None)
 bins = numpy.linspace(0, 1, 50)
 
 # Plot the histogram
-#--- Truth ---#
-#plt.hist(flattened_scores, bins=bins, histtype='step', label='Truth Distribution')
-#plt.xlabel('disTauTag_score1')
-#plt.ylabel('Frequency')
-#plt.title('Truth Histogram of disTauTag_score1')
-#plt.legend()
-# plt.savefig("tau-truth-hist.png")
-
-#--- Fake ---#
-plt.hist(flattened_scores, bins=bins, histtype='step', label='Fake Distribution')
+plt.hist(flattened_scores, bins=bins, histtype='step', label='Truth Distribution')
 plt.xlabel('disTauTag_score1')
 plt.ylabel('Frequency')
-plt.title('Fake Rate Histogram of disTauTag_score1')
+plt.title('Truth Histogram of disTauTag_score1')
 plt.legend()
-plt.savefig("tau-fake-hist.png")
+plt.savefig("tau-truth-hist.png")
