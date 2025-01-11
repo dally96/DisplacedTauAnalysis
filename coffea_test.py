@@ -19,6 +19,17 @@ events = NanoEventsFactory.from_root(
     metadata={"dataset": "signal"},
     delayed = False).events()
 
-print('Electron fields =', events.Electron.fields)
-print('Muon fields =', events.Muon.fields)
-print('Tau fields =', events.Tau.fields)
+# Tau stuff
+taus = events.GenPart[events.GenVisTau.genPartIdxMother]
+stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # collection of all h-decay taus with stau parents
+
+# Jet stuff
+jets = events.Jet
+scores = jets.disTauTag_score1
+tau_jets = stau_taus.nearest(events.Jet, threshold = 0.4)
+matched_scores = tau_jets.disTauTag_score1
+
+print('taus fields =', taus.fields)
+print('stau_taus fields =', stau_taus.fields)
+print('tau_jets fields =', tau_jets.fields)
+print('matched_scores fields =', matched_scores.fields)
