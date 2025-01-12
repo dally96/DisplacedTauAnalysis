@@ -5,6 +5,7 @@ import numpy
 import awkward as ak
 import matplotlib.pyplot as plt
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.analysis_tools import PackedSelection
 
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
@@ -21,18 +22,20 @@ events = NanoEventsFactory.from_root(
     metadata={"dataset": "signal"},
     delayed = False).events()
 
-taus = events.Tau
-htaus = events.GenPart[events.GenVisTau.genPartIdxMother]
-stau_taus = htaus[abs(htaus.distinctParent.pdgId) == 1000015]
-neg_mask = ~ak.any(taus.pt[:, None] == stau_taus.pt, axis=1)
+jagged_htaus = events.GenPart[events.GenVisTau.genPartIdxMother]
+valid_htaus_mask = jagged_htaus >= 0
+htaus = jagged_htaus[valid_htaus_mask]
 
-neg_taus = taus[neg_mask]
+selection = PackedSelection()
+selection.add("stau_taus", htaus[abs(htaus.distinctParent.pdgId)] == 1000015)
+selection.add("event_cut", selection.require(stau_taus=True))
+selected_events = events[selection.all("event_cut")]
 
-print(f"Taus\n{taus}")
-print(len(ak.flatten(taus)), "total taus")
-print(f"\nHadronically-decaying taus\n{htaus}")
-print(len(ak.flatten(htaus)), "total h-decay taus")
-print(f"\nH-decay taus with stau parents\n{stau_taus}")
-print(len(ak.flatten(stau_taus)), "total tau children of staus")
-print(f"\nOther taus\n{neg_taus}")
-print(len(ak.flatten(neg_taus)), "total other taus")
+#print(f"Taus\n{taus}")
+#print(len(ak.flatten(taus)), "total taus")
+#print(f"\nHadronically-decaying taus\n{htaus}")
+#print(len(ak.flatten(htaus)), "total h-decay taus")
+print(f"\nH-decay taus with stau parents\n{selected_events}")
+print(len(ak.flatten(selected_events)), "total tau children of staus")
+#print(f"\nOther taus\n{neg_taus}")
+#print(len(ak.flatten(neg_taus)), "total other taus")
