@@ -48,15 +48,20 @@ true_tau_jets = jets[true_tau_jet_mask]
 true_passing_mask = ak.any(passing_jets.jetId[:, None] == true_tau_jets.jetId, axis=-1)
 true_passing_jets = jets[true_passing_mask]
 
+false_tau_jets = jets[~true_tau_jet_mask]
+false_passing_mask = ak.any(passing_jets.jetId[:, None] == false_tau_jets.jetId, axis=-1)
+false_passing_jets = jets[false_passing_mask]
+
 # --- Totals --- #
 total_passing_scores = ak.sum(ak.num(matched_scores))
 total_scores = ak.sum(ak.num(scores))
 total_true_tau_jets = ak.sum(ak.num(true_tau_jets))
 total_true_passing_jets = ak.sum(ak.num(true_passing_jets))
+total_false_passing_jets = ak.sum(ak.num(false_passing_jets))
 
 # --- Results --- #
-#TODO fake_rate
 efficiency = total_true_passing_jets / total_true_tau_jets
+fake_rate = total_false_passing_jets / total_scores
 
 # --- debug --- #
-print(f"A threshold of {threshold} yields an efficiency of {efficiency}")
+print(f"A threshold of {threshold} yields an efficiency of {efficiency} and a fake rate of {fake_rate}")
