@@ -26,7 +26,7 @@ min_pT = 20
 max_eta = 2.4
 max_dR2 = 0.3**2
 dr_max = 0.4
-resolution = 4 # no. of scores checked, 50 is probably a good value once functionality is confirmed
+resolution = 4 # inverse, 50 is probably a good value once functionality is confirmed
 
 taus = events.GenPart[events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
