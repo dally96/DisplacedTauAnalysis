@@ -36,7 +36,7 @@ scores = jets.disTauTag_score1
 tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max) # jets dr-matched to stau_taus
 matched_scores = tau_jets.disTauTag_score1 # scores of matched jets
 
-true_tau_jet_mask = ak.any(jets.jetId[:, None] == tau_jets.jetId, axis=-1)
+true_tau_jet_mask = ak.any(jets.genJetIdxG[:, None] == tau_jets.genJetIdxG, axis=-1)
 true_tau_jets = jets[true_tau_jet_mask]
 false_tau_jets = jets[~true_tau_jet_mask]
 
@@ -51,10 +51,10 @@ for score_threshold in range(0, resolution+1):
     passing_jet_mask = scores >= threshold
     passing_jets = jets[passing_jet_mask]
 
-    true_passing_mask = ak.any(passing_jets.jetId[:, None] == true_tau_jets.jetId, axis=-1)
+    true_passing_mask = ak.any(passing_jets.genJetIdxG[:, None] == true_tau_jets.genJetIdxG, axis=-1)
     true_passing_jets = jets[true_passing_mask]
 
-    false_passing_mask = ak.any(passing_jets.jetId[:, None] == false_tau_jets.jetId, axis=-1)
+    false_passing_mask = ak.any(passing_jets.genJetIdxG[:, None] == false_tau_jets.genJetIdxG, axis=-1)
     false_passing_jets = jets[false_passing_mask]
 
     # --- Totals --- #
@@ -74,7 +74,12 @@ for score_threshold in range(0, resolution+1):
 
     # --- debug --- #
     print(f"A threshold of {threshold} yields an efficiency of {efficiency} and a fake rate of {fake_rate}")
-    print(f"referencing {total_true_tau_jets} true tau jets and {total_false_tau_jets} false tau jets")
 
 print("List of efficiencies", efficiencies)
 print("List of fake rates", fake_rates)
+print(ak.sum(ak.num(tau_jets)), " tau_jet entries, compared to")
+print(total_true_tau_jets, "true tau jet entries")
+print("tau_jets")
+print(tau_jets.genJetIdxG)
+print("true_tau_jets")
+print(true_tau_jets.genJetIdxG)

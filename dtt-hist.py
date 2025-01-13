@@ -23,26 +23,22 @@ events = NanoEventsFactory.from_root(
     metadata={"dataset": "signal"},
     delayed = False).events()
 
-# Selection cut parameters
-min_pT = 20
-max_eta = 2.4
 dr_max = 0.3
+threshold = 0.5
 
-# Prompt and signal selection
-gpart = events.GenPart
-#prompt_sig_mask = gpart.hasFlags(['isPrompt', 'isLastCopy'])
-#dr_mask = events.Jet.nearest(gpart, threshold = dr_max) 
-
-# Tau stuff
 taus = events.GenPart[events.GenVisTau.genPartIdxMother]
-#tau_selection = taus[
-#        (numpy.abs(taus.eta) < max_eta) &
-#        (taus.pt > min_pT)]
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015]
 
-# Jet stuff
 tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max)
 matched_scores = tau_jets.disTauTag_score1
+matched_scores_mask = tau_jets.disTauTag_score1 > threshold
+passing_tau_jets = tau_jets[matched_scores_mask]
+
+passing_jet_mask = events.Jet.disTauTag_score1 > threshold
+passing_jets = events.Jet[passing_jet_mask]
+false_jet_mask = 
+
+fake_rate = total_false_passing_jets / total_scores
 
 # Convert to a flat array for histogram
 flattened_scores = ak.flatten(matched_scores, axis=None)
@@ -54,6 +50,6 @@ bins = numpy.linspace(0, 1, 50)
 plt.hist(flattened_scores, bins=bins, histtype='step', label='Truth Distribution')
 plt.xlabel('disTauTag_score1')
 plt.ylabel('Frequency')
-plt.title('Truth Histogram of disTauTag_score1')
+plt.title('Fake Rate Histogram of disTauTag_score1')
 plt.legend()
 plt.savefig("tau-truth-hist.png")
