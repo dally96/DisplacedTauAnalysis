@@ -3,9 +3,8 @@ import scipy
 import awkward as ak
 import numpy as np
 from coffea import processor
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, PFNanoAODSchema
-from coffea.nanoevents.methods.vector import LorentzVector
-from hist import Hist
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.analysis_tools import PackedSelection
 import matplotlib.pyplot as plt
 import vector
 
@@ -15,21 +14,15 @@ fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTtoLNu2Q_TuneCP5_
 
 events = NanoEventsFactory.from_root(
     {fname: "Events"},
-    schemaclass=PFNanoAODSchema,
+    schemaclass=NanoAODSchema,
     metadata={"dataset": "signal"},
     delayed = False).events()
 
-# Tau stuff
-taus = events.GenPart[events.GenVisTau.genPartIdxMother]
-stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # collection of all h-decay taus with stau parents
+selection = PackedSelection()
+tau_pt_vals = events.Tau.pt
+selection.add("tau_pt", tau_pt_vals > 2)
+selection.add("event_cut", selection.require(tau_pt=true))
+selected_events = events[selection.all("event_cut")]
 
-# Jet stuff
-jets = events.Jet
-scores = jets.disTauTag_score1
-tau_jets = stau_taus.nearest(events.Jet, threshold = 0.4)
-matched_scores = tau_jets.disTauTag_score1
-
-print('taus fields =', taus.fields)
-print('stau_taus fields =', stau_taus.fields)
-print('tau_jets fields =', tau_jets.fields)
-print('matched_scores fields =', matched_scores.fields)
+print(f"Tau pt values\n{tau_pt_vals}\n")
+print(f"Min tau pt after cut\n{min(selected_events.Tau.pt)}")
