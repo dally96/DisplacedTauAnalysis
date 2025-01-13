@@ -28,13 +28,13 @@ dr_max = 0.4
 # TODO replace threshold variable with loop over range
 threshold = 0.5
 
-taus = events.GenPart[events.GenVisTau.genPartIdxMother]
-stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # collection of all h-decay taus with stau parents
+taus = events.GenPart[events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
+stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
 
 jets = events.Jet
 scores = jets.disTauTag_score1
-tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max)
-matched_scores = tau_jets.disTauTag_score1
+tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max) # jets dr-matched to stau_taus
+matched_scores = tau_jets.disTauTag_score1 # scores of matched jets
 
 passing_scores_mask = matched_scores >= threshold
 passing_scores = matched_scores[passing_scores_mask]
