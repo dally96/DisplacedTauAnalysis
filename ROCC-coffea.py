@@ -4,7 +4,8 @@ import scipy
 import numpy
 import awkward as ak
 import matplotlib.pyplot as plt
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, NanoAODSchema
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.analysis_tools import PackedSelection
 
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
@@ -27,9 +28,6 @@ max_dR2 = 0.3**2
 dr_max = 0.4
 # TODO replace threshold variable with loop over range
 threshold = 0.5
-#tau_selection = taus[
-#        (numpy.abs(taus.eta) < max_eta) &
-#        (taus.pt > min_pT)]
 
 # Tau stuff
 taus = events.GenPart[events.GenVisTau.genPartIdxMother]
@@ -40,9 +38,13 @@ jets = events.Jet
 scores = jets.disTauTag_score1
 tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max)
 matched_scores = tau_jets.disTauTag_score1
-selected_matched_scores = matched_scores > threshold
 
+selection = PackedSelection()
+selection.add("passing_score", (scores > threshold))
+selection.add("event_cut", selection.require(passing_score=true))
+selected_events = events[selection.all("event_cut")]
 
-# --- debug --- # 
-print(f"Jets\n{jets}\n\nTotal scores\n{scores}\n\n")
-print(f"Tau jets\n{tau_jets}\n\nMatched scores\n{matched_scores}")
+# --- debug --- #
+print(f"matched_scores\n{matched_scores}\n")
+print(f"matched_scores type\n{type(matched_scores)}\n")
+print(f"matched_scores ak.type\n{ak.type(matched_scores)}\n")
