@@ -5,7 +5,6 @@ import numpy
 import awkward as ak
 import matplotlib.pyplot as plt
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
-from coffea.analysis_tools import PackedSelection
 
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
@@ -29,22 +28,35 @@ dr_max = 0.4
 # TODO replace threshold variable with loop over range
 threshold = 0.5
 
-# Tau stuff
 taus = events.GenPart[events.GenVisTau.genPartIdxMother]
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # collection of all h-decay taus with stau parents
 
-# Jet stuff
 jets = events.Jet
 scores = jets.disTauTag_score1
 tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max)
 matched_scores = tau_jets.disTauTag_score1
 
-selection = PackedSelection()
-selection.add("passing_score", (scores > threshold))
-selection.add("event_cut", selection.require(passing_score=true))
-selected_events = events[selection.all("event_cut")]
+passing_scores_mask = matched_scores >= threshold
+passing_scores = matched_scores[passing_scores_mask]
+
+passing_jet_mask = scores >= threshold
+passing_jets = jets[passing_jet_mask]
+
+true_tau_jet_mask = ak.any(jets.jetId[:, None] == tau_jets.jetId, axis=-1)
+true_tau_jets = jets[true_tau_jet_mask]
+
+true_passing_mask = ak.any(passing_jets.jetId[:, None] == true_tau_jets.jetId, axis=-1)
+true_passing_jets = jets[true_passing_mask]
+
+# --- Totals --- #
+total_passing_scores = ak.sum(ak.num(matched_scores))
+total_scores = ak.sum(ak.num(scores))
+total_true_tau_jets = ak.sum(ak.num(true_tau_jets))
+total_true_passing_jets = ak.sum(ak.num(true_passing_jets))
+
+# --- Results --- #
+#TODO fake_rate
+efficiency = total_true_passing_jets / total_true_tau_jets
 
 # --- debug --- #
-print(f"matched_scores\n{matched_scores}\n")
-print(f"matched_scores type\n{type(matched_scores)}\n")
-print(f"matched_scores ak.type\n{ak.type(matched_scores)}\n")
+print(f"A threshold of {threshold} yields an efficiency of {efficiency}")
