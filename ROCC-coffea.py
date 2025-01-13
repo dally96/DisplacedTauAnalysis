@@ -21,12 +21,12 @@ events = NanoEventsFactory.from_root(
     delayed = False).events()
 
 # Selection cut parameters
+#TODO implement cuts
 min_pT = 20
 max_eta = 2.4
 max_dR2 = 0.3**2
 dr_max = 0.4
-# TODO replace threshold variable with loop over range
-threshold = 0.5
+resolution = 4 # no. of scores checked, 50 is probably a good value once functionality is confirmed
 
 taus = events.GenPart[events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
@@ -36,32 +36,43 @@ scores = jets.disTauTag_score1
 tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max) # jets dr-matched to stau_taus
 matched_scores = tau_jets.disTauTag_score1 # scores of matched jets
 
-passing_scores_mask = matched_scores >= threshold
-passing_scores = matched_scores[passing_scores_mask]
+fake_rates = []
+efficiencies = []
 
-passing_jet_mask = scores >= threshold
-passing_jets = jets[passing_jet_mask]
+for score_threshold in range(0, resolution+1):
+    threshold = score_threshold / resolution
+    passing_scores_mask = matched_scores >= threshold
+    passing_scores = matched_scores[passing_scores_mask]
 
-true_tau_jet_mask = ak.any(jets.jetId[:, None] == tau_jets.jetId, axis=-1)
-true_tau_jets = jets[true_tau_jet_mask]
+    passing_jet_mask = scores >= threshold
+    passing_jets = jets[passing_jet_mask]
 
-true_passing_mask = ak.any(passing_jets.jetId[:, None] == true_tau_jets.jetId, axis=-1)
-true_passing_jets = jets[true_passing_mask]
+    true_tau_jet_mask = ak.any(jets.jetId[:, None] == tau_jets.jetId, axis=-1)
+    true_tau_jets = jets[true_tau_jet_mask]
 
-false_tau_jets = jets[~true_tau_jet_mask]
-false_passing_mask = ak.any(passing_jets.jetId[:, None] == false_tau_jets.jetId, axis=-1)
-false_passing_jets = jets[false_passing_mask]
+    true_passing_mask = ak.any(passing_jets.jetId[:, None] == true_tau_jets.jetId, axis=-1)
+    true_passing_jets = jets[true_passing_mask]
 
-# --- Totals --- #
-total_passing_scores = ak.sum(ak.num(matched_scores))
-total_scores = ak.sum(ak.num(scores))
-total_true_tau_jets = ak.sum(ak.num(true_tau_jets))
-total_true_passing_jets = ak.sum(ak.num(true_passing_jets))
-total_false_passing_jets = ak.sum(ak.num(false_passing_jets))
+    false_tau_jets = jets[~true_tau_jet_mask]
+    false_passing_mask = ak.any(passing_jets.jetId[:, None] == false_tau_jets.jetId, axis=-1)
+    false_passing_jets = jets[false_passing_mask]
 
-# --- Results --- #
-efficiency = total_true_passing_jets / total_true_tau_jets
-fake_rate = total_false_passing_jets / total_scores
+    # --- Totals --- #
+    total_passing_scores = ak.sum(ak.num(matched_scores))
+    total_scores = ak.sum(ak.num(scores))
+    total_true_tau_jets = ak.sum(ak.num(true_tau_jets))
+    total_true_passing_jets = ak.sum(ak.num(true_passing_jets))
+    total_false_passing_jets = ak.sum(ak.num(false_passing_jets))
 
-# --- debug --- #
-print(f"A threshold of {threshold} yields an efficiency of {efficiency} and a fake rate of {fake_rate}")
+    # --- Results --- #
+    efficiency = total_true_passing_jets / total_true_tau_jets
+    fake_rate = total_false_passing_jets / total_scores
+
+    efficiencies.append(efficiency)
+    fake_rates.append(fake_rate)
+
+    # --- debug --- #
+    print(f"A threshold of {threshold} yields an efficiency of {efficiency} and a fake rate of {fake_rate}")
+
+print("List of efficiencies", efficiencies)
+print("List of fake rates", fake_rates)
