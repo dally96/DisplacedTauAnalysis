@@ -31,19 +31,34 @@ min_pT = 20
 max_eta = 2.4
 max_dR2 = 0.3**2
 dr_max = 0.4
-inv_res = 4 # inverse resolution, 50 is probably a good value once functionality is confirmed
+score_increment_scale_factor = 50
+
+def apply_cuts(collection):
+    pt_mask = collection.pt >= min_pT
+    eta_mask = abs(collection.eta) < max_eta
+    valid_mask = collection.genJetIdx > 0
+    
+    collection_length = ak.sum(ak.num(collection.partonFlavour))
+    inclusion_mask = collection.genJetIdx < collection_length
+    
+    cut_collection = collection[
+        pt_mask & eta_mask & valid_mask & inclusion_mask ]
+    
+    return cut_collection
 
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
 signal_jets = signal_events.Jet
-true_tau_jets = stau_taus.nearest(signal_events.Jet, threshold = dr_max) # jets dr-matched to stau_taus
+cut_signal_jets = apply_cuts(signal_jets)
+true_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = dr_max) # jets dr-matched to stau_taus
 matched_signal_scores = true_tau_jets.disTauTag_score1
 
 # Background processing
 bg_jets = bg_events.Jet
-bg_scores = bg_jets.disTauTag_score1
-false_tau_jets = bg_jets # No staus present in bg
+cut_bg_jets = apply_cuts(bg_jets)
+bg_scores = cut_bg_jets.disTauTag_score1
+false_tau_jets = cut_bg_jets # No staus present in bg
 matched_bg_scores = bg_scores
 
 # Jet totals
@@ -51,16 +66,16 @@ total_true_tau_jets = ak.sum(ak.num(true_tau_jets))
 total_false_tau_jets = ak.sum(ak.num(false_tau_jets))
 
 total_jets = (
-    ak.sum(ak.num(signal_jets)) +
-    ak.sum(ak.num(bg_jets)) )
+    ak.sum(ak.num(cut_signal_jets)) +
+    ak.sum(ak.num(cut_bg_jets)) )
 
 # ROC calculations
 thresholds = []
 fake_rates = []
 efficiencies = []
 
-for increment in range(0, inv_res+1):
-    threshold = increment / inv_res
+for increment in range(0, score_increment_scale_factor+1):
+    threshold = increment / score_increment_scale_factor
 
     passing_signal_mask = matched_signal_scores >= threshold
     true_passing_jets = true_tau_jets[passing_signal_mask]
@@ -84,9 +99,9 @@ for increment in range(0, inv_res+1):
 fig, ax = plt.subplots()
 roc = ax.plot(fake_rates, efficiencies)
 
-plt.xlabel('Fake rate (false passing jets / total jets)')
-plt.ylabel('Tau tagger efficiency (true passing jets / total true jets)')
+plt.xlabel(r"Fake rate $\left(\frac{false\_passing\_jets}{total\_jets}\right)$")
+plt.ylabel(r"Tau tagger efficiency $\left(\frac{true\_passing\_jets}{total\_true\_jets}\right)$")
 
 plt.grid()
-#plt.savefig('tau-tagger-rocc.pdf')
+plt.savefig('tau-tagger-rocc.pdf')
 plt.savefig('tau-tagger-rocc.png')
