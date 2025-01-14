@@ -55,6 +55,7 @@ total_jets = (
     ak.sum(ak.num(bg_jets)) )
 
 # ROC calculations
+thresholds = []
 fake_rates = []
 efficiencies = []
 
@@ -75,11 +76,17 @@ for increment in range(0, inv_res+1):
     efficiency = total_true_passing_jets / total_true_tau_jets
     fake_rate = total_false_passing_jets / total_jets
 
-    efficiencies.append(efficiency)
+    thresholds.append(threshold)
     fake_rates.append(fake_rate)
+    efficiencies.append(efficiency)
 
-    # --- debug --- #
-    print(f"A threshold of {threshold} yields an efficiency of {efficiency} and a fake rate of {fake_rate}")
+# Plot stuff
+fig, ax = plt.subplots()
+roc = ax.plot(fake_rates, efficiencies)
 
-print("List of efficiencies", efficiencies)
-print("List of fake rates", fake_rates)
+plt.xlabel('Fake rate (false passing jets / total jets)')
+plt.ylabel('Tau tagger efficiency (true passing jets / total true jets)')
+
+plt.grid()
+#plt.savefig('tau-tagger-rocc.pdf')
+plt.savefig('tau-tagger-rocc.png')
