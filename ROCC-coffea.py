@@ -1,9 +1,10 @@
 import coffea
 import uproot
 import scipy
-import numpy
+import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
 # Silence obnoxious warning
@@ -30,7 +31,7 @@ bg_events = NanoEventsFactory.from_root(
 min_pT = 20
 max_eta = 2.4
 max_dR2 = 0.3**2
-dr_max = 0.4
+max_dr = 0.4
 score_increment_scale_factor = 50
 
 def apply_cuts(collection):
@@ -51,8 +52,11 @@ taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadroni
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
 signal_jets = signal_events.Jet
 cut_signal_jets = apply_cuts(signal_jets)
-true_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = dr_max) # jets dr-matched to stau_taus
+true_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
 matched_signal_scores = true_tau_jets.disTauTag_score1
+
+# dR2 cuts
+#stau_taus
 
 # Background processing
 bg_jets = bg_events.Jet
@@ -163,9 +167,11 @@ roc = colored_line(fake_rates, efficiencies, color, ax, linewidth=2, cmap='plasm
 cbar = fig.colorbar(roc)
 cbar.set_label('Score threshold')
 
+ax.set_xscale("log")
+
 plt.xlabel(r"Fake rate $\left(\frac{false\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{true\_passing\_jets}{total\_true\_jets}\right)$")
 
 plt.grid()
-plt.savefig('fancy-tau-tagger-rocc.pdf')
-plt.savefig('fancy-tau-tagger-rocc.png')
+plt.savefig('pt-eta-cut-scaled-tau-tagger-rocc.pdf')
+plt.savefig('pt-eta-cut-scaled-tau-tagger-rocc.png')
