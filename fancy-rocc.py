@@ -32,7 +32,7 @@ min_pT = 20
 max_eta = 2.4
 max_dR2 = 0.3**2
 dr_max = 0.4
-inv_res = 4 # inverse resolution, 50 is probably a good value once functionality is confirmed
+inv_res = 50 # inverse resolution, 50 is probably a good value once functionality is confirmed
 
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
@@ -158,8 +158,8 @@ roc = colored_line(fake_rates, efficiencies, color, ax, linewidth=2, cmap='plasm
 cbar = fig.colorbar(roc)
 cbar.set_label('Score threshold')
 
-#fig.xlabel('Fake rate (false passing jets / total jets)')
-#fig.ylabel('Tau tagger efficiency (true passing jets / total true jets)')
+plt.xlabel('Fake rate (false passing jets / total jets)')
+plt.ylabel('Tau tagger efficiency (true passing jets / total true jets)')
 
 #plt.grid()
 plt.savefig('fancy-tau-tagger-rocc.pdf')
