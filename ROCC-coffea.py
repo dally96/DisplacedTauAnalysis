@@ -51,15 +51,20 @@ def apply_cuts(collection):
     return cut_collection
 
 def apply_lepton_veto(evt_collection):
-    for lepton_type in ['Photon', 'Electron', 'DisMuon']:
-        evt_collection['Jet'] = evt_collection.Jet[
-            delta_r_mask(evt_collection.Jet, evt_collection.lepton_type, max_lep_dr) ]
+    evt_collection['Jet'] = evt_collection.Jet[
+        delta_r_mask(evt_collection.Jet, evt_collection.Photon, max_lep_dr) ]
+    evt_collection['Jet'] = evt_collection.Jet[
+        delta_r_mask(evt_collection.Jet, evt_collection.Electron, max_lep_dr) ]
+    evt_collection['Jet'] = evt_collection.Jet[
+        delta_r_mask(evt_collection.Jet, evt_collection.DisMuon, max_lep_dr) ]
     return evt_collection
 
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-cut_signal_jets = apply_cuts(apply_lepton_veto(signal_events).Jet)
+#cut_signal_jets = apply_cuts(apply_lepton_veto(signal_events).Jet)
+cut_signal = apply_lepton_veto(signal_events)
+cut_signal_jets = apply_cuts(cut_signal.Jet)
 true_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
 matched_signal_scores = true_tau_jets.disTauTag_score1
 
