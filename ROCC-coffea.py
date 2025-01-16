@@ -27,12 +27,15 @@ bg_events = NanoEventsFactory.from_root(
     delayed = False).events()
 
 # Selection cut parameters
-#TODO implement cuts
 min_pT = 20
 max_eta = 2.4
-max_dR2 = 0.3**2
-max_dr = 0.4
-score_increment_scale_factor = 50
+max_dr = 0.3
+max_lep_dr = 0.4
+score_increment_scale_factor = 4
+
+def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
+            mval = first.metric_table(second)
+            return ak.all(mval > threshold, axis=-1)
 
 def apply_cuts(collection):
     pt_mask = collection.pt >= min_pT
@@ -47,16 +50,18 @@ def apply_cuts(collection):
     
     return cut_collection
 
+def apply_lepton_veto(evt_collection):
+    for lepton_type in ['Photon', 'Electron', 'DisMuon']:
+        evt_collection['Jet'] = evt_collection.Jet[
+            delta_r_mask(evt_collection.Jet, evt_collection.lepton_type, max_lep_dr) ]
+    return evt_collection
+
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-signal_jets = signal_events.Jet
-cut_signal_jets = apply_cuts(signal_jets)
+cut_signal_jets = apply_cuts(apply_lepton_veto(signal_events).Jet)
 true_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
 matched_signal_scores = true_tau_jets.disTauTag_score1
-
-# dR2 cuts
-#stau_taus
 
 # Background processing
 bg_jets = bg_events.Jet
@@ -168,6 +173,7 @@ cbar = fig.colorbar(roc)
 cbar.set_label('Score threshold')
 
 ax.set_xscale("log")
+#ax.set_ylim(0.7, 1.0)
 
 plt.xlabel(r"Fake rate $\left(\frac{false\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{true\_passing\_jets}{total\_true\_jets}\right)$")
