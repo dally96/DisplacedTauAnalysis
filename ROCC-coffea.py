@@ -50,7 +50,7 @@ def apply_cuts(collection):
     
     return cut_collection
 
-def apply_lepton_veto(evt_collection):
+def apply_lepton_veto(evt_collection: ak.highlevel.Array):
     evt_collection['Jet'] = evt_collection.Jet[
         delta_r_mask(evt_collection.Jet, evt_collection.Photon, max_lep_dr) ]
     evt_collection['Jet'] = evt_collection.Jet[
