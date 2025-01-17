@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
+# Prevent lepton veto problems
+NanoAODSchema.mixins["DisMuon"] = "Muon"
+
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
 
@@ -32,9 +35,6 @@ max_eta = 2.4
 max_dr = 0.3
 max_lep_dr = 0.4
 score_increment_scale_factor = 4
-
-# Prevent lepton veto problems
-NanoAODSchema.mixins["DisMuon"] = "Muon"
 
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)

@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
+NanoAODSchema.mixins["DisMuon"] = "Muon"
+
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
 
@@ -31,8 +33,6 @@ print(ak.sum(ak.num(signal_events.Jet)), "original jets, cut to ")
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)
             return ak.all(mval > threshold, axis=-1)
-
-NanoAODSchema.mixins["DisMuon"] = "Muon"
 
 def apply_cuts(collection):
     pt_mask = collection.pt >= min_pT
