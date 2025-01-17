@@ -5,7 +5,7 @@ import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, PFNanoAODSchema
 
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
@@ -16,7 +16,7 @@ signal_fname = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_c
 # Pass dataset info to coffea objects
 signal_events = NanoEventsFactory.from_root(
     {signal_fname: "Events"},
-    schemaclass=NanoAODSchema,
+    schemaclass=PFNanoAODSchema,
     metadata={"dataset": "signal"},
     delayed = False).events()
 
@@ -25,6 +25,8 @@ max_lep_dr = 0.4
 
 ### --- debug --- ###
 print(ak.sum(ak.num(signal_events.Jet)), "original jets, cut to ")
+
+PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)

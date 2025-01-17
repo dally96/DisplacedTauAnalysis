@@ -33,6 +33,9 @@ max_dr = 0.3
 max_lep_dr = 0.4
 score_increment_scale_factor = 4
 
+# Prevent lepton veto problems
+NanoAODSchema.mixins["DisMuon"] = "Muon"
+
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)
             return ak.all(mval > threshold, axis=-1)
