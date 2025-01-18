@@ -34,7 +34,7 @@ min_pT = 20
 max_eta = 2.4
 max_dr = 0.3
 max_lep_dr = 0.4
-score_increment_scale_factor = 4
+score_increment_scale_factor = 500
 
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)
@@ -181,11 +181,11 @@ cbar = fig.colorbar(roc)
 cbar.set_label('Score threshold')
 
 ax.set_xscale("log")
-#ax.set_ylim(0.7, 1.0)
+ax.set_ylim(0.85, 1.05)
 
 plt.xlabel(r"Fake rate $\left(\frac{false\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{true\_passing\_jets}{total\_true\_jets}\right)$")
 
 plt.grid()
-plt.savefig('pt-eta-cut-scaled-tau-tagger-rocc.pdf')
-plt.savefig('pt-eta-cut-scaled-tau-tagger-rocc.png')
+plt.savefig('pt-eta-lep-dr-cut-scaled-zoomed-tau-tagger-rocc.pdf')
+plt.savefig('pt-eta-lep-dr-cut-scaled-zoomed-tau-tagger-rocc.png')
