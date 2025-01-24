@@ -82,7 +82,7 @@ selections = {
               "MET_pT":                     105, ##GeV
              }
 
-num_bins = 25
+num_bins = 100
 range_min = 0
 range_max = 1
 
@@ -223,10 +223,13 @@ for proc in color_dict:
         num[proc][var] = ROOT.TH1F(f"h_{proc}_{var}_num", f";{var};Numerator", num_bins,  range_min, range_max)
         den[proc][var] = ROOT.TH1F(f"h_{proc}_{var}_den", f";{var};Denominator", num_bins, range_min, range_max)
 
+        num[proc][var].Sumw2()
+        den[proc][var].Sumw2()
+
         if "QCD" in proc:        
             for i in range(num_bins): 
-                num[proc][var].SetBinContent(i + 1, ak.sum(QCD_hists[f"muon_{var}"].view(flow=True)[1:num_bins + 1 - i]))
-                den[proc][var].SetBinContent(i + 1, ak.sum(QCD_hists[f"muon_{var}"].view(flow=True)))                    
+                num[proc][var].SetBinContent(i + 1, ak.sum(QCD_hists[f"leadingmuon_{var}"].view(flow=True)[1:num_bins + 1 - i]))
+                den[proc][var].SetBinContent(i + 1, ak.sum(QCD_hists[f"leadingmuon_{var}"].view(flow=True)))                    
         else: 
             for i in range(num_bins):
                 num[proc][var].SetBinContent(i + 1, ak.sum(out[proc][var].view(flow=True)[1:num_bins + 1 - i]))
@@ -255,7 +258,7 @@ for var in variables:
         eff[proc][var].Draw(draw_option)
         ROOT.gPad.Update()
         eff[proc][var].GetPaintedGraph().GetYaxis().SetRangeUser(0, 1.1)
-        eff[proc][var].GetPaintedGraph().GetYaxis().SetTitle("Efficiency")
+        eff[proc][var].SetTitle(f";{var};Efficiency")
 
     canvas.Update()
     legend.Draw()
@@ -275,52 +278,52 @@ for proc in eff:
 
 ROCC = {}
 rocc_colors = ["#c0a9b0", "#7880b5", "#6bbaec"]
-#rocc_legend = ROOT.TLegend()
-#rocc_legend.SetBorderSize(0)  # No border
-#rocc_legend.SetFillStyle(0)   # Transparent background
-#for i, var in enumerate(variables):
-#    print(f"Making ROC curve for {var}")
-#    ROCC[var] = ROOT.TGraph(num_bins, eff_list["QCD"][var], eff_list["Stau_100_100mm"][var])
-#    ROCC[var].SetLineColor(ROOT.TColor.GetColor(rocc_colors[i]))
-#    ROCC[var].SetMarkerColor(ROOT.TColor.GetColor(rocc_colors[i]))
-#    ROCC[var].SetMarkerStyle(20 + i)
-#    ROCC[var].SetLineWidth(2)
-#
-#    if i == 0:
-#        ROCC[var].Draw("APL")
-#        ROCC[var].GetXaxis().SetTitle("QCD")
-#        ROCC[var].GetYaxis().SetTitle("Stau")
-#        ROCC[var].SetTitle("Isolation ROC Curves")
-#    else:
-#        ROCC[var].Draw("PL SAME")
-#
-#    rocc_legend.AddEntry(ROCC[var], var, "LP")
-#
-#rocc_legend.Draw()
-#canvas.SaveAs("IsoROCC.pdf")
-#canvas.SaveAs("../www/roc_curves/isolation_roc_curves.png")
+rocc_legend = ROOT.TLegend()
+rocc_legend.SetBorderSize(0)  # No border
+rocc_legend.SetFillStyle(0)   # Transparent background
+for i, var in enumerate(variables):
+    print(f"Making ROC curve for {var}")
+    ROCC[var] = ROOT.TGraph(num_bins, eff_list["QCD"][var], eff_list["Stau_100_100mm"][var])
+    ROCC[var].SetLineColor(ROOT.TColor.GetColor(rocc_colors[i]))
+    ROCC[var].SetMarkerColor(ROOT.TColor.GetColor(rocc_colors[i]))
+    ROCC[var].SetMarkerStyle(20 + i)
+    ROCC[var].SetLineWidth(2)
 
-#for i, var in enumerate(variables):
-#    print(f"Making separate ROC curve for {var}")
-#    ROCC[var] = ROOT.TGraph(num_bins, eff_list["QCD"][var], eff_list["Stau_100_100mm"][var])
-#    ROCC[var].SetLineColor(ROOT.TColor.GetColor(rocc_colors[i]))
-#    ROCC[var].SetMarkerColor(ROOT.TColor.GetColor(rocc_colors[i]))
-#    ROCC[var].SetMarkerStyle(20 + i)
-#    ROCC[var].SetLineWidth(2)
-#
-#    ROCC[var].Draw("APL")
-#    ROCC[var].GetXaxis().SetTitle("QCD")
-#    ROCC[var].GetYaxis().SetTitle("Stau")
-#    ROCC[var].SetTitle(f"{var} ROC Curve")
-#
-#    latex = ROOT.TLatex()
-#    for j in range(num_bins): 
-#        latex.DrawLatex(eff_list["QCD"][var][j] + 0.01, eff_list["Stau_100_100mm"][var][j], f"{1 - 1/num_bins * j:.2f}")
-#        latex.SetTextColor(ROOT.TColor.GetColor(rocc_colors[i]))
-#        latex.SetTextSize(0.01)
-#
-#
-#    canvas.SaveAs(f"{var}_ROCC.pdf")
-#    canvas.SaveAs(f"../www/roc_curves/{var}_ROCC.png")
+    if i == 0:
+        ROCC[var].Draw("APL")
+        ROCC[var].GetXaxis().SetTitle("QCD")
+        ROCC[var].GetYaxis().SetTitle("Stau")
+        ROCC[var].SetTitle("Isolation ROC Curves")
+    else:
+        ROCC[var].Draw("PL SAME")
+
+    rocc_legend.AddEntry(ROCC[var], var, "LP")
+
+rocc_legend.Draw()
+canvas.SaveAs("IsoROCC.pdf")
+canvas.SaveAs("../www/roc_curves/isolation_roc_curves.png")
+
+for i, var in enumerate(variables):
+    print(f"Making separate ROC curve for {var}")
+    ROCC[var] = ROOT.TGraph(num_bins, eff_list["QCD"][var], eff_list["Stau_100_100mm"][var])
+    ROCC[var].SetLineColor(ROOT.TColor.GetColor(rocc_colors[i]))
+    ROCC[var].SetMarkerColor(ROOT.TColor.GetColor(rocc_colors[i]))
+    ROCC[var].SetMarkerStyle(20 + i)
+    ROCC[var].SetLineWidth(2)
+
+    ROCC[var].Draw("APL")
+    ROCC[var].GetXaxis().SetTitle("QCD")
+    ROCC[var].GetYaxis().SetTitle("Stau")
+    ROCC[var].SetTitle(f"{var} ROC Curve")
+
+    latex = ROOT.TLatex()
+    for j in range(num_bins): 
+        latex.DrawLatex(eff_list["QCD"][var][j] + 0.01, eff_list["Stau_100_100mm"][var][j], f"{1 - 1/num_bins * j:.2f}")
+        latex.SetTextColor(ROOT.TColor.GetColor(rocc_colors[i]))
+        latex.SetTextSize(0.01)
+
+
+    canvas.SaveAs(f"{var}_ROCC.pdf")
+    canvas.SaveAs(f"../www/roc_curves/{var}_ROCC.png")
     
  

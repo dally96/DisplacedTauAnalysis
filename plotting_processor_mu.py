@@ -1,4 +1,4 @@
-#FDCA40#5DFDCBimport numpy as np 
+import numpy as np 
 import hist
 import awkward as ak 
 import math
@@ -7,12 +7,15 @@ import array
 import ROOT
 import dask
 import dask_awkward as dak
+import dill as pickle
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 from coffea.analysis_tools import Weights, PackedSelection
 import hist.dask as hda
 import matplotlib  as mpl
 from  matplotlib import pyplot as plt
+import matplotlib.colors as color
+
 from xsec import *
 import time
 
@@ -20,7 +23,7 @@ start_time = time.time()
 
 
 SAMP = [
-      ['Stau_100_100mm', 'SIG'],
+      #['Stau_100_100mm', 'SIG'],
       ['QCD50_80', 'QCD'],
       ['QCD80_120','QCD'],
       ['QCD120_170','QCD'],
@@ -59,6 +62,7 @@ selections = {
               "muon_dxy_prompt_min":        0E-4, ##cm
               "muon_dxy_displaced_min":     100E-4, ##cm
               "muon_dxy_displaced_max":     10, ##cm
+              "muon_Iso_max":               0.19,
 
               "jet_score":                  0.9, 
               "jet_pt":                     32, ##GeV
@@ -70,22 +74,27 @@ variables_with_bins = {
     #"muon_pt": [(245, 20, 1000), "GeV"],
     #"muon_eta": [(50, -2.5, 2.5), ""],
     #"muon_phi": [(64, -3.2, 3.2), ""],
-    #"muon_dxy": [(200, -1, 1), "cm"],
+    #"muon_dxy": [(100, -10, 10), "cm"],
     #"muon_dz" : [(200, -1, 1), "cm"],
-    "muon_pfRelIso03_all": [(100, 0, 1), ""],
-    "muon_pfRelIso03_chg": [(100, 0, 1), ""],
-    "muon_pfRelIso04_all": [(100, 0, 1), ""],
+    #"muon_pfRelIso03_all": [(50, 0, 1), ""],
+    #"muon_pfRelIso03_chg": [(100, 0, 1), ""],
+    #"muon_pfRelIso04_all": [(100, 0, 1), ""],
+    #"muon_tightId": [(2,0,2), ""],
 
     #"jet_pt" : [(245, 20, 1000), "GeV"],
     #"jet_eta": [(48, -2.4, 2.4), ""],
     #"jet_phi": [(64, -3.2, 3.2), ""],
     #"jet_score": [(20, 0, 1), ""],
 
-    #"leadingmuon_pt": [(245, 20, 1000), "GeV"],
+    #"leadingmuon_pt": [(98, 20, 1000), "GeV"],
     #"leadingmuon_eta": [(50, -2.5, 2.5), ""],
     #"leadingmuon_phi": [(64, -3.2, 3.2), ""],
-    #"leadingmuon_dxy": [(200, -1, 1), "cm"],
+    "leadingmuon_dxy": [(100, -0.1, 0.1), "cm"],
     #"leadingmuon_dz" : [(200, -1, 1), "cm"],
+    "leadingmuon_pfRelIso03_all": [(100, 0, 1), ""],
+    "leadingmuon_pfRelIso03_chg": [(100, 0, 1), ""],
+    "leadingmuon_pfRelIso04_all": [(100, 0, 1), ""],
+
 
     #"leadingjet_pt" : [(245, 20, 1000), "GeV"],
     #"leadingjet_eta": [(48, -2.4, 2.4), ""],
@@ -95,7 +104,7 @@ variables_with_bins = {
     #"dR" : [(20, 0, 1), ""],
     #"deta": [(100, -5, 5), ""],
     #"dphi": [(64, -3.2, 3.2), ""],
-    #"MET_pT": [(225, 100, 1000), "GeV"],
+    #"MET_pT": [(90, 100, 1000), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -134,17 +143,34 @@ class ExampleProcessor(processor.ProcessorABC):
         for var, bin_info in self.vars_with_bins.items():
             print(f"Creating histogram for {var} with bin_info {bin_info}")
 
-            histograms[var] = hda.hist.Hist(hist.axis.Regular(*bin_info[0], name=var, label = var + ' ' + bin_info[1]))
+            histograms[var] = hda.hist.Hist(hist.axis.Regular(*bin_info[0], name=var, label = var + ' ' + bin_info[1], underflow = True, overflow = True))
 
             print(f"Successfully created histogram for {var}")
         return histograms
 
     def process(self, events, weights):
         # Object selection
+        for branch in events.fields:
+            if ("muon_" in branch) and ("leading" not in branch): 
+                events[f"leading{branch}"] = ak.firsts(events[branch])
+            if ("jet_" in branch) and ("leading" not in branch):
+                events[f"leading{branch}"] = ak.firsts(events[branch])
+            
+        leading_good_muons = ((events["leadingmuon_pt"] > selections["muon_pt"]) 
+                         & (events["leadingmuon_tightId"] ==  1)
+                         #& (abs(events["leadingmuon_dxy"]) > selections["muon_dxy_displaced_min"])
+                         #& (abs(events["leadingmuon_dxy"]) < selections["muon_dxy_displaced_max"])
+                         #& (events["leadingmuon_pfRelIso03_all"] < selections["muon_Iso_max"])
+                         )        
+        leading_good_jets = ((events["leadingjet_score"] > selections["jet_score"])
+                    & (events["leadingjet_pt"] > selections["jet_pt"])
+                    )        
+
         good_muons = ((events["muon_pt"] > selections["muon_pt"]) 
-                         &(events["muon_tightId"] ==  1)
+                         & (events["muon_tightId"] ==  1)
                          & (abs(events["muon_dxy"]) > selections["muon_dxy_displaced_min"])
                          & (abs(events["muon_dxy"]) < selections["muon_dxy_displaced_max"])
+                         & (events["muon_pfRelIso03_all"] < selections["muon_Iso_max"])
                          )        
         good_jets = ((events["jet_score"] > selections["jet_score"])
                     & (events["jet_pt"] > selections["jet_pt"])
@@ -156,24 +182,27 @@ class ExampleProcessor(processor.ProcessorABC):
         num_jets = ak.num(events["jet_pt"][good_jets])
         muon_event_mask = num_muons > 0
         jet_event_mask = num_jets > 0
-        events = events[muon_event_mask & jet_event_mask & good_events]
-
-
-        for branch in self.vars_with_bins:
-            if ("muon_" in branch) and ("leading" not in branch): 
-                events[branch] = events[branch][good_muons[muon_event_mask & jet_event_mask & good_events]]
-            if ("jet_" in branch) and ("leading" not in branch):
-                events[branch] = events[branch][good_jets[jet_event_mask & muon_event_mask & good_events]]
-                    
+        #regularevents = events[muon_event_mask & jet_event_mask & good_events]
+        #leadingevents = events[leading_good_muons & leading_good_jets & good_events]
+        #regularevents = events[muon_event_mask & good_events]
+        leadingevents = events[leading_good_muons & good_events]
+            
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
         for var in histograms:
-            histograms[var].fill(
-                **{var: dak.flatten(events[var], axis = None)},
-                weight = weights
-            )
-            
-            
+            if ("leading" or "deta" or "dphi" or "dR" or "MET" in var): 
+                histograms[var].fill(
+                    **{var: dak.flatten(leadingevents[var], axis = None)},
+                    weight = weights
+                )
+            else: 
+                histograms[var].fill(
+                    **{var: dak.flatten(regularevents[var], axis = None)},
+                    weight = weights
+                )
+        histograms["dxy_iso"] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins["leadingmuon_dxy"][0], name="muon_dxy", label = 'muon_dxy [cm]', underflow = True, overflow = True),
+                                              hist.axis.Regular(*variables_with_bins["leadingmuon_pfRelIso03_all"][0], name="muon_pfRelIso03_all", label = 'muon_pfRelIso03_all', underflow = True, overflow = True))
+        histograms["dxy_iso"].fill(**{"muon_dxy": dak.flatten(leadingevents["leadingmuon_dxy"], axis = None)}, **{"muon_pfRelIso03_all": dak.flatten(leadingevents["leadingmuon_pfRelIso03_all"], axis = None)}, weight = weights) 
         output = {"histograms": histograms}
         print(output)
         return output
@@ -208,7 +237,10 @@ for background, samples in background_samples.items():
     # Initialize a dictionary to hold ROOT histograms for the current background
     background_histograms[background] = {}
     for var in variables_with_bins:
-        background_histograms[background][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
+        background_histograms[background][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1], underflow = True, overflow = True)).compute()
+    background_histograms[background]["dxy_iso"] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins["leadingmuon_dxy"][0], name="muon_dxy", label = 'muon_dxy [cm]', underflow = True, overflow = True),
+                                                                 hist.axis.Regular(*variables_with_bins["leadingmuon_pfRelIso03_all"][0], name="muon_pfRelIso03_all", label = 'muon_pfRelIso03_all', underflow = True, overflow = True)).compute()
+
 
     print(f"For {background} here are samples {samples}") 
     for sample_file, sample_weight in samples:
@@ -237,7 +269,8 @@ for var in variables_with_bins:
                               "W": background_histograms["W"][var],
                               "DY": background_histograms["DY"][var],       
                                 })
-    s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2]])
+    s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1], colors[2], colors[3]])
+    #s.plot(stack = True, histtype= "fill", color = colors[1])
     for sample in background_samples:
         if "Stau" in sample: 
             background_histograms[sample][var].plot(color = '#B80C09', label = sample)
@@ -247,8 +280,55 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105/mu_stacked_histogram_{var}_111111.png")
+    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105_Iso03All0.19/mu_stacked_histogram_{var}_10.png")
 
+with open(f"muon_QCD_hists_firsts.pkl", "wb") as f:
+    pickle.dump(background_histograms["QCD"], f)
+print(f"pkl file written")
+        
+plt.cla()
+plt.clf()
+fig, ax = plt.subplots()
+w, x, y = background_histograms["QCD"]["dxy_iso"].to_numpy()
+mesh = ax.pcolormesh(x, y, w.T, norm=color.LogNorm(vmin=1E-2, vmax=1E5),shading='auto')
+ax.set_xlabel("muon_dxy [cm]")
+ax.set_ylabel("muon_pfRelIso03_all")
+plt.title("QCD")
+fig.colorbar(mesh)
+plt.savefig(f"../www/single_hists/muon_dxy_iso_QCD.png")
+
+plt.cla()
+plt.clf()
+fig, ax = plt.subplots()
+v, s, t = background_histograms["TT"]["dxy_iso"].to_numpy()
+cmesh = ax.pcolormesh(s, t, v.T, norm=color.LogNorm(vmin=1E-2, vmax=1E5),shading='auto')
+ax.set_xlabel("muon_dxy [cm]")
+ax.set_ylabel("muon_pfRelIso03_all")
+plt.title("TT")
+fig.colorbar(cmesh)
+plt.savefig(f"../www/single_hists/muon_dxy_iso_TT.png")
+
+plt.cla()
+plt.clf()
+fig, ax = plt.subplots()
+v, s, t = background_histograms["DY"]["dxy_iso"].to_numpy()
+cmesh = ax.pcolormesh(s, t, v.T, norm=color.LogNorm(vmin=1E-2, vmax=1E5),shading='auto')
+ax.set_xlabel("muon_dxy [cm]")
+ax.set_ylabel("muon_pfRelIso03_all")
+plt.title("DY")
+fig.colorbar(cmesh)
+plt.savefig(f"../www/single_hists/muon_dxy_iso_DY.png")
+
+plt.cla()
+plt.clf()
+fig, ax = plt.subplots()
+v, s, t = background_histograms["W"]["dxy_iso"].to_numpy()
+cmesh = ax.pcolormesh(s, t, v.T, norm=color.LogNorm(vmin=1E-2, vmax=1E5),shading='auto')
+ax.set_xlabel("muon_dxy [cm]")
+ax.set_ylabel("muon_pfRelIso03_all")
+plt.title("W")
+fig.colorbar(cmesh)
+plt.savefig(f"../www/single_hists/muon_dxy_iso_W.png")
 
 
 

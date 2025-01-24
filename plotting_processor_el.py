@@ -20,25 +20,25 @@ start_time = time.time()
 
 
 SAMP = [
-      ['Stau_100_100mm', 'SIG'],
-      ['QCD50_80', 'QCD'],
-      ['QCD80_120','QCD'],
-      ['QCD120_170','QCD'],
-      ['QCD170_300','QCD'],
-      ['QCD300_470','QCD'],
-      ['QCD470_600','QCD'],
-      ['QCD600_800','QCD'],
-      ['QCD800_1000','QCD'],
-      ['QCD1000_1400','QCD'],
-      ['QCD1400_1800','QCD'],
-      ['QCD1800_2400','QCD'],
-      ['QCD2400_3200','QCD'],
-      ['QCD3200','QCD'],
-      ["DYJetsToLL", 'EWK'],  
-      ["WtoLNu2Jets", 'EWK'],
+      #['Stau_100_100mm', 'SIG'],
+      #['QCD50_80', 'QCD'],
+      #['QCD80_120','QCD'],
+      #['QCD120_170','QCD'],
+      #['QCD170_300','QCD'],
+      #['QCD300_470','QCD'],
+      #['QCD470_600','QCD'],
+      #['QCD600_800','QCD'],
+      #['QCD800_1000','QCD'],
+      #['QCD1000_1400','QCD'],
+      #['QCD1400_1800','QCD'],
+      #['QCD1800_2400','QCD'],
+      #['QCD2400_3200','QCD'],
+      #['QCD3200','QCD'],
+      #["DYJetsToLL", 'EWK'],  
+      #["WtoLNu2Jets", 'EWK'],
       ["TTtoLNu2Q",  'TT'],
-      ["TTto4Q", 'TT'],
-      ["TTto2L2Nu", 'TT'],
+      #["TTto4Q", 'TT'],
+      #["TTto2L2Nu", 'TT'],
       ]
 
 lumi = 38.01 ##fb-1
@@ -67,33 +67,33 @@ selections = {
              }
 
 variables_with_bins = {
-    "electron_pt": [(245, 20, 1000), "GeV"],
-    "electron_eta": [(50, -2.5, 2.5), ""],
-    "electron_phi": [(64, -3.2, 3.2), ""],
-    "electron_dxy": [(200, -1, 1), "cm"],
-    "electron_dz" : [(200, -1, 1), "cm"],
-    "electron_cutBased" : [(5, 0, 5), ""],
+    #"electron_pt": [(245, 20, 1000), "GeV"],
+    #"electron_eta": [(50, -2.5, 2.5), ""],
+    #"electron_phi": [(64, -3.2, 3.2), ""],
+    #"electron_dxy": [(200, -1, 1), "cm"],
+    #"electron_dz" : [(200, -1, 1), "cm"],
+    #"electron_cutBased" : [(5, 0, 5), ""],
 
-    "jet_pt" : [(245, 20, 1000), "GeV"],
-    "jet_eta": [(48, -2.4, 2.4), ""],
-    "jet_phi": [(64, -3.2, 3.2), ""],
-    "jet_score": [(20, 0, 1), ""],
+    #"jet_pt" : [(245, 20, 1000), "GeV"],
+    #"jet_eta": [(48, -2.4, 2.4), ""],
+    #"jet_phi": [(64, -3.2, 3.2), ""],
+    #"jet_score": [(20, 0, 1), ""],
 
-    "leadingelectron_pt": [(245, 20, 1000), "GeV"],
-    "leadingelectron_eta": [(50, -2.5, 2.5), ""],
-    "leadingelectron_phi": [(64, -3.2, 3.2), ""],
-    "leadingelectron_dxy": [(200, -1, 1), "cm"],
-    "leadingelectron_dz" : [(200, -1, 1), "cm"],
+    #"leadingelectron_pt": [(245, 20, 1000), "GeV"],
+    #"leadingelectron_eta": [(50, -2.5, 2.5), ""],
+    #"leadingelectron_phi": [(64, -3.2, 3.2), ""],
+    "leadingelectron_dxy": [(2000, -10, 10), "cm"],
+    #"leadingelectron_dz" : [(200, -1, 1), "cm"],
 
-    "leadingjet_pt" : [(245, 20, 1000), "GeV"],
-    "leadingjet_eta": [(48, -2.4, 2.4), ""],
-    "leadingjet_phi": [(64, -3.2, 3.2), ""],
-    "leadingjet_score": [(20, 0, 1), ""],
+    #"leadingjet_pt" : [(245, 20, 1000), "GeV"],
+    #"leadingjet_eta": [(48, -2.4, 2.4), ""],
+    #"leadingjet_phi": [(64, -3.2, 3.2), ""],
+    #"leadingjet_score": [(20, 0, 1), ""],
 
-    "dR" : [(20, 0, 1), ""],
-    "deta": [(100, -5, 5), ""],
-    "dphi": [(64, -3.2, 3.2), ""],
-    "MET_pT": [(225, 100, 1000), "GeV"],
+    #"dR" : [(20, 0, 1), ""],
+    #"deta": [(100, -5, 5), ""],
+    #"dphi": [(64, -3.2, 3.2), ""],
+    #"MET_pT": [(225, 100, 1000), "GeV"],
     }
 
 def get_stack_maximum(stack):
@@ -139,31 +139,58 @@ class ExampleProcessor(processor.ProcessorABC):
 
     def process(self, events, weights):
         # Object selection
-        good_electrons = ((events["electron_pt"] > selections["electron_pt"]) 
-                         & (events["electron_cutBased"] == selections["electron_cutBased"])
-                         & (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
+        good_electrons = (#(events["electron_pt"] > selections["electron_pt"]) 
+                         #& (events["electron_cutBased"] == selections["electron_cutBased"])
+                          (abs(events["electron_dxy"]) > selections["electron_dxy_displaced_min"])
                          & (abs(events["electron_dxy"]) < selections["electron_dxy_displaced_max"])
                          )        
+        #for i in range(20): 
+        #    for j in range(len(events["electron_dxy"][i].compute())):
+        #        print(f"Electron dxy for event {i} is {events['electron_dxy'][i][j].compute()}")
 
         good_jets = ((events["jet_score"] > selections["jet_score"])
                     & (events["jet_pt"] > selections["jet_pt"])
                     )
+        #for i in range(20): 
+        #    for j in range(len(events["jet_score"][i].compute())):
+        #        print(f"Jet score for event {i} is {events['jet_score'][i][j].compute()}")
+        #        print(f"Jet pt for event {i} is {events['jet_pt'][i][j].compute()}")
 
         good_events = (events["MET_pT"] > selections["MET_pT"])
 
         num_electrons = ak.num(events["electron_pt"][good_electrons])
+        #for i in range(20):
+        #    print(f"Num electrons for event {i} is {num_electrons[i].compute()}")
         num_jets = ak.num(events["jet_pt"][good_jets])
         electron_event_mask = num_electrons > 0
+        #for i in range(20):
+        #    print(f"Does event {i} have at least one electron? {electron_event_mask[i].compute()}")
         jet_event_mask = num_jets > 0
+        #for i in range(20):
+            #print(f"Does event {i} have at least one jet? {jet_event_mask[i].compute()}")
+        print(good_electrons.compute())
+        print(electron_event_mask.compute())
+        print(jet_event_mask.compute())
+        print(good_events.compute())
+        #print(events["electron_dxy"][good_electrons[electron_event_mask & jet_event_mask & good_events]].compute())
         events = events[electron_event_mask & jet_event_mask & good_events]
+        print(len(events['electron_dxy'].compute()))
+        print(events['leadingelectron_dxy'].compute())
+        #for i in range(5): 
+        #    print(f"Electron dxy for event {i} is {events['electron_dxy'][i].compute()}")
+        
+        
+        
 
 
-        for branch in self.vars_with_bins:
+        for branch in events.fields:
             if ("electron_" in branch) and ("leading" not in branch): 
+                print(branch)
                 events[branch] = events[branch][good_electrons[electron_event_mask & jet_event_mask & good_events]]
             if ("jet_" in branch) and ("leading" not in branch):
                 events[branch] = events[branch][good_jets[jet_event_mask & electron_event_mask & good_events]]
                     
+        print(events["electron_dxy"].compute())
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
         for var in histograms:
@@ -229,23 +256,23 @@ for background, samples in background_samples.items():
 for var in variables_with_bins:
     plt.cla()
     plt.clf()
-    s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
+    s = hist.Stack.from_dict({#"QCD": background_histograms["QCD"][var],
                               "TT" : background_histograms["TT"][var],
-                              "W": background_histograms["W"][var],
-                              "DY": background_histograms["DY"][var],       
+                              #"W": background_histograms["W"][var],
+                              #"DY": background_histograms["DY"][var],       
                                 })
 
-    s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2], colors[3]])
-    for sample in background_samples:
-        if "Stau" in sample: 
-            background_histograms[sample][var].plot(color = '#B80C09', label = sample)
+    s.plot(stack = True, histtype= "fill", color = [colors[1]])
+    #for sample in background_samples:
+    #    if "Stau" in sample: 
+    #        background_histograms[sample][var].plot(color = '#B80C09', label = sample)
 
     plt.xlabel(var + ' ' + variables_with_bins[var][1])
     plt.ylabel("A.U.")
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105/el_stacked_histogram_{var}_111111.png")
+    plt.savefig(f"../www/single_hists/el_stacked_histogram_{var}_elPt_elID_elDis_jetCuts_METCuts.png")
 
 
 end_time = time.time()
