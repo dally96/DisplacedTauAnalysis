@@ -1,6 +1,9 @@
 import sys
+import uproot
 import argparse
 import json
+import pyarrow as pa
+import pyarrow.parquet as pq
 import numpy as np
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
@@ -102,7 +105,7 @@ def main():
                          & (events.Flag.hfNoisyHitsFilter == 1)
                          & (events.Flag.eeBadScFilter == 1)
                          & (events.Flag.ecalBadCalibFilter == 1)
-                         )
+                             )
 
             events = events[noise_mask] 
             
@@ -116,63 +119,105 @@ def main():
             if is_MC: weights = events.genWeight / sumWeights 
             else: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
             logger.info("Defined weights")
+   
+            out_dict = {"DisMuon": {}, "Jet": {}}
+            muon_vars = [ 
+                        "pt",
+                        "eta",
+                        "phi",
+                        "charge",
+                        "dxy",
+                        "dxyErr",
+                        "dz",
+                        "dzErr",
+                        "looseId",
+                        "mediumId",
+                        "tightId",
+                        "pfRelIso03_all",
+                        "pfRelIso03_chg",
+                        "pfRelIso04_all",
+                        ]
+            jet_vars = [
+                        "pt",
+                        "eta",
+                        "phi",
+                        "disTauTag_score1",
+                        ]
+            for branch in muon_vars:
+                out_dict["DisMuon"][branch] = events["DisMuon"][branch]
+            for branch in jet_vars:
+                out_dict["Jet"][branch] = events["Jet"][branch]
+                
     
             out = ak.zip({
-                "muon_pt": events.DisMuon.pt,
-                "muon_eta": events.DisMuon.eta,
-                "muon_phi": events.DisMuon.phi,
-                "muon_charge": events.DisMuon.charge,
-                "muon_dxy": events.DisMuon.dxy,
-                "muon_dxyErr": events.DisMuon.dxyErr,
-                "muon_dz": events.DisMuon.dz,
-                "muon_dzErr": events.DisMuon.dzErr,
-                "muon_ntrk": events.DisMuon.nTrackerLayers,
-                "muon_looseId": events.DisMuon.looseId,
-                "muon_mediumId": events.DisMuon.mediumId,
-                "muon_tightId": events.DisMuon.tightId,
-                "muon_pfRelIso03_all": events.DisMuon.pfRelIso03_all,
-                "muon_pfRelIso03_chg": events.DisMuon.pfRelIso03_chg,
-                "muon_pfRelIso04_all": events.DisMuon.pfRelIso04_all,
+                "DisMuon_pt": events.DisMuon.pt,
+                "DisMuon_eta": events.DisMuon.eta,
+                "DisMuon_phi": events.DisMuon.phi,
+                "DisMuon_charge": events.DisMuon.charge,
+                "DisMuon_dxy": events.DisMuon.dxy,
+                "DisMuon_dxyErr": events.DisMuon.dxyErr,
+                "DisMuon_dz": events.DisMuon.dz,
+                "DisMuon_dzErr": events.DisMuon.dzErr,
+                "DisMuon_ntrk": events.DisMuon.nTrackerLayers,
+                "DisMuon_looseId": events.DisMuon.looseId,
+                "DisMuon_mediumId": events.DisMuon.mediumId,
+                "DisMuon_tightId": events.DisMuon.tightId,
+                "DisMuon_pfRelIso03_all": events.DisMuon.pfRelIso03_all,
+                "DisMuon_pfRelIso03_chg": events.DisMuon.pfRelIso03_chg,
+                "DisMuon_pfRelIso04_all": events.DisMuon.pfRelIso04_all,
     
-                "jet_pt": events.Jet.pt, 
-                "jet_eta": events.Jet.eta,
-                "jet_phi": events.Jet.phi,
+                "Jet_pt": events.Jet.pt, 
+                "Jet_eta": events.Jet.eta,
+                "Jet_phi": events.Jet.phi,
                 #"jet_d0": ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis=-1), 
-                "jet_score": events.Jet.disTauTag_score1, 
-                "jet_partonFlavor": events.Jet.partonFlavour,
-    
-                "leadingjet_pt": leadingjet.pt,
-                "leadingjet_eta": leadingjet.eta,
-                "leadingjet_phi": leadingjet.phi,
-                "leadingjet_score": leadingjet.disTauTag_score1,
-                "leadingjet_partonFlavor": leadingjet.partonFlavour,
+                "Jet_score": events.Jet.disTauTag_score1, 
+                "Jet_partonFlavor": events.Jet.partonFlavour,
 
-                "leadingmuon_pt": leadingmu.pt,
-                "leadingmuon_eta": leadingmu.eta,
-                "leadingmuon_phi": leadingmu.phi,
-                "leadingmuon_charge": leadingmu.charge,
-                "leadingmuon_dxy": leadingmu.dxy,
-                "leadingmuon_dxyErr": leadingmu.dxyErr,
-                "leadingmuon_dz": leadingmu.dz,
-                "leadingmuon_dzErr": leadingmu.dzErr,
-                "leadingmuon_ntrk": leadingmu.nTrackerLayers,
-
-                "deta": leadingmu.eta - leadingjet.eta,
-                "dphi": leadingmu.delta_phi(leadingjet),
-                "dR" : leadingmu.delta_r(leadingjet),
+                "event" : events.event,
+                "run" : events.run,
+                "luminosityBlock" : events.luminosityBlock,
     
-                "MET_pT": events.MET.pt,
-                "NJets": ak.num(events.Jet),
-                "NGoodMuons": ak.num(events.DisMuon),
-                "weight": weights, #*valsf,
-                "intLumi": ak.ones_like(weights)*lumi,
-                "generator_scalePDF": events.Generator.scalePDF,
+            ##    "LeadingJet_pt": leadingjet.pt,
+            #    "LeadingJet_eta": leadingjet.eta,
+            #    "LeadingJet_phi": leadingjet.phi,
+            #    "LeadingJet_score": leadingjet.disTauTag_score1,
+            #    "LeadingJet_partonFlavor": leadingjet.partonFlavour,
+
+            #    "LeadingMuon_pt": leadingmu.pt,
+            #    "LeadingMuon_eta": leadingmu.eta,
+            #    "LeadingMuon_phi": leadingmu.phi,
+            #    "LeadingMuon_charge": leadingmu.charge,
+            #    "LeadingMuon_dxy": leadingmu.dxy,
+            #    "LeadingMuon_dxyErr": leadingmu.dxyErr,
+            #    "LeadingMuon_dz": leadingmu.dz,
+            #    "LeadingMuon_dzErr": leadingmu.dzErr,
+            #    "LeadingMuon_ntrk": leadingmu.nTrackerLayers,
+
+            #    "deta": leadingmu.eta - leadingjet.eta,
+            #    "dphi": leadingmu.delta_phi(leadingjet),
+            #    "dR" : leadingmu.delta_r(leadingjet),
+    
+            #    "MET_pT": events.MET.pt,
+            #    "NJets": ak.num(events.Jet),
+            #    "NGoodMuons": ak.num(events.DisMuon),
+            #    "weight": weights, #*valsf,
+            #    "intLumi": ak.ones_like(weights)*lumi,
+            #    "generator_scalePDF": events.Generator.scalePDF,
             }, depth_limit = 1)
-    
+            
+            #out = dak.Record(out_dict, "out")
+            #out_dict = dak.Array(out_dict)
             #out = dak.from_awkward(out, npartitions = 1)
+            out_dict["DisMuon"] = ak.zip(out_dict["DisMuon"], depth_limit = 1)
+            out_dict["Jet"] = ak.zip(out_dict["Jet"], depth_limit = 1)
+            out_dict["event"] = events.event
+            out_dict["run"] = events.run
+            out_dict["luminosityBlock"] = events.luminosityBlock
+            out_dict = ak.zip(out_dict, depth_limit = 1)
             logger.info("Prepare tuple to be written")
             logger.info("Write tuple out")
-            
+            #print("out is ", out.compute())
+            #skim = pq.write_table(out_table, "output.parquet")
             skim = dak.to_parquet(out, 'my_skim_muon_' + events.metadata['dataset'], compute=False)
             return skim
             logger.info("Tuple written outg to parquet")

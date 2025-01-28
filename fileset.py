@@ -12,11 +12,11 @@ fileset = {
             #'/eos/cms/store/user/fiorendi/displacedTaus/test_btvNano/nano_TStauStau_m100_ct100mm_noBTV_with-disTauTagScore_100_newFormat_with-disTauTagScore.root': 'Events',
           }
       },
-     'QCD1000_1400': {
-         "files": {
-             '080924_BG_Out/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/240809_220931/0000/*':"Events", 
-         }
-     },
+#     'QCD1000_1400': {
+#         "files": {
+#             '080924_BG_Out/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/240809_220931/0000/*':"Events", 
+#         }
+#     },
 #     'QCD120_170': {
 #         "files": {
 #             '080924_BG_Out/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/240809_221059/0000/*': "Events",
