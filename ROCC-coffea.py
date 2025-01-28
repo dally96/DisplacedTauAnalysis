@@ -68,19 +68,19 @@ stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with 
 #cut_signal_jets = apply_cuts(apply_lepton_veto(signal_events).Jet)
 cut_signal = apply_lepton_veto(signal_events)
 cut_signal_jets = apply_cuts(cut_signal.Jet)
-true_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
-matched_signal_scores = true_tau_jets.disTauTag_score1
+matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
+matched_signal_scores = matched_tau_jets.disTauTag_score1
 
 # Background processing
 bg_jets = bg_events.Jet
 cut_bg_jets = apply_cuts(bg_jets)
 bg_scores = cut_bg_jets.disTauTag_score1
-false_tau_jets = cut_bg_jets # No staus present in bg
+fake_tau_jets = cut_bg_jets # No staus present in bg
 matched_bg_scores = bg_scores
 
 # Jet totals
-total_true_tau_jets = ak.sum(ak.num(true_tau_jets))
-total_false_tau_jets = ak.sum(ak.num(false_tau_jets))
+total_matched_tau_jets = ak.sum(ak.num(matched_tau_jets))
+total_fake_tau_jets = ak.sum(ak.num(fake_tau_jets))
 
 total_jets = (
     ak.sum(ak.num(cut_signal_jets)) +
@@ -95,18 +95,18 @@ for increment in range(0, score_increment_scale_factor+1):
     threshold = increment / score_increment_scale_factor
 
     passing_signal_mask = matched_signal_scores >= threshold
-    true_passing_jets = true_tau_jets[passing_signal_mask]
+    matched_passing_jets = matched_tau_jets[passing_signal_mask]
 
     passing_bg_mask = matched_bg_scores >= threshold
-    false_passing_jets = false_tau_jets[passing_bg_mask]
+    fake_passing_jets = fake_tau_jets[passing_bg_mask]
 
     # --- Totals --- #
-    total_true_passing_jets = ak.sum(ak.num(true_passing_jets))
-    total_false_passing_jets = ak.sum(ak.num(false_passing_jets))
+    total_matched_passing_jets = ak.sum(ak.num(matched_passing_jets))
+    total_fake_passing_jets = ak.sum(ak.num(fake_passing_jets))
 
     # --- Results --- #
-    efficiency = total_true_passing_jets / total_true_tau_jets
-    fake_rate = total_false_passing_jets / total_jets
+    efficiency = total_matched_passing_jets / total_matched_tau_jets
+    fake_rate = total_fake_passing_jets / total_jets
 
     thresholds.append(threshold)
     fake_rates.append(fake_rate)
@@ -183,8 +183,8 @@ cbar.set_label('Score threshold')
 ax.set_xscale("log")
 ax.set_ylim(0.85, 1.05)
 
-plt.xlabel(r"Fake rate $\left(\frac{false\_passing\_jets}{total\_jets}\right)$")
-plt.ylabel(r"Tau tagger efficiency $\left(\frac{true\_passing\_jets}{total\_true\_jets}\right)$")
+plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
+plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
 plt.savefig('pt-eta-lep-dr-cut-scaled-zoomed-tau-tagger-rocc.pdf')
