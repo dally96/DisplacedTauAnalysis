@@ -115,38 +115,39 @@ def main():
             leadingmu = ak.firsts(events.DisMuon)
             leadingjet = ak.firsts(events.Jet)
             logger.info("Defined leading muons and jets")
+            events['nDisMuon'] = dak.num(events.DisMuon)
+            events['nJet'] = dak.num(events.Jet)
     
             if is_MC: weights = events.genWeight / sumWeights 
             else: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
             logger.info("Defined weights")
-   
-            out_dict = {"DisMuon": {}, "Jet": {}}
-            muon_vars = [ 
-                        "pt",
-                        "eta",
-                        "phi",
-                        "charge",
-                        "dxy",
-                        "dxyErr",
-                        "dz",
-                        "dzErr",
-                        "looseId",
-                        "mediumId",
-                        "tightId",
-                        "pfRelIso03_all",
-                        "pfRelIso03_chg",
-                        "pfRelIso04_all",
-                        ]
-            jet_vars = [
-                        "pt",
-                        "eta",
-                        "phi",
-                        "disTauTag_score1",
-                        ]
-            for branch in muon_vars:
-                out_dict["DisMuon"][branch] = events["DisMuon"][branch]
-            for branch in jet_vars:
-                out_dict["Jet"][branch] = events["Jet"][branch]
+            out_dict = {"DisMuon": events.DisMuon}
+            #muon_vars = [ 
+            #            "pt",
+            #            "eta",
+            #            "phi",
+            #            "charge",
+            #            "dxy",
+            #            "dxyErr",
+            #            "dz",
+            #            "dzErr",
+            #            "looseId",
+            #            "mediumId",
+            #            "tightId",
+            #            "pfRelIso03_all",
+            #            "pfRelIso03_chg",
+            #            "pfRelIso04_all",
+            #            ]
+            #jet_vars = [
+            #            "pt",
+            #            "eta",
+            #            "phi",
+            #            "disTauTag_score1",
+            #            ]
+            #for branch in muon_vars:
+            #    out_dict["DisMuon"][branch] = events["DisMuon"][branch]
+            #for branch in jet_vars:
+            #    out_dict["Jet"][branch] = events["Jet"][branch]
                 
     
             out = ak.zip({
@@ -173,9 +174,12 @@ def main():
                 "Jet_score": events.Jet.disTauTag_score1, 
                 "Jet_partonFlavor": events.Jet.partonFlavour,
 
-                "event" : events.event,
-                "run" : events.run,
-                "luminosityBlock" : events.luminosityBlock,
+                "event": events.event,
+                "run": events.run,
+                "luminosityBlock": events.luminosityBlock,
+                
+                "nDisMuon": events.nDisMuon,
+                "nJet": events.nJet,
     
             ##    "LeadingJet_pt": leadingjet.pt,
             #    "LeadingJet_eta": leadingjet.eta,
@@ -208,17 +212,21 @@ def main():
             #out = dak.Record(out_dict, "out")
             #out_dict = dak.Array(out_dict)
             #out = dak.from_awkward(out, npartitions = 1)
-            out_dict["DisMuon"] = ak.zip(out_dict["DisMuon"], depth_limit = 1)
-            out_dict["Jet"] = ak.zip(out_dict["Jet"], depth_limit = 1)
+            #out_dict["DisMuon"] = ak.zip(out_dict["DisMuon"], depth_limit = 1)
+            #out_dict["Jet"] = ak.zip(out_dict["Jet"], depth_limit = 1)
             out_dict["event"] = events.event
             out_dict["run"] = events.run
             out_dict["luminosityBlock"] = events.luminosityBlock
+            out_dict["nDisMuon"] = dak.num(events.DisMuon)
             out_dict = ak.zip(out_dict, depth_limit = 1)
+            
+            #out_array = ak.Array([events.DisMuon, events.nDisMuon, events.event, events.run, events.luminosityBlock])
+
             logger.info("Prepare tuple to be written")
             logger.info("Write tuple out")
             #print("out is ", out.compute())
             #skim = pq.write_table(out_table, "output.parquet")
-            skim = dak.to_parquet(out, 'my_skim_muon_' + events.metadata['dataset'], compute=False)
+            skim = dak.to_parquet(events, 'my_skim_muon_' + events.metadata['dataset'], compute=False)
             return skim
             logger.info("Tuple written outg to parquet")
    
