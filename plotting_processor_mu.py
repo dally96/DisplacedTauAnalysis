@@ -23,7 +23,7 @@ start_time = time.time()
 
 
 SAMP = [
-      #['Stau_100_100mm', 'SIG'],
+      ['Stau_100_100mm', 'SIG'],
       ['QCD50_80', 'QCD'],
       ['QCD80_120','QCD'],
       ['QCD120_170','QCD'],
@@ -60,7 +60,7 @@ selections = {
               "muon_ID":                    "muon_tightId",
               "muon_dxy_prompt_max":        50E-4, ##cm
               "muon_dxy_prompt_min":        0E-4, ##cm
-              "muon_dxy_displaced_min":     100E-4, ##cm
+              "muon_dxy_displaced_min":     0.1, ##cm
               "muon_dxy_displaced_max":     10, ##cm
               "muon_Iso_max":               0.19,
 
@@ -89,11 +89,11 @@ variables_with_bins = {
     #"leadingmuon_pt": [(98, 20, 1000), "GeV"],
     #"leadingmuon_eta": [(50, -2.5, 2.5), ""],
     #"leadingmuon_phi": [(64, -3.2, 3.2), ""],
-    "leadingmuon_dxy": [(100, -0.1, 0.1), "cm"],
+    "leadingmuon_dxy": [(25, 0, 0.1), "cm"],
     #"leadingmuon_dz" : [(200, -1, 1), "cm"],
-    "leadingmuon_pfRelIso03_all": [(100, 0, 1), ""],
-    "leadingmuon_pfRelIso03_chg": [(100, 0, 1), ""],
-    "leadingmuon_pfRelIso04_all": [(100, 0, 1), ""],
+    "leadingmuon_pfRelIso03_all": [(25, 0, 1), ""],
+    #"leadingmuon_pfRelIso03_chg": [(100, 0, 1), ""],
+    #"leadingmuon_pfRelIso04_all": [(100, 0, 1), ""],
 
 
     #"leadingjet_pt" : [(245, 20, 1000), "GeV"],
@@ -202,7 +202,7 @@ class ExampleProcessor(processor.ProcessorABC):
                 )
         histograms["dxy_iso"] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins["leadingmuon_dxy"][0], name="muon_dxy", label = 'muon_dxy [cm]', underflow = True, overflow = True),
                                               hist.axis.Regular(*variables_with_bins["leadingmuon_pfRelIso03_all"][0], name="muon_pfRelIso03_all", label = 'muon_pfRelIso03_all', underflow = True, overflow = True))
-        histograms["dxy_iso"].fill(**{"muon_dxy": dak.flatten(leadingevents["leadingmuon_dxy"], axis = None)}, **{"muon_pfRelIso03_all": dak.flatten(leadingevents["leadingmuon_pfRelIso03_all"], axis = None)}, weight = weights) 
+        histograms["dxy_iso"].fill(**{"muon_dxy": dak.flatten(abs(leadingevents["leadingmuon_dxy"]), axis = None)}, **{"muon_pfRelIso03_all": dak.flatten(leadingevents["leadingmuon_pfRelIso03_all"], axis = None)}, weight = weights) 
         output = {"histograms": histograms}
         print(output)
         return output
@@ -280,7 +280,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105_Iso03All0.19/mu_stacked_histogram_{var}_10.png")
+    #plt.savefig(f"../www/pt30_tightId_displaced0.1_score90_jetPt32_MET105_Iso03All0.19/mu_stacked_histogram_{var}.png")
 
 with open(f"muon_QCD_hists_firsts.pkl", "wb") as f:
     pickle.dump(background_histograms["QCD"], f)
@@ -301,48 +301,56 @@ plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["QCD"]["dxy_iso"].profile("muon_dxy").plot()
+plt.title("QCD")
 plt.savefig(f"../www/single_hists/muon_iso_QCD_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["QCD"]["dxy_iso"].profile("muon_pfRelIso03_all").plot()
+plt.title("QCD")
 plt.savefig(f"../www/single_hists/muon_dxy_QCD_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["TT"]["dxy_iso"].profile("muon_dxy").plot()
+plt.title("TT")
 plt.savefig(f"../www/single_hists/muon_iso_TT_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["TT"]["dxy_iso"].profile("muon_pfRelIso03_all").plot()
+plt.title("TT")
 plt.savefig(f"../www/single_hists/muon_dxy_TT_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["W"]["dxy_iso"].profile("muon_dxy").plot()
+plt.title("W")
 plt.savefig(f"../www/single_hists/muon_iso_W_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["W"]["dxy_iso"].profile("muon_pfRelIso03_all").plot()
+plt.title("W")
 plt.savefig(f"../www/single_hists/muon_dxy_W_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["DY"]["dxy_iso"].profile("muon_dxy").plot()
+plt.title("DY")
 plt.savefig(f"../www/single_hists/muon_iso_DY_profile.png")
 
 plt.cla()
 plt.clf()
 fig, ax = plt.subplots()
 background_histograms["DY"]["dxy_iso"].profile("muon_pfRelIso03_all").plot()
+plt.title("DY")
 plt.savefig(f"../www/single_hists/muon_dxy_DY_profile.png")
 
 
