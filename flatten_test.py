@@ -27,7 +27,8 @@ events['staus_taus'] = events.staus.distinctChildren[ (abs(events.staus.distinct
                                                   (events.staus.distinctChildren.hasFlags("isLastCopy")) #& \
 #                                                  (events.staus.distinctChildren.pt > 5)
                                                  ]
-print(f"Before arg sort {events.staus_taus.pt[71856].compute()}")
+print(f"Before arg sort {events.staus_taus.distinctChildren.pdgId[56313].compute()}")
+print(f"Before arg sort Gen Vis Taus are {events.GenVisTau.genPartIdxMother.compute()[56313]}")
 print(f"Printing staus_taus structure {events.staus_taus.pdgId.compute()}")
 events['staus_taus'] = ak.firsts(events.staus_taus[ak.argsort(events.staus_taus.pt, ascending=False)], axis = 2)
 print(f"Printing staus_taus structure {events.staus_taus.pdgId.compute()}")
