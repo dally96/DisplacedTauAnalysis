@@ -65,7 +65,6 @@ def apply_lepton_veto(evt_collection: ak.highlevel.Array):
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-#cut_signal_jets = apply_cuts(apply_lepton_veto(signal_events).Jet)
 cut_signal = apply_lepton_veto(signal_events)
 cut_signal_jets = apply_cuts(cut_signal.Jet)
 matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
