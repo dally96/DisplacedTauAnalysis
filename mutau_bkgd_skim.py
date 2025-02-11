@@ -110,7 +110,7 @@ def main():
 
             events = events[noise_mask] 
 
-            Trigger Selection
+            #Trigger Selection
             trigger_mask = (
                             events.HLT.PFMET120_PFMHT120_IDTight                                    |\
                             events.HLT.PFMET130_PFMHT130_IDTight                                    |\
