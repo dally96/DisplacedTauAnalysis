@@ -110,7 +110,7 @@ def main():
 
             events = events[noise_mask] 
 
-            Trigger Selection
+            #Trigger Selection
             trigger_mask = (
                             events.HLT.PFMET120_PFMHT120_IDTight                                    |\
                             events.HLT.PFMET130_PFMHT130_IDTight                                    |\
@@ -202,7 +202,7 @@ def main():
                          ]
 
             tau_vars   = events.Tau.fields                        
-            MET_vars   = events.MET.fields  
+            MET_vars   = events.PFMET.fields  
             JetPF_vars = events.JetPFCands.fields
      
             for branch in muon_vars:
@@ -216,7 +216,7 @@ def main():
             for branch in tau_vars:
                 out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
             for branch in MET_vars: 
-                out_dict["MET_"       + branch]  = ak.drop_none(events["MET"][branch])    
+                out_dict["PFMET_"       + branch]  = ak.drop_none(events["MET"][branch])    
             for branch in JetPF_vars:
                 out_dict["JetPFCands_" + branch] = ak.drop_none(events["JetPFCands"][branch])
 

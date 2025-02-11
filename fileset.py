@@ -7,9 +7,9 @@ fileset = {
 #        },
       'Stau_100_100mm': {
         "files": {
-             'SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root': "Events",
-            #"/eos/cms/store/user/fiorendi/displacedTaus/test_btvNano//nano_TStauStau_m100_ct100mm_noBTV_with-disTauTagScore_3000_with-disTauTagScore.root": "Events",
-            #'/eos/cms/store/user/fiorendi/displacedTaus/test_btvNano/nano_TStauStau_m100_ct100mm_noBTV_with-disTauTagScore_100_newFormat_with-disTauTagScore.root': 'Events',
+             'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8/nano_*.root': "Events",
+           #"/eos/cms/store/user/fiorendi/displacedTaus/test_btvNano//nano_TStauStau_m100_ct100mm_noBTV_with-disTauTagScore_3000_with-disTauTagScore.root": "Events",
+           #'/eos/cms/store/user/fiorendi/displacedTaus/test_btvNano/nano_TStauStau_m100_ct100mm_noBTV_with-disTauTagScore_100_newFormat_with-disTauTagScore.root': 'Events',
           }
       },
 #     'QCD1000_1400': {
