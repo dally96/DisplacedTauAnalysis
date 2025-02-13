@@ -1,45 +1,35 @@
 import uproot
 import scipy
-import numpy as np
-import matplotlib as mpl
-from matplotlib import pyplot as plt
 import awkward as ak
-import math
-import ROOT
-import array
-import pandas as pd
+import numpy as np
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
-from leptonPlot import *
+import matplotlib.pyplot as plt
+import vector
 
 NanoAODSchema.warn_missing_crossrefs = False
 
-file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_lpcdisptau_NanoAOD_ExtraDisMuonBranches.root"
+fname = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root" # signal
+#fname = "/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-1.root" # background
 
-#events = NanoEventsFactory.from_root({file:"Events"}, schemaclass=NanoAODSchema).events()[0:21]
-events = NanoEventsFactory.from_root({file:"Events"}).events()
+events = NanoEventsFactory.from_root(
+    {fname: "Events"},
+    schemaclass=NanoAODSchema,
+    metadata={"dataset": "signal"},
+    delayed = False).events()
 
-gpart = events.GenPart
-electrons = events.Electron
-muons = events.Muon
-staus = gpart[(abs(gpart.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))]
+dr_max = 0.4 
 
-#taus = gpart[(abs(gpart.pdgId) == 15) & (abs(gpart.parent.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))]
-staus_taus = staus.distinctChildren[(abs(staus.distinctChildren.pdgId) == 15) & (staus.distinctChildren.hasFlags("isLastCopy"))]
-staus_taus = ak.flatten(staus_taus, axis=2)
+taus = events.GenPart[events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
+stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
 
-gen_mus = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 13)]
-gen_electrons = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 11)]
-RecoElectronsFromGen = electrons[(abs(electrons.matched_gen.distinctParent.distinctParent.pdgId) == 1000015)]
+jets = events.Jet
+scores = jets.disTauTag_score1
+tau_jets = stau_taus.nearest(events.Jet, threshold = dr_max) # jets dr-matched to stau_taus
+#matched_scores = tau_jets.disTauTag_score1 # scores of matched jets
 
-gen_electrons = gen_electrons[(gen_electrons.pt > 20) & (abs(gen_electrons.eta) < 2.4)]
-RecoElectronsFromGen = RecoElectronsFromGen.matched_gen[(RecoElectronsFromGen.matched_gen.pt > 20) & (abs(RecoElectronsFromGen.matched_gen.eta) < 2.4)]
+true_tau_jet_mask = ak.any(jets.genJetIdxG[:, None] == tau_jets.genJetIdxG, axis=-1)
+true_tau_jets = jets[true_tau_jet_mask]
+false_tau_jets = jets[~true_tau_jet_mask]
 
-
-makeEffPlot("e", "coffea_100GeV_100mm", [""], "pt", 16, 20, 100, 5, "[GeV]", [gen_electrons.pt.compute()], [RecoElectronsFromGen.pt.compute()], 0, file) 
-
-#for ev in range(len(events)):
-  #print("The pdgId of the mus in event", ev, "is", gen_mus.pt.compute()[ev])
-#  print("The pt of the electrons in event", ev, "is", gen_electrons.pt.compute()[ev])
-  #print("The gen idx of the matched muon for event", ev, "is", electrons.matched_gen.compute()[ev]) 
-  #print("The dr between reco ele and gen ele for event", ev, "is", dr.compute()[ev])
-  #print("The reco electrons that trace back to gen electrons whcih decay from staus for event", ev, "are", RecoElectronsFromGen.genPartIdx.compute()[ev]) 
+print("events.GenVisTau.genPartIdxMother")
+print(events.GenVisTau.genPartIdxMother)
