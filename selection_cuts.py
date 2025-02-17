@@ -56,16 +56,22 @@ class skimProcessor(processor.ProcessorABC):
         events["Stau"] = events.GenPart[(abs(events.GenPart.pdgId) == 1000015) &\
                                         (events.GenPart.hasFlags("isLastCopy"))]
 
+        print("Stau branch created")
+
         events["StauTau"] = events.Stau.distinctChildren[(abs(events.Stau.distinctChildren.pdgId) == 15) &\
                                                          (events.Stau.distinctChildren.hasFlags("isLastCopy"))]
 
         events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
+        
+        print("StauTau branch created")
 
         events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
         events["Jet"] = events.Jet[ak.argsort(events["Jet"][leading_jet_var], ascending=False, axis = 1)]
 
         events["DisMuon"] = ak.singletons(ak.firsts(events.DisMuon))
         events["Jet"] = ak.singletons(ak.firsts(events.Jet))
+
+        print("Leading muon and jet selected")
 
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
                        (events.DisMuon.tightId == 1)                                    &\
@@ -78,9 +84,11 @@ class skimProcessor(processor.ProcessorABC):
                        (events.Jet.pt > selections["jet_pt"])
                       )
 
-        good_events = (events.MET.pt > selections["MET_pt"])
+        good_events = (events.PFMET.pt > selections["MET_pt"])
 
         events = events[good_muons & good_jets & good_events]
+
+        print("Events have been filtered")
 
         meta = ak.Array([0], backend = "typetracer")
         event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
@@ -111,6 +119,7 @@ class skimProcessor(processor.ProcessorABC):
                      "pfRelIso03_all",
                      "pfRelIso03_chg",
                      "pfRelIso04_all",
+                     "tkRelIso",
                      ]
 
         jet_vars =   [
@@ -118,6 +127,7 @@ class skimProcessor(processor.ProcessorABC):
                      "eta",
                      "phi",
                      "disTauTag_score1",
+                     "dxy",
                      ]
 
         gpart_vars = [
@@ -131,9 +141,9 @@ class skimProcessor(processor.ProcessorABC):
                      "pt", 
                      "vertexR", 
                      "vertexRho", 
-                     "vertexX", 
-                     "vertexY", 
-                     "vertexZ",
+                     "vx", 
+                     "vy", 
+                     "vz",
                      ]
 
         gvist_vars = [
@@ -147,8 +157,7 @@ class skimProcessor(processor.ProcessorABC):
                      ]
 
         tau_vars   = events.Tau.fields                        
-        MET_vars   = events.MET.fields  
-        JetPF_vars = events.JetPFCands.fields
+        MET_vars   = events.PFMET.fields  
         
         for branch in muon_vars:
             out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
@@ -165,9 +174,7 @@ class skimProcessor(processor.ProcessorABC):
         for branch in tau_vars:
             out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
         for branch in MET_vars: 
-            out_dict["MET_"       + branch]  = ak.drop_none(events["MET"][branch])    
-        for branch in JetPF_vars:
-            out_dict["JetPFCands_" + branch] = ak.drop_none(events["JetPFCands"][branch])
+            out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
 
         out_dict["event"]           = ak.drop_none(events.event)
         out_dict["run"]             = ak.drop_none(events.run)
@@ -177,6 +184,9 @@ class skimProcessor(processor.ProcessorABC):
         out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
         out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
         out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
+        
+        print("Dictionary has been filled")
+        
         try:
             out_dict = dak.zip(out_dict, depth_limit = 1)
 

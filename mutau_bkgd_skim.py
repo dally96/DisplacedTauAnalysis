@@ -59,7 +59,12 @@ def main():
                 events = events[lumi_mask(events.run, events.luminosityBlock)]
                 lumi_list = LumiList(*dask.compute(events.run, events.luminosityBlock))
                 lumi = lumi_data.get_lumi(lumi_list)/10**9 # convert from inverse microbarn to inverse femtobarn
+
+            charged_sel = events.Jet.constituents.pf.charge != 0        
     
+            events["Jet_dxy"] = dak.flatten(ak.drop_none(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)    
+
+
             # Define the "good muon" condition for each muon per event
             good_muon_mask = (
                 #((events.DisMuon.isGlobal == 1) | (events.DisMuon.isTracker == 1)) & # Equivalent to loose ID cut without isPFcand requirement. Reduce background from non-prompt muons
@@ -166,6 +171,7 @@ def main():
                          "pfRelIso03_all",
                          "pfRelIso03_chg",
                          "pfRelIso04_all",
+                         "tkRelIso",
                          ]
 
             jet_vars =   [
@@ -186,9 +192,9 @@ def main():
                          "pt", 
                          "vertexR", 
                          "vertexRho", 
-                         "vertexX", 
-                         "vertexY", 
-                         "vertexZ",
+                         "vx", 
+                         "vy", 
+                         "vz",
                          ]
 
             gvist_vars = [
@@ -202,8 +208,7 @@ def main():
                          ]
 
             tau_vars   = events.Tau.fields                        
-            MET_vars   = events.MET.fields  
-            JetPF_vars = events.JetPFCands.fields
+            MET_vars   = events.PFMET.fields  
      
             for branch in muon_vars:
                 out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
@@ -216,13 +221,12 @@ def main():
             for branch in tau_vars:
                 out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
             for branch in MET_vars: 
-                out_dict["MET_"       + branch]  = ak.drop_none(events["MET"][branch])    
-            for branch in JetPF_vars:
-                out_dict["JetPFCands_" + branch] = ak.drop_none(events["JetPFCands"][branch])
+                out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
 
             out_dict["event"]           = ak.drop_none(events.event)
             out_dict["run"]             = ak.drop_none(events.run)
             out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
+            out_dict["Jet_dxy"]         = ak.drop_none(events["Jet_dxy"])
             out_dict["nDisMuon"]        = dak.num(events.DisMuon)
             out_dict["nJet"]            = dak.num(events.Jet)
             out_dict["nGenPart"]        = dak.num(events.GenPart)
@@ -244,14 +248,14 @@ def main():
     dataset_runnable, dataset_updated = preprocess(
         fileset,
         align_clusters=False,
-        step_size=100_000,
+        step_size=100_00,
         files_per_batch=1,
         skip_bad_files=True,
         save_form=False,
     )
     to_compute = apply_to_fileset(
                  MyProcessor(),
-                 max_chunks(dataset_runnable, 10000000),
+                 max_chunks(dataset_runnable, 1000000000),
                  schemaclass=PFNanoAODSchema
     )
     (out,) = dask.compute(to_compute)
