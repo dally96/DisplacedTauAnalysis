@@ -1,52 +1,119 @@
+# jet_selection_efficiency.py
+import os
 import awkward as ak
 import numpy as np
 import matplotlib.pyplot as plt
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
-from hist import Hist, axis, intervals
+
+# Import functions from jet_selection.py
+from jet_selection import (
+    process_events,
+    select_and_define_leading_jets,
+    match_gen_taus,
+    flatten_gen_tau_vars,
+)
+
+# Import functions from jet_plotting.py
+from jet_plotting import (
+    plot_dxy_efficiency,
+    plot_pt_efficiency,
+    plot_overlay_histograms,
+    plot_2d_histogram,
+    plot_jet_score_efficiency,
+    overlay_efficiency,
+    compute_overall_efficiency,
+    plot_sample_grid
+)
 
 # Load the file
-filename = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root"
-events = NanoEventsFactory.from_root({filename: "Events"}, 
-                                         schemaclass=PFNanoAODSchema,
-                                         metadata={"dataset": "MC"},
-                                         ).events()
+filenames = {
+    'Stau_100_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_200_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_300_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_500_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+}
 
-## find staus and their tau children  
-gpart = events.GenPart
-events['staus'] = gpart[(abs(gpart.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))] # most likely last copy of stay in the chain
+samples = {}
+for sample_name, files in filenames.items():
+    samples[sample_name] = NanoEventsFactory.from_root(
+        {files: "Events"},
+        schemaclass=PFNanoAODSchema,
+        metadata={"dataset": "MC"}
+    ).events()
 
-events['staus_taus'] = events.staus.distinctChildren[ (abs(events.staus.distinctChildren.pdgId) == 15) & \
-                                                  (events.staus.distinctChildren.hasFlags("isLastCopy")) & \
-                                                  (events.staus.distinctChildren.pt > 5) \
-                                                 ]
-staus_taus = events['staus_taus']
+# Create output folder for histograms
+output_dir = "histograms"
+os.makedirs(output_dir, exist_ok=True)
 
-mask_taul = ak.any((abs(staus_taus.distinctChildren.pdgId) == 11) | (abs(staus_taus.distinctChildren.pdgId) == 13), axis=-1)
-mask_tauh = ~mask_taul
+# Lists to store efficiency histograms for overlay plots
+pt_eff_data = []
+pt_zoom_eff_data = []
+dxy_eff_data = []
 
-one_tauh_evt = (ak.sum(mask_tauh, axis=1) > 0) & (ak.sum(mask_tauh, axis=1) < 3)
-one_taul_evt = (ak.sum(mask_taul, axis=1) > 0) & (ak.sum(mask_taul, axis=1) < 3)
+# ----------------------------------------------------------------------
+# Main loop: Process each sample and produce histograms.
+# ----------------------------------------------------------------------
+if __name__ == '__main__':
+    for sample_name, events in samples.items():
+        print(f"Processing sample: {sample_name}")
+        
+        # Process events: select staus, taus, and apply event filters
+        cut_filtered_events = process_events(events)
+        
+        # Select jets and define leading jets (using the filtered events)
+        jets, leading_pt_jets, leading_score_jets = select_and_define_leading_jets(cut_filtered_events)
+        
+        # Match gen taus to jets using both pt-based and leading-score methods
+        (gen_taus,
+         gen_taus_matched_by_pt, jet_matched_gen_taus_pt,
+         gen_taus_matched_by_score, jet_matched_gen_taus_score) = match_gen_taus(cut_filtered_events, leading_pt_jets, leading_score_jets)
+        
+        # Flatten variables for histogram filling 
+        (gen_taus_flat_dxy, gen_taus_flat_pt,
+         gen_taus_matched_by_pt_flat_dxy, gen_taus_matched_by_pt_flat_pt) = flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt)
 
-flat_one_tauh_evt = ak.flatten(one_tauh_evt, axis=None)
-flat_one_taul_evt = ak.flatten(one_taul_evt, axis=None)
+        # Generate efficiency histograms
+        hist_dxy_num, hist_dxy_den = plot_dxy_efficiency(gen_taus_flat_dxy, gen_taus_matched_by_pt_flat_dxy, output_dir, sample_name)
+        hist_pt_num, hist_pt_den, hist_pt_num_zoom, hist_pt_den_zoom = plot_pt_efficiency(gen_taus_flat_pt, gen_taus_matched_by_pt_flat_pt, output_dir, sample_name)
+        
+        # Overlay histograms (pt and dxy)
+        plot_overlay_histograms(gen_taus_flat_pt, gen_taus_flat_dxy, gen_taus_matched_by_pt_flat_pt, gen_taus_matched_by_pt_flat_dxy, output_dir, sample_name)
+        
+        # 2D histogram of gen_tau_dxy vs. gen_tau_pT
+        plot_2d_histogram(gen_taus_flat_pt, gen_taus_flat_dxy, output_dir, sample_name)
+        
+        # Plot jet score efficiency using leading-score jets
+        plot_jet_score_efficiency(leading_score_jets, jet_matched_gen_taus_score, output_dir, sample_name)
 
-filtered_events = events[flat_one_tauh_evt & flat_one_taul_evt]  # Filtered events are events with one hadronic tau and one leptonic tau
+        # Generate a random color for the sample
+        color = np.random.rand(3,)
 
-tau_selections = ak.any((filtered_events.staus_taus.pt > 20) & (abs(filtered_events.staus.eta < 2.4)), axis=-1)
-num_taus = ak.num(filtered_events.staus_taus[tau_selections]).compute()
-num_tau_mask = num_taus > 1
-cut_filerted_events = filtered_events[num_tau_mask]
+        # Store efficiency histograms for overlay
+        dxy_eff_data.append((hist_dxy_num, hist_dxy_den, sample_name, color))
+        pt_eff_data.append((hist_pt_num, hist_pt_den, sample_name, color))
+        pt_zoom_eff_data.append((hist_pt_num_zoom, hist_pt_den_zoom, sample_name, color))
 
-jets = cut_filtered_events.Jet[(abs(cut_filtered_events.Jet.eta) < 2.4) & (cut_filtered_events.Jet.pt > 20)]
-sorted_jets = jets[ak.argsort(jets.pt, ascending=False)]
-leading_jets = ak.singletons(ak.firsts(sorted_jets))
+    # ------------------------------------------------------------------
+    # Compute efficiency values for the sample grid **AFTER** all samples are processed
+    # ------------------------------------------------------------------
+    efficiency_grid_dxy = {}
+    efficiency_grid_pt = {}
 
-gen_taus = ak.flatten(cut_filtered_events.staus_taus, axis = 2)
-gen_taus_jet_matched = leading_jets.nearest(gen_taus, threshold = 0.4)
+    for sample_name, hist_data in zip(filenames.keys(), dxy_eff_data):
+        hist_dxy_num, hist_dxy_den, _, _ = hist_data
+        efficiency_grid_dxy[sample_name] = compute_overall_efficiency(hist_dxy_num, hist_dxy_den)
 
-new_mask_taul = ak.any((abs(gen_taus_jet_matched.distinctChildren.pdgId) == 11) | (abs(gen_taus_jet_matched.distinctChildren.pdgId) == 13), axis=-1)
-new_mask_tauh = ~new_mask_taul
+    for sample_name, hist_data in zip(filenames.keys(), pt_eff_data):
+        hist_pt_num, hist_pt_den, _, _ = hist_data
+        efficiency_grid_pt[sample_name] = compute_overall_efficiency(hist_pt_num, hist_pt_den)
 
-gen_taus_jet_matched = gen_taus_jet_matched[new_mask_tauh]
-gen_taus_jet_matched = ak.drop_none(gen_taus_jet_matched)
-ak.flatten(gen_taus_jet_matched, axis = 1).compute()
+    # ------------------------------------------------------------------
+    # Generate and save sample grid plots
+    # ------------------------------------------------------------------
+    plot_sample_grid(efficiency_grid_dxy, output_dir, "dxy")
+    plot_sample_grid(efficiency_grid_pt, output_dir, "pt")
+
+    # ------------------------------------------------------------------
+    # Generate overlay efficiency plots for all samples
+    # ------------------------------------------------------------------
+    overlay_efficiency(pt_eff_data, pt_zoom_eff_data, dxy_eff_data, output_dir)
