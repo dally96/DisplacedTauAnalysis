@@ -1,6 +1,7 @@
 import coffea
 import uproot
 import scipy
+import warnings
 import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ NanoAODSchema.mixins["DisMuon"] = "Muon"
 
 # Silence obnoxious warning
 NanoAODSchema.warn_missing_crossrefs = False
+warnings.filterwarnings("ignore", module="coffea.nanoevents.methods")
 
 # Import dataset
 signal_fname = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root" # signal
@@ -41,17 +43,20 @@ def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshol
             return ak.all(mval > threshold, axis=-1)
 
 def apply_cuts(collection):
-    pt_mask = collection.pt >= min_pT
-    eta_mask = abs(collection.eta) < max_eta
-    valid_mask = collection.genJetIdx > 0
+    cut_collection = apply_lepton_veto(collection)
+    jets = cut_collection.Jet
     
-    collection_length = ak.sum(ak.num(collection.partonFlavour))
-    inclusion_mask = collection.genJetIdx < collection_length
+    pt_mask = jets.pt >= min_pT
+    eta_mask = abs(jets.eta) < max_eta
+    valid_mask = jets.genJetIdx > 0
     
-    cut_collection = collection[
+    collection_length = ak.sum(ak.num(jets.partonFlavour))
+    inclusion_mask = jets.genJetIdx < collection_length
+    
+    cut_jets = jets[
         pt_mask & eta_mask & valid_mask & inclusion_mask ]
     
-    return cut_collection
+    return cut_jets
 
 def apply_lepton_veto(evt_collection: ak.highlevel.Array):
     evt_collection['Jet'] = evt_collection.Jet[
@@ -65,14 +70,12 @@ def apply_lepton_veto(evt_collection: ak.highlevel.Array):
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-cut_signal = apply_lepton_veto(signal_events)
-cut_signal_jets = apply_cuts(cut_signal.Jet)
+cut_signal_jets = apply_cuts(signal_events)
 matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
 matched_signal_scores = matched_tau_jets.disTauTag_score1
 
 # Background processing
-bg_jets = bg_events.Jet
-cut_bg_jets = apply_cuts(bg_jets)
+cut_bg_jets = apply_cuts(bg_events)
 bg_scores = cut_bg_jets.disTauTag_score1
 fake_tau_jets = cut_bg_jets # No staus present in bg
 matched_bg_scores = bg_scores
