@@ -134,5 +134,5 @@ to_compute = apply_to_fileset(
     schemaclass=NanoAODSchema,
 )
 
-(cut_bg_jets,) = dask.compute(to_compute)
-print(cut_bg_jets)
+(data,) = dask.compute(to_compute)
+print(data['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1'])
