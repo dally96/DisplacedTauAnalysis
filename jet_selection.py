@@ -89,11 +89,11 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_score_jets):
 def flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt):
 
     # Flatten the dxy fields
-    gen_taus_flat_dxy = ak.flatten(gen_taus.dxy, axis=1).compute()
-    gen_taus_flat_pt = ak.flatten(gen_taus.pt, axis=1).compute()
+    gen_taus_flat_dxy = ak.flatten(gen_taus.dxy, axis=1)
+    gen_taus_flat_pt = ak.flatten(gen_taus.pt, axis=1)
 
-    gen_taus_matched_by_pt_flat_dxy = ak.flatten(gen_taus_matched_by_pt.dxy, axis=1).compute()
-    gen_taus_matched_by_pt_flat_pt = ak.flatten(gen_taus_matched_by_pt.pt, axis=1).compute()
+    gen_taus_matched_by_pt_flat_dxy = ak.flatten(gen_taus_matched_by_pt.dxy, axis=1)
+    gen_taus_matched_by_pt_flat_pt = ak.flatten(gen_taus_matched_by_pt.pt, axis=1)
 
     return (gen_taus_flat_dxy, gen_taus_flat_pt,
             gen_taus_matched_by_pt_flat_dxy, gen_taus_matched_by_pt_flat_pt)

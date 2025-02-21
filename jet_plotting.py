@@ -4,6 +4,7 @@ import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
 import hist
+import hist.dask as hda
 from hist import Hist, axis, intervals
 
 def get_ratio_histogram(passing_probes, denominator):
@@ -27,7 +28,7 @@ def get_ratio_histogram(passing_probes, denominator):
 
     with np.errstate(divide="ignore", invalid="ignore"):
         ratio_values = passing_probes.values(flow=True) / denominator.values(flow=True)
-    ratio = hist.Hist(hist.Hist(*passing_probes.axes))
+    ratio = hda.hist.Hist(hda.hist.Hist(*passing_probes.axes))
     ratio[:] = np.nan_to_num(ratio_values)
     yerr = intervals.ratio_uncertainty(passing_probes.values(), denominator.values(), uncertainty_type="efficiency")
 
@@ -69,11 +70,11 @@ def plot_dxy_efficiency(gen_taus_flat_dxy, gen_taus_matched_by_pt_flat_dxy, outp
     dxy_bins_prompt = np.linspace(-0.12, 0.12, 30)
     dxy_bins = np.linspace(-20, 20, 41)
     # Create histograms for prompt dxy efficiency
-    hist_dxy_prompt_den = Hist(axis.Variable(dxy_bins_prompt, flow=True, name="dxy", label="dxy [cm]"))
-    hist_dxy_prompt_num = Hist(axis.Variable(dxy_bins_prompt, flow=True, name="dxy", label="dxy [cm]"))
+    hist_dxy_prompt_den = hda.hist.Hist(axis.Variable(dxy_bins_prompt, flow=True, name="dxy", label="dxy [cm]"))
+    hist_dxy_prompt_num = hda.hist.Hist(axis.Variable(dxy_bins_prompt, flow=True, name="dxy", label="dxy [cm]"))
     # Create histograms for overall dxy efficiency
-    hist_dxy_den = Hist(axis.Variable(dxy_bins, flow=True, name="dxy", label="dxy [cm]"))
-    hist_dxy_num = Hist(axis.Variable(dxy_bins, flow=True, name="dxy", label="dxy [cm]"))
+    hist_dxy_den = hda.hist.Hist(axis.Variable(dxy_bins, flow=True, name="dxy", label="dxy [cm]"))
+    hist_dxy_num = hda.hist.Hist(axis.Variable(dxy_bins, flow=True, name="dxy", label="dxy [cm]"))
     
     # Fill prompt histograms
     hist_dxy_prompt_den.fill(gen_taus_flat_dxy) 
@@ -85,13 +86,13 @@ def plot_dxy_efficiency(gen_taus_flat_dxy, gen_taus_matched_by_pt_flat_dxy, outp
     
     # Plot efficiency for prompt dxy
     plt.clf()
-    plot_efficiency(hist_dxy_prompt_num, hist_dxy_prompt_den, label='Leading pT Jet Matching Efficiency dxy (prompt)')
+    plot_efficiency(hist_dxy_prompt_num.compute(), hist_dxy_prompt_den.compute(), label='Leading pT Jet Matching Efficiency dxy (prompt)')
     plt.legend()
     plt.savefig(os.path.join(output_dir, f"eff_vs_dxy_prompt_leading_pT_{sample_name}.pdf"))
     
     # Plot efficiency for overall dxy
     plt.clf()
-    plot_efficiency(hist_dxy_num, hist_dxy_den, label='Leading pT Jet Matching Efficiency dxy')
+    plot_efficiency(hist_dxy_num.compute(), hist_dxy_den.compute(), label='Leading pT Jet Matching Efficiency dxy')
     plt.legend()
     plt.savefig(os.path.join(output_dir, f"eff_vs_dxy_leading_pT_{sample_name}.pdf"))
 
@@ -112,10 +113,10 @@ def plot_pt_efficiency(gen_taus_flat_pt, gen_taus_matched_by_pt_flat_pt, output_
     var_axes = {'pt': axis.Variable(pt_bins_eff, flow=False, name="tauh_pt")}
     var_axes_zoom = {'pt': axis.Variable(pt_bins_zoom, flow=False, name="tauh_pt_zoom")}
     
-    hist_pt_den = Hist(var_axes['pt'])
-    hist_pt_num = Hist(var_axes['pt'])
-    hist_pt_den_zoom = Hist(var_axes_zoom['pt'])
-    hist_pt_num_zoom = Hist(var_axes_zoom['pt'])
+    hist_pt_den = hda.hist.Hist(var_axes['pt'])
+    hist_pt_num = hda.hist.Hist(var_axes['pt'])
+    hist_pt_den_zoom = hda.hist.Hist(var_axes_zoom['pt'])
+    hist_pt_num_zoom = hda.hist.Hist(var_axes_zoom['pt'])
     
     hist_pt_den.fill(gen_taus_flat_pt)
     hist_pt_num.fill(gen_taus_matched_by_pt_flat_pt)
@@ -124,13 +125,13 @@ def plot_pt_efficiency(gen_taus_flat_pt, gen_taus_matched_by_pt_flat_pt, output_
     
     # Plot overall pt efficiency
     plt.clf()
-    plot_efficiency(hist_pt_num, hist_pt_den, label='Leading pT Jet Matching Efficiency (pt)')
+    plot_efficiency(hist_pt_num.compute(), hist_pt_den.compute(), label='Leading pT Jet Matching Efficiency (pt)')
     plt.legend()
     plt.savefig(os.path.join(output_dir, f"eff_vs_pt_leading_pT_{sample_name}.pdf"))
     
     # Plot zoom pt efficiency
     plt.clf()
-    plot_efficiency(hist_pt_num_zoom, hist_pt_den_zoom, label='Leading pT Jet Matching Efficiency (pt Zoom)')
+    plot_efficiency(hist_pt_num_zoom.compute(), hist_pt_den_zoom.compute(), label='Leading pT Jet Matching Efficiency (pt Zoom)')
     plt.legend()
     plt.savefig(os.path.join(output_dir, f"eff_vs_pt_zoom_leading_pT_{sample_name}.pdf"))
 
@@ -151,7 +152,7 @@ def overlay_efficiency(pt_eff_data, pt_zoom_eff_data, dxy_eff_data, output_dir):
     fig, ax = plt.subplots(figsize=(8, 6))
     for num_hist, den_hist, sample_label, color in pt_eff_data:
         ratio_hist, yerr = get_ratio_histogram(num_hist, den_hist)
-        ratio_hist.plot1d(ax=ax, histtype="errorbar", yerr=yerr, xerr=True, flow="none",
+        ratio_hist.plot1d(ax=ax, histtype="errorbar", yerr=yerr, xerr=True, flow="none", 
                           label=sample_label, color=color)
 
     ax.set_xlabel("pt [GeV]")
@@ -199,8 +200,8 @@ def plot_overlay_histograms(gen_taus_flat_pt, gen_taus_flat_dxy, gen_taus_matche
     """
     # Overlay for pt
     pt_bins_indiv = list(range(20, 750, 10))
-    hist_gen = Hist(axis.Variable(pt_bins_indiv, flow=True, name="pt", label="pt [GeV]"))
-    hist_gen_matched = Hist(axis.Variable(pt_bins_indiv, flow=True, name="pt", label="pt [GeV]"))
+    hist_gen = hda.hist.Hist(axis.Variable(pt_bins_indiv, flow=True, name="pt", label="pt [GeV]"))
+    hist_gen_matched = hda.hist.Hist(axis.Variable(pt_bins_indiv, flow=True, name="pt", label="pt [GeV]"))
     
     hist_gen.fill(gen_taus_flat_pt)
     hist_gen_matched.fill(gen_taus_matched_by_pt_flat_pt)
@@ -218,8 +219,8 @@ def plot_overlay_histograms(gen_taus_flat_pt, gen_taus_flat_dxy, gen_taus_matche
     
     # Overlay for dxy
     dxy_bins_indiv = list(np.arange(-30, 30, 0.5))
-    hist_dxy = Hist(axis.Variable(dxy_bins_indiv, flow=True, name="dxy", label="dxy [cm]"))
-    hist_dxy_matched = Hist(axis.Variable(dxy_bins_indiv, flow=True, name="dxy", label="dxy [cm]"))
+    hist_dxy = hda.hist.Hist(axis.Variable(dxy_bins_indiv, flow=True, name="dxy", label="dxy [cm]"))
+    hist_dxy_matched = hda.hist.Hist(axis.Variable(dxy_bins_indiv, flow=True, name="dxy", label="dxy [cm]"))
     
     hist_dxy.fill(gen_taus_flat_dxy)
     hist_dxy_matched.fill(gen_taus_matched_by_pt_flat_dxy)
@@ -242,7 +243,7 @@ def plot_2d_histogram(gen_taus_flat_pt, gen_taus_flat_dxy, output_dir, sample_na
     """
     dxy_bins = np.linspace(-10, 10, 41)  
     pt_bins = np.linspace(0, 500, 51)  
-    h2d = hist.Hist(
+    h2d = hda.hist.Hist(
         axis.Variable(dxy_bins, name="dxy", label="gen_tau_dxy [cm]"),
         axis.Variable(pt_bins, name="pT", label="gen_tau_pT [GeV]")
     )
@@ -263,8 +264,8 @@ def plot_jet_score_efficiency(leading_score_jets, jet_matched_gen_taus_score, ou
     jet_score_bins = np.linspace(0, 1.0, 61)  # 61 edges for 60 bins
     jet_score_axis = axis.Variable(jet_score_bins, flow=True, name="jet_score", label="disTauTag score")
     
-    h_den = Hist(jet_score_axis)
-    h_num = Hist(jet_score_axis)
+    h_den = hda.hist.Hist(jet_score_axis)
+    h_num = hda.hist.Hist(jet_score_axis)
     
     jet_scores = ak.flatten(leading_score_jets.disTauTag_score1, axis=1).compute()
     matched_jet_scores = ak.flatten(jet_matched_gen_taus_score.disTauTag_score1, axis=1).compute()

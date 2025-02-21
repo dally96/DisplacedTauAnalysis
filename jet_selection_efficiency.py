@@ -27,10 +27,10 @@ from jet_plotting import (
 
 # Load the file
 filenames = {
-    'Stau_100_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
-    'Stau_200_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
-    'Stau_300_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
-    'Stau_500_100' : 'root://cmseos.fnal.gov/.../SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_100_100' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_200_100' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_300_100' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
+    'Stau_500_100' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_*.root',
 }
 
 samples = {}
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         dxy_eff_data.append((hist_dxy_num, hist_dxy_den, sample_name, color))
         pt_eff_data.append((hist_pt_num, hist_pt_den, sample_name, color))
         pt_zoom_eff_data.append((hist_pt_num_zoom, hist_pt_den_zoom, sample_name, color))
-
+    print(f"All single histograms made")
     # ------------------------------------------------------------------
     # Compute efficiency values for the sample grid **AFTER** all samples are processed
     # ------------------------------------------------------------------
