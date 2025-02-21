@@ -32,17 +32,20 @@ def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshol
             return ak.all(mval > threshold, axis=-1)
 
 def apply_cuts(collection):
-    pt_mask = collection.pt >= min_pT
-    eta_mask = abs(collection.eta) < max_eta
-    valid_mask = collection.genJetIdx > 0
+    cut_collection = apply_lepton_veto(collection)
+    jets = cut_collection.Jet
     
-    collection_length = ak.sum(ak.num(collection.partonFlavour))
-    inclusion_mask = collection.genJetIdx < collection_length
+    pt_mask = jets.pt >= min_pT
+    eta_mask = abs(jets.eta) < max_eta
+    valid_mask = jets.genJetIdx > 0
     
-    cut_collection = collection[
+    collection_length = ak.sum(ak.num(jets.partonFlavour))
+    inclusion_mask = jets.genJetIdx < collection_length
+    
+    cut_jets = jets[
         pt_mask & eta_mask & valid_mask & inclusion_mask ]
     
-    return cut_collection
+    return cut_jets
 
 def apply_lepton_veto(evt_collection: ak.highlevel.Array):
     evt_collection['Jet'] = evt_collection.Jet[
@@ -135,4 +138,7 @@ to_compute = apply_to_fileset(
 )
 
 (data,) = dask.compute(to_compute)
-print(data['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1'])
+print(type(data['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']))
+print(ak.sum(ak.num(data['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1'])))
+print(ak.sum(ak.num(data['TT to 4Q']['TT to 4Q']['jets']['partonFlavour'])))
+print(ak.sum(ak.num(data['TT to 4Q']['TT to 4Q']['jets']['genJetIdx'])))
