@@ -68,15 +68,16 @@ class BGProcessor(processor.ProcessorABC):
         dataset = events.metadata['dataset']
         jets = ak.zip(
             {
-                "Jet": events.Jet,
+                "Jet": {
+                    "pt": events.Jet.pt,
+                    "eta": events.Jet.eta,
+                    "genJetIdx": events.Jet.genJetIdx,
+                    "partonFlavour": events.Jet.partonFlavour,
+                    "disTauTag_score1": events.Jet.disTauTag_score1,
+                    },
                 "Photon": events.Photon,
                 "Electron": events.Electron,
                 "DisMuon": events.DisMuon,
-                "pt": events.Jet.pt,
-                "eta": events.Jet.eta,
-                "genJetIdx": events.Jet.genJetIdx,
-                "partonFlavour": events.Jet.partonFlavour,
-                "disTauTag_score1": events.Jet.disTauTag_score1,
             },
         )
 
