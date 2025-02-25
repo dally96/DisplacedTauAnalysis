@@ -31,9 +31,19 @@ max_dr = 0.3
 max_lep_dr = 0.4 
 score_increment_scale_factor = 500 
 
-def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
-            mval = first.metric_table(second)
-            return ak.all(mval > threshold, axis=-1)
+def delta_r_mask(jet, particle, dr_threshold):
+    dr = jet[:, 0].delta_r(particle)
+    mask = dr.compute > dr_threshold
+    return mask
+
+def apply_lepton_veto(evt_collection: ak.highlevel.Array):
+    evt_collection['Jet'] = evt_collection.Jet[
+        delta_r_mask(evt_collection.Jet, evt_collection.Photon, max_lep_dr) ]
+    evt_collection['Jet'] = evt_collection.Jet[
+        delta_r_mask(evt_collection.Jet, evt_collection.Electron, max_lep_dr) ]
+    evt_collection['Jet'] = evt_collection.Jet[
+        delta_r_mask(evt_collection.Jet, evt_collection.DisMuon, max_lep_dr) ]
+    return evt_collection
 
 def apply_cuts(collection):
     cut_collection = apply_lepton_veto(collection)
@@ -51,15 +61,6 @@ def apply_cuts(collection):
 
     return cut_jets
 
-def apply_lepton_veto(evt_collection: ak.highlevel.Array):
-    evt_collection['Jet'] = evt_collection.Jet[
-        delta_r_mask(evt_collection.Jet, evt_collection.Photon, max_lep_dr) ]
-    evt_collection['Jet'] = evt_collection.Jet[
-        delta_r_mask(evt_collection.Jet, evt_collection.Electron, max_lep_dr) ]
-    evt_collection['Jet'] = evt_collection.Jet[
-        delta_r_mask(evt_collection.Jet, evt_collection.DisMuon, max_lep_dr) ]
-    return evt_collection
-
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
@@ -68,16 +69,15 @@ class BGProcessor(processor.ProcessorABC):
         dataset = events.metadata['dataset']
         jets = ak.zip(
             {
-                "Jet": {
-                    "pt": events.Jet.pt,
-                    "eta": events.Jet.eta,
-                    "genJetIdx": events.Jet.genJetIdx,
-                    "partonFlavour": events.Jet.partonFlavour,
-                    "disTauTag_score1": events.Jet.disTauTag_score1,
-                    },
+                "Jet": events.Jet,
                 "Photon": events.Photon,
                 "Electron": events.Electron,
                 "DisMuon": events.DisMuon,
+                "pt": events.Jet.pt,
+                "eta": events.Jet.eta,
+                "genJetIdx": events.Jet.genJetIdx,
+                "partonFlavour": events.Jet.partonFlavour,
+                "disTauTag_score1": events.Jet.disTauTag_score1,
             },
         )
 
