@@ -146,7 +146,7 @@ dataset_runnable, dataset_updated = preprocess(
 
 to_compute = apply_to_fileset(
     BGProcessor(),
-    max_chunks(dataset_runnable, 10),
+    max_chunks(dataset_runnable, ),
     schemaclass=NanoAODSchema,
 )
 
