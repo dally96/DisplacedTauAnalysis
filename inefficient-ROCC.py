@@ -265,5 +265,5 @@ plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
-plt.savefig('inef-TT-4Q-bg-tau-tagger-rocc.pdf')
-plt.savefig('inef-TT-4Q-bg-tau-tagger-rocc.png')
+plt.savefig('inef-full-TT-4Q-bg-tau-tagger-rocc.pdf')
+plt.savefig('inef-full-TT-4Q-bg-tau-tagger-rocc.png')
