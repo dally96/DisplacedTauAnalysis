@@ -31,10 +31,9 @@ max_dr = 0.3
 max_lep_dr = 0.4 
 score_increment_scale_factor = 500 
 
-def delta_r_mask(jet, particle, dr_threshold):
-    dr = jet[:, 0].delta_r(particle)
-    mask = dr.compute > dr_threshold
-    return mask
+def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
+    mval = first.metric_table(second)
+    return ak.all(mval > threshold, axis=-1)
 
 def apply_lepton_veto(evt_collection: ak.highlevel.Array):
     evt_collection['Jet'] = evt_collection.Jet[
@@ -139,7 +138,7 @@ fileset = {
 dataset_runnable, dataset_updated = preprocess(
     fileset,
     align_clusters=False,
-    step_size=100_000,
+    step_size=1_000,
     files_per_batch=1,
     skip_bad_files=False,
     save_form=False,
@@ -147,8 +146,7 @@ dataset_runnable, dataset_updated = preprocess(
 
 to_compute = apply_to_fileset(
     BGProcessor(),
-    chunksize = 10,
-    max_chunks = 1,
+    max_chunks(dataset_runnable, 10),
     schemaclass=NanoAODSchema,
 )
 
@@ -267,5 +265,5 @@ plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
-plt.savefig('TT-4Q-bg-tau-tagger-rocc.pdf')
-plt.savefig('TT-4Q-bg-tau-tagger-rocc.png')
+plt.savefig('inef-TT-4Q-bg-tau-tagger-rocc.pdf')
+plt.savefig('inef-TT-4Q-bg-tau-tagger-rocc.png')
