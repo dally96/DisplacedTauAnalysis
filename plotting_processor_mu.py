@@ -1,4 +1,5 @@
-#FDCA40#5DFDCBimport numpy as np 
+import numpy as np 
+import uproot
 import hist
 import awkward as ak 
 import math
@@ -8,20 +9,21 @@ import ROOT
 import dask
 import dask_awkward as dak
 from coffea import processor
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema, PFNanoAODSchema
 from coffea.analysis_tools import Weights, PackedSelection
 import hist.dask as hda
 import matplotlib  as mpl
 from  matplotlib import pyplot as plt
 from xsec import *
 import time
+import pickle
 
 start_time = time.time()
 
 
 SAMP = [
-      ['Stau_100_100mm', 'SIG'],
-      ['QCD50_80', 'QCD'],
+      #['Stau_100_100mm', 'SIG'],
+      #['QCD50_80', 'QCD'],
       ['QCD80_120','QCD'],
       ['QCD120_170','QCD'],
       ['QCD170_300','QCD'],
@@ -29,73 +31,41 @@ SAMP = [
       ['QCD470_600','QCD'],
       ['QCD600_800','QCD'],
       ['QCD800_1000','QCD'],
-      ['QCD1000_1400','QCD'],
-      ['QCD1400_1800','QCD'],
-      ['QCD1800_2400','QCD'],
-      ['QCD2400_3200','QCD'],
-      ['QCD3200','QCD'],
-      ["DYJetsToLL", 'EWK'],  
-      ["WtoLNu2Jets", 'EWK'],
-      ["TTtoLNu2Q",  'TT'],
-      ["TTto4Q", 'TT'],
-      ["TTto2L2Nu", 'TT'],
+      #['QCD1000_1400','QCD'],
+      #['QCD1400_1800','QCD'],
+      #['QCD1800_2400','QCD'],
+      #['QCD2400_3200','QCD'],
+      #['QCD3200','QCD'],
+      #["DYJetsToLL", 'EWK'],  
+      #["WtoLNu2Jets", 'EWK'],
+      #["TTtoLNu2Q",  'TT'],
+      #["TTto4Q", 'TT'],
+      #["TTto2L2Nu", 'TT'],
       ]
 
 lumi = 38.01 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
-selections = {
-              "electron_pt":                30,  ##GeV 
-              "electron_eta":               1.44, 
-              "electron_cutBased":          4, ## 4 = tight
-              "electron_dxy_prompt_max":    50E-4, ##cm
-              "electron_dxy_prompt_min":    0E-4, ##cm
-              "electron_dxy_displaced_min": 100E-4, ##cm
-              "electron_dxy_displaced_max": 10, ##cm
-
-              "muon_pt":                    30, ##GeV
-              "muon_eta":                   1.5,
-              "muon_ID":                    "muon_tightId",
-              "muon_dxy_prompt_max":        50E-4, ##cm
-              "muon_dxy_prompt_min":        0E-4, ##cm
-              "muon_dxy_displaced_min":     100E-4, ##cm
-              "muon_dxy_displaced_max":     10, ##cm
-
-              "jet_score":                  0.9, 
-              "jet_pt":                     32, ##GeV
-
-              "MET_pT":                     105, ##GeV
-             }
-
 variables_with_bins = {
-    "muon_pt": [(245, 20, 1000), "GeV"],
-    "muon_eta": [(50, -2.5, 2.5), ""],
-    "muon_phi": [(64, -3.2, 3.2), ""],
-    "muon_dxy": [(200, -1, 1), "cm"],
-    "muon_dz" : [(200, -1, 1), "cm"],
-    "muon_pfRelIso03_all": [(100, 0, 10), ""],
-    "muon_pfRelIso03_chg": [(100, 0, 10), ""],
-    "muon_pfRelIso04_all": [(100, 0, 10), ""],
+    #"DisMuon_pt": [(245, 20, 1000), "GeV"],
+    #"DisMuon_eta": [(50, -2.5, 2.5), ""],
+    #"DisMuon_phi": [(64, -3.2, 3.2), ""],
+    #"DisMuon_dxy": [(200, -1, 1), "cm"],
+    #"DisMuon_dz" : [(200, -1, 1), "cm"],
+    "DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
+    "DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
+    "DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
+    "DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
-    "jet_pt" : [(245, 20, 1000), "GeV"],
-    "jet_eta": [(48, -2.4, 2.4), ""],
-    "jet_phi": [(64, -3.2, 3.2), ""],
-    "jet_score": [(20, 0, 1), ""],
+    #"Jet_pt" : [(245, 20, 1000), "GeV"],
+    #"Jet_eta": [(48, -2.4, 2.4), ""],
+    #"Jet_phi": [(64, -3.2, 3.2), ""],
+    #"Jet_disTauTag_score1": [(20, 0, 1), ""],
+    #"Jet_dxy": [(50, -1, 1), "cm"],
 
-    "leadingmuon_pt": [(245, 20, 1000), "GeV"],
-    "leadingmuon_eta": [(50, -2.5, 2.5), ""],
-    "leadingmuon_phi": [(64, -3.2, 3.2), ""],
-    "leadingmuon_dxy": [(200, -1, 1), "cm"],
-    "leadingmuon_dz" : [(200, -1, 1), "cm"],
-
-    "leadingjet_pt" : [(245, 20, 1000), "GeV"],
-    "leadingjet_eta": [(48, -2.4, 2.4), ""],
-    "leadingjet_phi": [(64, -3.2, 3.2), ""],
-    "leadingjet_score": [(20, 0, 1), ""],
-
-    "dR" : [(20, 0, 1), ""],
-    "deta": [(100, -5, 5), ""],
-    "dphi": [(64, -3.2, 3.2), ""],
-    "MET_pT": [(225, 100, 1000), "GeV"],
+    #"dR" : [(20, 0, 1), ""],
+    #"deta": [(100, -5, 5), ""],
+    #"dphi": [(64, -3.2, 3.2), ""],
+    #"PFMET_pt": [(225, 100, 1000), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -140,36 +110,14 @@ class ExampleProcessor(processor.ProcessorABC):
         return histograms
 
     def process(self, events, weights):
-        # Object selection
-        good_muons = ((events["muon_pt"] > selections["muon_pt"]) 
-                         &(events["muon_tightId"] ==  1)
-                         & (abs(events["muon_dxy"]) > selections["muon_dxy_displaced_min"])
-                         & (abs(events["muon_dxy"]) < selections["muon_dxy_displaced_max"])
-                         )        
-        good_jets = ((events["jet_score"] > selections["jet_score"])
-                    & (events["jet_pt"] > selections["jet_pt"])
-                    )        
-
-        good_events = (events["MET_pT"] > selections["MET_pT"])
-
-        num_muons = ak.num(events["muon_pt"][good_muons])
-        num_jets = ak.num(events["jet_pt"][good_jets])
-        muon_event_mask = num_muons > 0
-        jet_event_mask = num_jets > 0
-        events = events[muon_event_mask & jet_event_mask & good_events]
-
-
-        for branch in self.vars_with_bins:
-            if ("muon_" in branch) and ("leading" not in branch): 
-                events[branch] = events[branch][good_muons[muon_event_mask & jet_event_mask & good_events]]
-            if ("jet_" in branch) and ("leading" not in branch):
-                events[branch] = events[branch][good_jets[jet_event_mask & muon_event_mask & good_events]]
                     
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
         for var in histograms:
+            var_name = '_'.join(var.split('_')[1:])
+
             histograms[var].fill(
-                **{var: dak.flatten(events[var], axis = None)},
+                **{var: dak.flatten(events[var.split('_')[0]][var_name], axis = None)},
                 weight = weights
             )
             
@@ -190,15 +138,15 @@ background_samples["DY"] = []
 #
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append( ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(   ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["DY"].append(  ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("my_skim_muon_" + samples[0] + "/*.parquet", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples[samples[0]] = [("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -214,7 +162,8 @@ for background, samples in background_samples.items():
     for sample_file, sample_weight in samples:
         try:
             # Step 1: Load events for the sample using dask-awkward
-            events = dak.from_parquet(sample_file)
+            events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+            #events = uproot.dask(sample_file)
             print(f'Starting {sample_file} histogram')         
 
             processor_instance = ExampleProcessor(variables_with_bins)
@@ -237,7 +186,7 @@ for var in variables_with_bins:
                               "W": background_histograms["W"][var],
                               "DY": background_histograms["DY"][var],       
                                 })
-    s.plot(stack = True, histtype= "fill", color = [colors[0],colors[1],colors[2]])
+    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[2], colors[3]])
     for sample in background_samples:
         if "Stau" in sample: 
             background_histograms[sample][var].plot(color = '#B80C09', label = sample)
@@ -247,7 +196,11 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend()
-    plt.savefig(f"../www/pt30_tightId_displaced_score90_jetPt32_MET105/mu_stacked_histogram_{var}_111111.png")
+    #plt.savefig(f"../www/pt30_tightId_displaced1mm_score90_jetPt32_MET105_pfRelIso0p19/mu_stacked_histogram_{var}.png")
+
+with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:
+    pickle.dump(background_histograms["QCD"], f)
+print(f"pkl file written")
 
 
 
