@@ -259,7 +259,7 @@ cbar = fig.colorbar(roc)
 cbar.set_label('Score threshold')
 
 ax.set_xscale("log")
-ax.set_ylim(0.85, 1.05)
+ax.set_ylim(0.8, 1.025)
 
 plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
