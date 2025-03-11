@@ -7,8 +7,8 @@ import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 from coffea import processor
+from coffea.nanoevents.methods import vector
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 from coffea.dataset_tools import (
     apply_to_fileset,
@@ -31,12 +31,11 @@ max_dr = 0.3
 max_lep_dr = 0.4 
 score_increment_scale_factor = 500 
 
-def delta_r_mask(jet, particle, dr_threshold):
-    dr = jet[:, 0].delta_r(particle)
-    mask = dr.compute > dr_threshold
-    return mask
+def delta_r_mask(first, second, threshold):
+    mval = first.metric_table(second)
+    return ak.all(mval > threshold, axis=-1)
 
-def apply_lepton_veto(evt_collection: ak.highlevel.Array):
+def apply_lepton_veto(evt_collection):
     evt_collection['Jet'] = evt_collection.Jet[
         delta_r_mask(evt_collection.Jet, evt_collection.Photon, max_lep_dr) ]
     evt_collection['Jet'] = evt_collection.Jet[
@@ -45,10 +44,7 @@ def apply_lepton_veto(evt_collection: ak.highlevel.Array):
         delta_r_mask(evt_collection.Jet, evt_collection.DisMuon, max_lep_dr) ]
     return evt_collection
 
-def apply_cuts(collection):
-    cut_collection = apply_lepton_veto(collection)
-    jets = cut_collection.Jet
-    
+def apply_cuts(jets):
     pt_mask = jets.pt >= min_pT
     eta_mask = abs(jets.eta) < max_eta
     valid_mask = jets.genJetIdx > 0 
@@ -69,19 +65,55 @@ class BGProcessor(processor.ProcessorABC):
         dataset = events.metadata['dataset']
         jets = ak.zip(
             {
-                "Jet": events.Jet,
-                "Photon": events.Photon,
-                "Electron": events.Electron,
-                "DisMuon": events.DisMuon,
                 "pt": events.Jet.pt,
                 "eta": events.Jet.eta,
+                "phi": events.Jet.phi,
+                "mass": events.Jet.mass,
                 "genJetIdx": events.Jet.genJetIdx,
                 "partonFlavour": events.Jet.partonFlavour,
                 "disTauTag_score1": events.Jet.disTauTag_score1,
             },
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
         )
+        photons = ak.zip(
+            {       
+                "pt": events.Photon.pt,
+                "eta": events.Photon.eta,
+                "phi": events.Photon.phi,
+                "mass": events.Photon.mass,
+            },
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
+        )
+        electrons = ak.zip(
+            {       
+                "pt": events.Electron.pt,
+                "eta": events.Electron.eta,
+                "phi": events.Electron.phi,
+                "mass": events.Electron.mass,
+            },
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
+        )
+        disMuons = ak.zip(
+            {       
+                "pt": events.DisMuon.pt,
+                "eta": events.DisMuon.eta,
+                "phi": events.DisMuon.phi,
+                "mass": events.DisMuon.mass,
+            },
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
+        )
+        jets_and_leps = []
+        jets_and_leps['Jet'] = jets
+        jets_and_leps['Photon'] = photons
+        jets_and_leps['Electron'] = electrons
+        jets_and_leps['DisMuon'] = disMuons
 
-        cut = apply_cuts(jets)
+        lep_vetoed_jets = apply_lepton_veto(jets_and_leps)
+        cut = apply_cuts(lep_vetoed_jets)
 
         return {
             dataset: {
@@ -105,7 +137,7 @@ signal_events = NanoEventsFactory.from_root(
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
 stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-cut_signal_jets = apply_cuts(signal_events)
+cut_signal_jets = apply_cuts(signal_events.Jet)
 matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
 matched_signal_scores = matched_tau_jets.disTauTag_score1
 
@@ -161,8 +193,7 @@ dataset_runnable, dataset_updated = preprocess(
 
 to_compute = apply_to_fileset(
     BGProcessor(),
-    chunksize = 10,
-    max_chunks = 1,
+    max_chunks(dataset_runnable, 10),
     schemaclass=NanoAODSchema,
 )
 
@@ -281,5 +312,5 @@ plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
-plt.savefig('TT-4Q-bg-tau-tagger-rocc.pdf')
-plt.savefig('TT-4Q-bg-tau-tagger-rocc.png')
+plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.pdf')
+plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.png')
