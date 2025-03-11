@@ -1,4 +1,5 @@
 import sys
+import os
 import uproot
 import uproot.exceptions
 from uproot.exceptions import KeyInFileError
@@ -7,20 +8,20 @@ import argparse
 import numpy as np
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
-#from coffea.dataset_tools import (
-#    apply_to_fileset,
-#    max_chunks,
-#    preprocess,
-#)
+from coffea.dataset_tools import (
+    apply_to_fileset,
+    max_chunks,
+    preprocess,
+)
 from coffea.lumi_tools import LumiData, LumiList, LumiMask
 import awkward as ak
 import dask
 from dask import config as cfg
-#cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-#import dask_awkward as dak
-#from dask_jobqueue import HTCondorCluster
-#from dask.distributed import Client, wait, progress, LocalCluster
-#from fileset import *
+cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
+import dask_awkward as dak
+from dask_jobqueue import HTCondorCluster
+from dask.distributed import Client, wait, progress, LocalCluster
+from fileset import *
 
 import time
 from distributed import Client
@@ -62,13 +63,16 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 class MyProcessor(processor.ProcessorABC):
     def __init__(self):
         self._accumulator = {} 
+        for samp in fileset:
+            self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
     def process(self, events):
         
         output = {} 
+        output[events.metadata['dataset']] = {}
+
         if events is None: 
             return output
-
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
@@ -83,10 +87,9 @@ class MyProcessor(processor.ProcessorABC):
             lumi_list = LumiList(*dask.compute(events.run, events.luminosityBlock))
             lumi = lumi_data.get_lumi(lumi_list)/10**9 # convert from inverse microbarn to inverse femtobarn
 
-        
-        #charged_sel = events.Jet.constituents.pf.charge != 0            
+        charged_sel = events.Jet.constituents.pf.charge != 0            
 
-        #events["Jet_dxy"] = ak.flatten(ak.drop_none(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)
+        events["Jet_dxy"] = ak.flatten(ak.drop_none(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)
 
         # Define the "good muon" condition for each muon per event
         good_muon_mask = (
@@ -163,128 +166,117 @@ class MyProcessor(processor.ProcessorABC):
         
         events = events[trigger_mask]
 
-        meta = ak.Array([0], backend = "typetracer")
-        event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
-        partition_counts = event_counts.compute()
-        non_empty_partitions = [
-                                events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
-                               ]
-        if non_empty_partitions:
-            events = ak.concatenate(non_empty_partitions) 
+        
+        ## Will be needed if we switch back to writing root files
+        #meta = ak.Array([0], backend = "typetracer")
+        #event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
+        #partition_counts = event_counts.compute()
+        #non_empty_partitions = [
+        #                        events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
+        #                       ]
+        #if non_empty_partitions:
+        #    events = ak.concatenate(non_empty_partitions) 
+        #logger.info(f"Number of events after cuts: {ak.num(events.Jet.pt).compute()}")
        
         if is_MC: weights = events.genWeight / sumWeights 
         else: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
         logger.info("Defined weights")
 
+        logger.info(f"Get number of events: {ak.num(events.Jet.pt, axis = 0).compute()}")
+
         out_dict = {}
-        muon_vars =  [ 
-                     "pt",
-                     "eta",
-                     "phi",
-                     "charge",
-                     "dxy",
-                     "dxyErr",
-                     "dz",
-                     "dzErr",
-                     "looseId",
-                     "mediumId",
-                     "tightId",
-                     "pfRelIso03_all",
-                     "pfRelIso03_chg",
-                     "pfRelIso04_all",
-                     "tkRelIso",
-                     "genPartIdx",
-                     ]
 
-        jet_vars =   [
-                     "pt",
-                     "eta",
-                     "phi",
-                     "disTauTag_score1",
-                     ]
 
-        gpart_vars = [
-                     "genPartIdxMother", 
-                     "statusFlags", 
-                     "pdgId",
-                     "status", 
-                     "eta", 
-                     "mass", 
-                     "phi", 
-                     "pt", 
-                     "vertexR", 
-                     "vertexRho", 
-                     "vx", 
-                     "vy", 
-                     "vz",
-                     ]
+        muon_vars =  events.DisMuon.fields #[ 
+                     #"pt",
+                     #"eta",
+                     #"phi",
+                     #"charge",
+                     #"dxy",
+                     #"dxyErr",
+                     #"dz",
+                     #"dzErr",
+                     #"looseId",
+                     #"mediumId",
+                     #"tightId",
+                     #"pfRelIso03_all",
+                     #"pfRelIso03_chg",
+                     #"pfRelIso04_all",
+                     #"tkRelIso",
+                     #"genPartIdx",
+                     #]
 
-        gvist_vars = [
-                     "genPartIdxMother", 
-                     "charge",
-                     "status", 
-                     "eta", 
-                     "mass", 
-                     "phi", 
-                     "pt", 
-                     ]
+        jet_vars =   events.Jet.fields #[
+                     #"pt",
+                     #"eta",
+                     #"phi",
+                     #"disTauTag_score1",
+                     #"genPartIdx",
+                     #]
+
+        gpart_vars = events.GenPart.fields #[
+                     #"genPartIdxMother", 
+                     #"statusFlags", 
+                     #"pdgId",
+                     #"status", 
+                     #"eta", 
+                     #"mass", 
+                     #"phi", 
+                     #"pt", 
+                     #"vertexR", 
+                     #"vertexRho", 
+                     #"vx", 
+                     #"vy", 
+                     #"vz",
+                     #]
+
+        gvist_vars = events.GenVisTau.fields #[
+                     #"genPartIdxMother", 
+                     #"charge",
+                     #"status", 
+                     #"eta", 
+                     #"mass", 
+                     #"phi", 
+                     #"pt", 
+                     #]
 
         tau_vars   = events.Tau.fields                        
         MET_vars   = events.PFMET.fields  
  
         for branch in muon_vars:
-            out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
+            out_dict["DisMuon_"   + branch]  = dak.drop_none(events["DisMuon"][branch])
         for branch in jet_vars:
-            out_dict["Jet_"       + branch]  = ak.drop_none(events["Jet"][branch])
+            out_dict["Jet_"       + branch]  = dak.drop_none(events["Jet"][branch])
         for branch in gpart_vars:
-            out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
+            out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
         for branch in gvist_vars:
-            out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
+            out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
         for branch in tau_vars:
-            out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
+            out_dict["Tau_"       + branch]  = dak.drop_none(events["Tau"][branch])
         for branch in MET_vars: 
-            out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
+            out_dict["PFMET_"     + branch]  = dak.drop_none(events["PFMET"][branch])    
 
-        out_dict["event"]           = ak.drop_none(events.event)
-        out_dict["run"]             = ak.drop_none(events.run)
-        out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
-        #out_dict["Jet_dxy"]         = ak.drop_none(events["Jet_dxy"])
-        out_dict["nDisMuon"]        = ak.num(ak.drop_none(events.DisMuon))
-        out_dict["nJet"]            = ak.num(ak.drop_none(events.Jet))
-        out_dict["nGenPart"]        = ak.num(ak.drop_none(events.GenPart))
-        out_dict["nGenVisTau"]      = ak.num(ak.drop_none(events.GenVisTau))
-        out_dict["nTau"]            = ak.num(ak.drop_none(events.Tau))
+        out_dict["event"]           = dak.drop_none(events.event)
+        out_dict["run"]             = dak.drop_none(events.run)
+        out_dict["luminosityBlock"] = dak.drop_none(events.luminosityBlock)
+        out_dict["Jet_dxy"]         = dak.drop_none(events["Jet_dxy"])
+        out_dict["nDisMuon"]        = dak.num(dak.drop_none(events.DisMuon))
+        out_dict["nJet"]            = dak.num(dak.drop_none(events.Jet))
+        out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
+        out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
+        out_dict["nTau"]            = dak.num(dak.drop_none(events.Tau))
 
 
         logger.info(f"Filled dictionary")
+        
+        out_dict = dak.zip(out_dict, depth_limit = 1)
 
-        out_dict = ak.zip(out_dict, depth_limit = 1)
-        logger.info(f"Dictionary zipped")
-        return uproot.dask_write(out_dict, "my_skim_muon_root/" + events.metadata["dataset"], tree_name="Events")
-        logger.info("Dictionary written to root files")
-        return output
-
+        logger.info(f"Dictionary zipped: {type(out_dict)}")
+        return out_dict
 
     def postprocess(self, accumulator):
-        pass
-
-#dataset_runnable, dataset_updated = preprocess(
-#    fileset,
-#    align_clusters=False,
-#    step_size=100_00,
-#    files_per_batch=1,
-#    skip_bad_files=True,
-#    save_form=False,
-#    file_exceptions=(OSError, KeyInFileError),
-#    allow_empty_datasets=False,
-#)
-#to_compute = apply_to_fileset(
-#             MyProcessor(),
-#             max_chunks(dataset_runnable, 100000000000000000000000),
-#             schemaclass=PFNanoAODSchema
-#)
-#(out,) = dask.compute(to_compute)
-#print(out)
+        return accumulator
+        
 
 if __name__ == "__main__":
 
@@ -293,33 +285,36 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     
     tic = time.time()
-    cluster = LPCCondorCluster()
+    cluster = LPCCondorCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
-    cluster.scale(10)
-    cluster.adapt(minimum=1, maximum=10)
+    #cluster.scale(10)
+    cluster.adapt(minimum=1, maximum=5)
     client = Client(cluster)
 
-    exe_args = {
-        "client": client,
-        "savemetrics": True,
-        "schema": NanoAODSchema,
-        "align_clusters": True,
-    }
-
-    proc = MyProcessor()
-
-    print("Waiting for at least one worker...")
-    client.wait_for_workers(1)
-    hists, metrics = processor.run_uproot_job(
-        "tau_fileset.json",
-        treename="Events",
-        processor_instance=proc,
-        executor=processor.dask_executor,
-        executor_args=exe_args,
+    dataset_runnable, dataset_updated = preprocess(
+        fileset,
+        align_clusters=False,
+        step_size=100_00,
+        files_per_batch=1,
+        skip_bad_files=True,
+        save_form=False,
+        file_exceptions=(OSError, KeyInFileError),
+        allow_empty_datasets=False,
     )
-    elapsed = time.time() - tic
-    print(f"Output: {hists}")
-    print(f"Metrics: {metrics}")
-    print(f"Finished in {elapsed:.1f}s")
-    print(f"Events/s: {metrics['entries'] / elapsed:.0f}")
+    to_compute = apply_to_fileset(
+                 MyProcessor(),
+                 max_chunks(dataset_runnable, 1000000),
+                 schemaclass=PFNanoAODSchema
+    )
 
+    for samp in fileset: 
+        print(type(to_compute))
+        print(to_compute)
+        outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root/"+samp, compute=False, tree_name='Events')
+        dask.compute(outfile)
+        
+
+
+
+    elapsed = time.time() - tic
+    print(f"Finished in {elapsed:.1f}s")
