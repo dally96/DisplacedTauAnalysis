@@ -24,38 +24,16 @@ NanoAODSchema.warn_missing_crossrefs = False
 warnings.filterwarnings("ignore", module="coffea.nanoevents.methods")
 
 # --- FUNCTIONS & DEFINITIONS --- #
-# Selection cut parameters
-min_pT = 20
-max_eta = 2.4 
-max_dr = 0.3 
-max_lep_dr = 0.4 
+signal_file_name = 'Stau_100_100mm'
 score_increment_scale_factor = 500 
 
-def delta_r_mask(first, second, threshold):
-    mval = first.metric_table(second)
-    return ak.all(mval > threshold, axis=-1)
-
-def apply_lepton_veto(evt_collection):
-    evt_collection['Jet'] = evt_collection.Jet[
-        delta_r_mask(evt_collection.Jet, evt_collection.Photon, max_lep_dr) ]
-    evt_collection['Jet'] = evt_collection.Jet[
-        delta_r_mask(evt_collection.Jet, evt_collection.Electron, max_lep_dr) ]
-    evt_collection['Jet'] = evt_collection.Jet[
-        delta_r_mask(evt_collection.Jet, evt_collection.DisMuon, max_lep_dr) ]
-    return evt_collection
-
-def apply_cuts(jets):
-    pt_mask = jets.pt >= min_pT
-    eta_mask = abs(jets.eta) < max_eta
-    valid_mask = jets.genJetIdx > 0 
-    
-    collection_length = ak.sum(ak.num(jets.partonFlavour))
-    inclusion_mask = jets.genJetIdx < collection_length
-
-    cut_jets = jets[
-        pt_mask & eta_mask & valid_mask & inclusion_mask ]
-
-    return cut_jets
+def get_bg(collection):
+    bg = {}
+    for dataset in collection:
+        if dataset = signal_file_name:
+            continue
+        bg.update(collection[dataset][dataset])
+    return bg
 
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
@@ -76,45 +54,6 @@ class BGProcessor(processor.ProcessorABC):
             with_name="PtEtaPhiMLorentzVector",
             behavior=vector.behavior,
         )
-        photons = ak.zip(
-            {       
-                "pt": events.Photon.pt,
-                "eta": events.Photon.eta,
-                "phi": events.Photon.phi,
-                "mass": events.Photon.mass,
-            },
-            with_name="PtEtaPhiMLorentzVector",
-            behavior=vector.behavior,
-        )
-        electrons = ak.zip(
-            {       
-                "pt": events.Electron.pt,
-                "eta": events.Electron.eta,
-                "phi": events.Electron.phi,
-                "mass": events.Electron.mass,
-            },
-            with_name="PtEtaPhiMLorentzVector",
-            behavior=vector.behavior,
-        )
-        disMuons = ak.zip(
-            {       
-                "pt": events.DisMuon.pt,
-                "eta": events.DisMuon.eta,
-                "phi": events.DisMuon.phi,
-                "mass": events.DisMuon.mass,
-            },
-            with_name="PtEtaPhiMLorentzVector",
-            behavior=vector.behavior,
-        )
-        jets_and_leps = []
-        jets_and_leps['Jet'] = jets
-        jets_and_leps['Photon'] = photons
-        jets_and_leps['Electron'] = electrons
-        jets_and_leps['DisMuon'] = disMuons
-
-        lep_vetoed_jets = apply_lepton_veto(jets_and_leps)
-        cut = apply_cuts(lep_vetoed_jets)
-
         return {
             dataset: {
                 "jets": cut,
@@ -123,62 +62,66 @@ class BGProcessor(processor.ProcessorABC):
     def postprocess(self,accumulator):
         pass
 
-# --- SIGNAL PROCESSING --- #
-# Import dataset
-signal_fname = "/eos/user/d/dally/DisplacedTauAnalysis/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root" # signal
-
-# Pass dataset info to coffea objects
-signal_events = NanoEventsFactory.from_root(
-    {signal_fname: "Events"},
-    schemaclass=NanoAODSchema,
-    metadata={"dataset": "signal"},
-    delayed = False).events()
-
-# Signal processing
-taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
-stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-cut_signal_jets = apply_cuts(signal_events.Jet)
-matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
-matched_signal_scores = matched_tau_jets.disTauTag_score1
-
-# --- BG PROCESSING --- #
 # Import dataset
 fileset = {
-    'TT to 4Q' : {
-        "files": {
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-1.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-2.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1-3.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_1.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_10.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_11.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_12.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_13.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_14.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_15.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_16.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_17.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_18.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_2.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_20.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_21.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_22.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_23.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_24.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_25.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_26.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_27.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_28.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_29.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_30.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_3.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_4.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_5.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_6.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_7.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_8.root': "Events",
-            '/eos/user/d/dally/DisplacedTauAnalysis/080924_BG_Out/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/crab_TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/240809_215611/0000/nanoaod_output_9.root': "Events",
+    'QCD300_470' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD300_470_root/part0.root': "Events",
             }
+    }
+    'QCD470_600' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD470_600_root/part0.root': "Events",
+            }
+    }
+    'QCD50_80' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part05.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part06.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part07.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part08.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part09.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part27.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part29.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part31.root': "Events",
+            }
+    }
+    'QCD80_120' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part096.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part097.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part099.root': "Events",
+        }
+    }
+    'TTto2L2Nu' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
+        }
+    }
+    'TTtoLNu2Q' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
+        }
+    }
+    'Stau_100_100mm' : {
+        "files" : {
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part00.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part01.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part02.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part03.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part04.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part05.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part06.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part07.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part08.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part09.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part10.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part11.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part12.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part13.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part14.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part15.root': "Events",
+        }
     }
 }
 
@@ -197,8 +140,17 @@ to_compute = apply_to_fileset(
     schemaclass=NanoAODSchema,
 )
 
-(cut_bg_jets,) = dask.compute(to_compute)
+(cut_jets,) = dask.compute(to_compute)
 
+# --- SIGNAL PROCESSING --- #
+signal_events = cut_jets['Stau_100_100mm']['Stau_100_100mm']
+stau_taus = signal_events['StauTau']  # h-decay taus with stau parents
+cut_signal_jets = signal_events['Jet'] # imported files are precut
+matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
+matched_signal_scores = matched_tau_jets.disTauTag_score1
+
+# --- BG PROCESSING --- #
+all_bg = get_bg(cut_jets)
 bg_scores = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']
 fake_tau_jets = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets'] # No staus present in bg
 matched_bg_scores = bg_scores
