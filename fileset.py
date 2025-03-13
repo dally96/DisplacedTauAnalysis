@@ -5,50 +5,57 @@ fileset = {
 #               '/eos/cms/store/user/fiorendi/displacedTaus/test_btvNano/testTTToLNu.root': "Events",
 #            }
 #        },
+#        'oneCustomNano_data_2022F_22Sep2023_JetMET': {
+#            "files": {
+#                '/eos/cms/store/user/fiorendi/displacedTaus/oneCustomNano_data_2022F_22Sep2023_JetMET.root': 'Events',
+#                }
+#         }, 
+#            
 #      'Stau_100_100mm': {
 #        "files": {
 #             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*": "Events", 
 #          }
 #      },
-      'Stau_200_100mm': {
-        "files": {
-             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_0_0.root": "Events", 
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_0_0.root": "Events",
-                "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_10_0.root": "Events",
-                "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_1_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_11_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_12_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_13_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_15_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_16_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_17_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_18_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_19_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_20_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_21_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_22_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_3_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_4_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_5_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_6_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_7_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_8_0.root": "Events",
-                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_9_0.root": "Events"
-          }
-      },
-      #'Stau_300_100mm': {
-      #  "files": {
-      #       "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*": "Events", 
-      #    }
-      #},
-      #'Stau_500_100mm': {
-      #  "files": {
-      #       "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*": "Events", 
-      #    }
-      #},
+#      'Stau_200_100mm': {
+#        "files": {
+#             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*": "Events", 
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_0_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_10_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_1_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_11_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_12_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_13_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_15_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_16_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_17_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_18_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_19_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_20_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_21_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_22_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_3_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_4_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_5_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_6_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_7_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_8_0.root": "Events",
+#                #"root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_9_0.root": "Events"
+#          }
+#      },
+#      'Stau_300_100mm': {
+#        "files": {
+#             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*": "Events", 
+#          }
+#      },
+#      'Stau_500_100mm': {
+#        "files": {
+#             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*": "Events", 
+#          }
+#      },
 #     'QCD1000_1400': {
 #         "files": {
-#             '080924_BG_Out/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/240809_220931/0000/*':"Events", 
+#             #'080924_BG_Out/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8/240809_220931/0000/*':"Events", 
+#             '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8_ext/*':'Events',
 #         }
 #     },
 #     'QCD120_170': {
@@ -60,7 +67,8 @@ fileset = {
 #     },
 #     'QCD1400_1800': {
 #         "files": {
-#             '080924_BG_Out/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/240809_220910/0000/*': "Events",
+#             #'080924_BG_Out/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8/240809_220910/0000/*': "Events",
+#             '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8_ext/*': 'Events',
 #         }
 #     },
 #     'QCD170_300': {
@@ -72,12 +80,14 @@ fileset = {
 #     },
 #     'QCD1800_2400': {
 #         "files": {
-#             '080924_BG_Out/QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/240809_220842/0000/*': "Events", 
+#             #'080924_BG_Out/QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8/240809_220842/0000/*': "Events", 
+#             '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8_ext/*': 'Events',
 #         }
 #     },
 #     'QCD2400_3200': {
 #         "files": {
-#             '080924_BG_Out/QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/240809_220118/0000/*':"Events",
+#             #'080924_BG_Out/QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8/240809_220118/0000/*':"Events",
+#              '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8_ext/*': 'Events', 
 #         }
 #     },
 #     'QCD300_470': {
@@ -89,7 +99,8 @@ fileset = {
 #     },
 #     'QCD3200': {
 #         "files": {
-#             '080924_BG_Out/QCD_PT-3200_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-3200_TuneCP5_13p6TeV_pythia8/240809_220041/0000/*' : "Events",
+#            # '080924_BG_Out/QCD_PT-3200_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-3200_TuneCP5_13p6TeV_pythia8/240809_220041/0000/*' : "Events",
+#              '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-3200_TuneCP5_13p6TeV_pythia8_ext/*': 'Events', 
 #         }
 #    },
 #     'QCD50_80': {
@@ -101,6 +112,7 @@ fileset = {
 #     'QCD600_800': {
 #         "files": {
 #            # '080924_BG_Out/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/crab_QCD_PT-600to800_TuneCP5_13p6TeV_pythia8/240809_220956/0000/*' : "Events",
+#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_?_0.root": "Events",
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_??_0.root": "Events",
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_1??_0.root": "Events",
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_2??_0.root": "Events",
@@ -112,7 +124,6 @@ fileset = {
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_8??_0.root": "Events",
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_9??_0.root": "Events",
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_1???_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/nano_2???_0.root": "Events",
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/*": "Events",
 #         }
 #     },
@@ -156,59 +167,59 @@ fileset = {
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_15??_0.root": "Events",
 #         }
 #     },
-#     'TTtoLNu2Q': {
-#         "files": {
-#             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/*": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_?_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_5??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_6??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_7??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_8??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_9??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_10??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_11??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_12??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_13??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_14??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_15??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_16??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_17??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_18??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_19??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_20??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_21??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_22??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_23??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_24??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_25??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_26??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_27??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_28??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_29??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_30??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_31??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_32??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_33??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_34??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_35??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_36??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_37??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_38??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_39??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_40??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_41??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_42??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_43??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_44??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_45??_0.root": "Events",
-#             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_46??_0.root": "Events",
-#         }
-#     },   
+     'TTtoLNu2Q': {
+         "files": {
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/*": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_?_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_5??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_6??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_7??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_8??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_9??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_10??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_11??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_12??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_13??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_14??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_15??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_16??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_17??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_18??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_19??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_20??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_21??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_22??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_23??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_24??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_25??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_26??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_27??_0.root": "Events",
+             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_28??_0.root": "Events",
+             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_29??_0.root": "Events",
+             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_30??_0.root": "Events",
+             "/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_31??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_32??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_33??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_34??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_35??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_36??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_37??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_38??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_39??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_40??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_41??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_42??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_43??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_44??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_45??_0.root": "Events",
+             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_46??_0.root": "Events",
+         }
+     },   
 #     'TTto4Q': {
 #         "files": {
 #             #"/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/*" : "Events",
