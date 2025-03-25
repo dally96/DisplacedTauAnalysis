@@ -35,24 +35,17 @@ def get_bg(collection):
         bg.update(collection[dataset][dataset])
     return bg
 
-class BGProcessor(processor.ProcessorABC):
+class BasicProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
 
     def process(self,events):
         dataset = events.metadata['dataset']
+        stau_tau = ak.zip(
         jets = ak.zip(
             {
-                "pt": events.Jet.pt,
-                "eta": events.Jet.eta,
-                "phi": events.Jet.phi,
-                "mass": events.Jet.mass,
-                "genJetIdx": events.Jet.genJetIdx,
-                "partonFlavour": events.Jet.partonFlavour,
                 "disTauTag_score1": events.Jet.disTauTag_score1,
             },
-            with_name="PtEtaPhiMLorentzVector",
-            behavior=vector.behavior,
         )
         return {
             dataset: {
@@ -151,118 +144,118 @@ matched_signal_scores = matched_tau_jets.disTauTag_score1
 
 # --- BG PROCESSING --- #
 all_bg = get_bg(cut_jets)
-bg_scores = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']
-fake_tau_jets = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets'] # No staus present in bg
-matched_bg_scores = bg_scores
+#bg_scores = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']
+#fake_tau_jets = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets'] # No staus present in bg
+#matched_bg_scores = bg_scores
+#
+## Jet totals
+#total_matched_tau_jets = ak.sum(ak.num(matched_tau_jets))
+#total_fake_tau_jets = ak.sum(ak.num(bg_scores))
+#
+#total_jets = (
+#    ak.sum(ak.num(cut_signal_jets)) +
+#    ak.sum(ak.num(bg_scores)) )
 
-# Jet totals
-total_matched_tau_jets = ak.sum(ak.num(matched_tau_jets))
-total_fake_tau_jets = ak.sum(ak.num(bg_scores))
+## ROC calculations
+#thresholds = []
+#fake_rates = []
+#efficiencies = []
 
-total_jets = (
-    ak.sum(ak.num(cut_signal_jets)) +
-    ak.sum(ak.num(bg_scores)) )
-
-# ROC calculations
-thresholds = []
-fake_rates = []
-efficiencies = []
-
-for increment in range(0, score_increment_scale_factor+1):
-    threshold = increment / score_increment_scale_factor
-
-    passing_signal_mask = matched_signal_scores >= threshold
-    matched_passing_jets = matched_tau_jets[passing_signal_mask]
-
-    passing_bg_mask = matched_bg_scores >= threshold
-    fake_passing_jets = fake_tau_jets[passing_bg_mask]
-
-    # --- Totals --- #
-    total_matched_passing_jets = ak.sum(ak.num(matched_passing_jets))
-    total_fake_passing_jets = ak.sum(ak.num(fake_passing_jets))
-
-    # --- Results --- #
-    efficiency = total_matched_passing_jets / total_matched_tau_jets
-    fake_rate = total_fake_passing_jets / total_jets
-
-    thresholds.append(threshold)
-    fake_rates.append(fake_rate)
-    efficiencies.append(efficiency)
-
-# Helper function for plot colormap
-def colored_line(x, y, c, ax, **lc_kwargs):
-    """ 
-    From https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html#sphx-glr-gallery-lines-bars-and-markers-multicolored-line-py
-    Plot a line with a color specified along the line by a third value.
-
-    It does this by creating a collection of line segments. Each line segment is
-    made up of two straight lines each connecting the current (x, y) point to the
-    midpoints of the lines connecting the current point with its two neighbors.
-    This creates a smooth line with no gaps between the line segments.
-
-    Parameters
-    ----------
-    x, y : array-like
-        The horizontal and vertical coordinates of the data points.
-    c : array-like
-        The color values, which should be the same size as x and y.
-    ax : Axes
-        Axis object on which to plot the colored line.
-    **lc_kwargs
-        Any additional arguments to pass to matplotlib.collections.LineCollection
-        constructor. This should not include the array keyword argument because
-        that is set to the color argument. If provided, it will be overridden.
-
-    Returns
-    -------
-    matplotlib.collections.LineCollection
-        The generated line collection representing the colored line.
-    """
-    if "array" in lc_kwargs:
-        warnings.warn('The provided "array" keyword argument will be overridden')
-
-    # Default the capstyle to butt so that the line segments smoothly line up
-    default_kwargs = {"capstyle": "butt"}
-    default_kwargs.update(lc_kwargs)
-    
-    # Compute the midpoints of the line segments. Include the first and last points
-    # twice so we don't need any special syntax later to handle them.
-    x = np.asarray(x)
-    y = np.asarray(y)
-    x_midpts = np.hstack((x[0], 0.5 * (x[1:] + x[:-1]), x[-1]))
-    y_midpts = np.hstack((y[0], 0.5 * (y[1:] + y[:-1]), y[-1]))
-
-    # Determine the start, middle, and end coordinate pair of each line segment.
-    # Use the reshape to add an extra dimension so each pair of points is in its
-    # own list. Then concatenate them to create:
-    # [
-    #   [(x1_start, y1_start), (x1_mid, y1_mid), (x1_end, y1_end)],
-    #   [(x2_start, y2_start), (x2_mid, y2_mid), (x2_end, y2_end)],
-    #   ...
-    # ]
-    coord_start = np.column_stack((x_midpts[:-1], y_midpts[:-1]))[:, np.newaxis, :]
-    coord_mid = np.column_stack((x, y))[:, np.newaxis, :]
-    coord_end = np.column_stack((x_midpts[1:], y_midpts[1:]))[:, np.newaxis, :]
-    segments = np.concatenate((coord_start, coord_mid, coord_end), axis=1)
-
-    lc = LineCollection(segments, **default_kwargs)
-    lc.set_array(c)  # set the colors of each segment
-
-    return ax.add_collection(lc)
+#for increment in range(0, score_increment_scale_factor+1):
+#    threshold = increment / score_increment_scale_factor
+#
+#    passing_signal_mask = matched_signal_scores >= threshold
+#    matched_passing_jets = matched_tau_jets[passing_signal_mask]
+#
+#    passing_bg_mask = matched_bg_scores >= threshold
+#    fake_passing_jets = fake_tau_jets[passing_bg_mask]
+#
+#    # --- Totals --- #
+#    total_matched_passing_jets = ak.sum(ak.num(matched_passing_jets))
+#    total_fake_passing_jets = ak.sum(ak.num(fake_passing_jets))
+#
+#    # --- Results --- #
+#    efficiency = total_matched_passing_jets / total_matched_tau_jets
+#    fake_rate = total_fake_passing_jets / total_jets
+#
+#    thresholds.append(threshold)
+#    fake_rates.append(fake_rate)
+#    efficiencies.append(efficiency)
+#
+# helper function for plot colormap
+#def colored_line(x, y, c, ax, **lc_kwargs):
+#    """ 
+#    From https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html#sphx-glr-gallery-lines-bars-and-markers-multicolored-line-py
+#    Plot a line with a color specified along the line by a third value.
+# 
+#    It does this by creating a collection of line segments. Each line segment is
+#    made up of two straight lines each connecting the current (x, y) point to the
+#    midpoints of the lines connecting the current point with its two neighbors.
+#    This creates a smooth line with no gaps between the line segments.
+# 
+#    Parameters
+#    ----------
+#    x, y : array-like
+#        The horizontal and vertical coordinates of the data points.
+#    c : array-like
+#        The color values, which should be the same size as x and y.
+#    ax : Axes
+#        Axis object on which to plot the colored line.
+#    **lc_kwargs
+#        Any additional arguments to pass to matplotlib.collections.LineCollection
+#        constructor. This should not include the array keyword argument because
+#        that is set to the color argument. If provided, it will be overridden.
+# 
+#    Returns
+#    -------
+#    matplotlib.collections.LineCollection
+#        The generated line collection representing the colored line.
+#    """
+#    if "array" in lc_kwargs:
+#        warnings.warn('The provided "array" keyword argument will be overridden')
+# 
+#    # Default the capstyle to butt so that the line segments smoothly line up
+#    default_kwargs = {"capstyle": "butt"}
+#    default_kwargs.update(lc_kwargs)
+#    
+#    # Compute the midpoints of the line segments. Include the first and last points
+#    # twice so we don't need any special syntax later to handle them.
+#    x = np.asarray(x)
+#    y = np.asarray(y)
+#    x_midpts = np.hstack((x[0], 0.5 * (x[1:] + x[:-1]), x[-1]))
+#    y_midpts = np.hstack((y[0], 0.5 * (y[1:] + y[:-1]), y[-1]))
+# 
+#    # Determine the start, middle, and end coordinate pair of each line segment.
+#    # Use the reshape to add an extra dimension so each pair of points is in its
+#    # own list. Then concatenate them to create:
+#    # [
+#    #   [(x1_start, y1_start), (x1_mid, y1_mid), (x1_end, y1_end)],
+#    #   [(x2_start, y2_start), (x2_mid, y2_mid), (x2_end, y2_end)],
+#    #   ...
+#    # ]
+#    coord_start = np.column_stack((x_midpts[:-1], y_midpts[:-1]))[:, np.newaxis, :]
+#    coord_mid = np.column_stack((x, y))[:, np.newaxis, :]
+#    coord_end = np.column_stack((x_midpts[1:], y_midpts[1:]))[:, np.newaxis, :]
+#    segments = np.concatenate((coord_start, coord_mid, coord_end), axis=1)
+#
+#    lc = LineCollection(segments, **default_kwargs)
+#    lc.set_array(c)  # set the colors of each segment
+#
+#    return ax.add_collection(lc)
 
 # Plot stuff
-fig, ax = plt.subplots()
-color = np.linspace(0, 1, len(thresholds))
-roc = colored_line(fake_rates, efficiencies, color, ax, linewidth=2, cmap='plasma')
-cbar = fig.colorbar(roc)
-cbar.set_label('Score threshold')
+#fig, ax = plt.subplots()
+#color = np.linspace(0, 1, len(thresholds))
+#roc = colored_line(fake_rates, efficiencies, color, ax, linewidth=2, cmap='plasma')
+#cbar = fig.colorbar(roc)
+#cbar.set_label('Score threshold')
 
-ax.set_xscale("log")
-ax.set_ylim(0.85, 1.05)
+#ax.set_xscale("log")
+#ax.set_ylim(0.85, 1.05)
 
-plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
-plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
+#plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
+#plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
-plt.grid()
-plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.pdf')
-plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.png')
+#plt.grid()
+#plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.pdf')
+#plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.png')
