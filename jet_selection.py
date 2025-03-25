@@ -82,21 +82,21 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
                       (gen_taus.vx - cut_filtered_events.GenVtx.x) * np.sin(gen_taus.phi)
 
     # Get sum of all had gen taus used as denominator for grid plots
-    num_had_gen_taus = ak.sum(ak.num(gen_taus)).compute()
+    #num_had_gen_taus = ak.sum(ak.num(gen_taus)).compute()
 
     # Matching using the pt leading jets
     gen_taus_matched_by_pt = leading_pt_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_pt = ak.drop_none(gen_taus_matched_by_pt)
 
     # Get sum of gen_taus_matched_by_pt
-    nMatched_gen_taus_by_pt = ak.sum(ak.num(gen_taus_matched_by_pt)).compute()
+    #nMatched_gen_taus_by_pt = ak.sum(ak.num(gen_taus_matched_by_pt)).compute()
 
     # Matching using the dxy leading jets
     gen_taus_matched_by_dxy = leading_dxy_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_dxy = ak.drop_none(gen_taus_matched_by_dxy)
 
     # Get sum of gen_taus_matched_by_dxy
-    nMatched_gen_taus_by_dxy = ak.sum(ak.num(gen_taus_matched_by_dxy)).compute()
+    #nMatched_gen_taus_by_dxy = ak.sum(ak.num(gen_taus_matched_by_dxy)).compute()
 
     jet_matched_gen_taus_pt = gen_taus.nearest(leading_pt_jets, threshold=0.4)
     jet_matched_gen_taus_pt = ak.drop_none(jet_matched_gen_taus_pt)
@@ -109,7 +109,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
 
     # Get all jets matched to a gen_tau
     all_jets_matched_to_gen_tau = gen_taus.nearest(jets, threshold=0.4)
-
+    '''
     # Compute efficiency
     efficiency = float(nMatched_gen_taus_by_dxy / num_had_gen_taus) if num_had_gen_taus > 0 else 0.0
 
@@ -144,7 +144,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
 
     with open(json_filename, "w") as f:
         json.dump(existing_data, f, indent=4)
-
+    '''    
     # From all jets matched to gen_tau, select highest pT jets
     sort_by_pt = all_jets_matched_to_gen_tau[ak.argsort(all_jets_matched_to_gen_tau.pt, ascending=False)]
     leading_jets_matched_to_gen_tau = ak.singletons(ak.firsts(sort_by_pt))
@@ -215,21 +215,24 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
          leading_pt_of_matched_jet_not_leading_pt_flat.pt, 
          no_match_jet_leading_pt_flat.pt])
 
-    return (gen_taus,
+    return (gen_taus, gen_taus_matched_by_dxy,
             gen_taus_matched_by_pt, jet_matched_gen_taus_pt,
             gen_taus_matched_by_score, jet_matched_gen_taus_score,
-            matched_leading_jets_flat, all_unmatched_jets_pt,
-            nMatched_gen_taus_by_pt, nMatched_gen_taus_by_dxy, num_had_gen_taus)
+            matched_leading_jets_flat, all_unmatched_jets_pt)
 
-def flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt):
+def flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt, leading_dxy_jets, gen_taus_matched_by_dxy):
 
     # Flatten the dxy fields
     gen_taus_flat_dxy = ak.flatten(gen_taus.dxy, axis=1)
+    gen_taus_matched_by_flat_dxy = ak.flatten(gen_taus_matched_by_dxy.dxy, axis=1)
+    leading_dxy_jets_flat_dxy = ak.flatten(ak.drop_none(leading_dxy_jets.dxy, axis=1))
+
+    # Flatten the pt fields
     gen_taus_flat_pt = ak.flatten(gen_taus.pt, axis=1)
 
     gen_taus_matched_by_pt_flat_dxy = ak.flatten(gen_taus_matched_by_pt.dxy, axis=1)
     gen_taus_matched_by_pt_flat_pt = ak.flatten(gen_taus_matched_by_pt.pt, axis=1)
 
-    return (gen_taus_flat_dxy, gen_taus_flat_pt,
+    return (gen_taus_flat_dxy, gen_taus_matched_by_flat_dxy, leading_dxy_jets_flat_dxy, gen_taus_flat_pt,
             gen_taus_matched_by_pt_flat_dxy, gen_taus_matched_by_pt_flat_pt)
 
