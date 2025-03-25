@@ -30,7 +30,7 @@ score_increment_scale_factor = 500
 def get_bg(collection):
     bg = {}
     for dataset in collection:
-        if dataset = signal_file_name:
+        if dataset == signal_file_name:
             continue
         bg.update(collection[dataset][dataset])
     return bg
@@ -41,7 +41,11 @@ class BasicProcessor(processor.ProcessorABC):
 
     def process(self,events):
         dataset = events.metadata['dataset']
-        stau_tau = ak.zip(
+        return {
+            dataset: {
+                "jets": cut,
+            }
+        }
         jets = ak.zip(
             {
                 "disTauTag_score1": events.Jet.disTauTag_score1,
@@ -61,12 +65,12 @@ fileset = {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD300_470_root/part0.root': "Events",
             }
-    }
+    },
     'QCD470_600' : {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD470_600_root/part0.root': "Events",
             }
-    }
+    },
     'QCD50_80' : {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part05.root': "Events",
@@ -78,24 +82,24 @@ fileset = {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part29.root': "Events",
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part31.root': "Events",
             }
-    }
+    },
     'QCD80_120' : {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part096.root': "Events",
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part097.root': "Events",
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part099.root': "Events",
         }
-    }
+    },
     'TTto2L2Nu' : {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
         }
-    }
+    },
     'TTtoLNu2Q' : {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
         }
-    }
+    },
     'Stau_100_100mm' : {
         "files" : {
             'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part00.root': "Events",
@@ -144,6 +148,7 @@ matched_signal_scores = matched_tau_jets.disTauTag_score1
 
 # --- BG PROCESSING --- #
 all_bg = get_bg(cut_jets)
+print(all_bg)
 #bg_scores = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']
 #fake_tau_jets = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets'] # No staus present in bg
 #matched_bg_scores = bg_scores
@@ -182,67 +187,6 @@ all_bg = get_bg(cut_jets)
 #    fake_rates.append(fake_rate)
 #    efficiencies.append(efficiency)
 #
-# helper function for plot colormap
-#def colored_line(x, y, c, ax, **lc_kwargs):
-#    """ 
-#    From https://matplotlib.org/stable/gallery/lines_bars_and_markers/multicolored_line.html#sphx-glr-gallery-lines-bars-and-markers-multicolored-line-py
-#    Plot a line with a color specified along the line by a third value.
-# 
-#    It does this by creating a collection of line segments. Each line segment is
-#    made up of two straight lines each connecting the current (x, y) point to the
-#    midpoints of the lines connecting the current point with its two neighbors.
-#    This creates a smooth line with no gaps between the line segments.
-# 
-#    Parameters
-#    ----------
-#    x, y : array-like
-#        The horizontal and vertical coordinates of the data points.
-#    c : array-like
-#        The color values, which should be the same size as x and y.
-#    ax : Axes
-#        Axis object on which to plot the colored line.
-#    **lc_kwargs
-#        Any additional arguments to pass to matplotlib.collections.LineCollection
-#        constructor. This should not include the array keyword argument because
-#        that is set to the color argument. If provided, it will be overridden.
-# 
-#    Returns
-#    -------
-#    matplotlib.collections.LineCollection
-#        The generated line collection representing the colored line.
-#    """
-#    if "array" in lc_kwargs:
-#        warnings.warn('The provided "array" keyword argument will be overridden')
-# 
-#    # Default the capstyle to butt so that the line segments smoothly line up
-#    default_kwargs = {"capstyle": "butt"}
-#    default_kwargs.update(lc_kwargs)
-#    
-#    # Compute the midpoints of the line segments. Include the first and last points
-#    # twice so we don't need any special syntax later to handle them.
-#    x = np.asarray(x)
-#    y = np.asarray(y)
-#    x_midpts = np.hstack((x[0], 0.5 * (x[1:] + x[:-1]), x[-1]))
-#    y_midpts = np.hstack((y[0], 0.5 * (y[1:] + y[:-1]), y[-1]))
-# 
-#    # Determine the start, middle, and end coordinate pair of each line segment.
-#    # Use the reshape to add an extra dimension so each pair of points is in its
-#    # own list. Then concatenate them to create:
-#    # [
-#    #   [(x1_start, y1_start), (x1_mid, y1_mid), (x1_end, y1_end)],
-#    #   [(x2_start, y2_start), (x2_mid, y2_mid), (x2_end, y2_end)],
-#    #   ...
-#    # ]
-#    coord_start = np.column_stack((x_midpts[:-1], y_midpts[:-1]))[:, np.newaxis, :]
-#    coord_mid = np.column_stack((x, y))[:, np.newaxis, :]
-#    coord_end = np.column_stack((x_midpts[1:], y_midpts[1:]))[:, np.newaxis, :]
-#    segments = np.concatenate((coord_start, coord_mid, coord_end), axis=1)
-#
-#    lc = LineCollection(segments, **default_kwargs)
-#    lc.set_array(c)  # set the colors of each segment
-#
-#    return ax.add_collection(lc)
-
 # Plot stuff
 #fig, ax = plt.subplots()
 #color = np.linspace(0, 1, len(thresholds))
