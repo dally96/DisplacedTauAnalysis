@@ -1,3 +1,4 @@
+import hist
 import coffea
 import uproot
 import scipy
@@ -5,6 +6,7 @@ import dask
 import warnings
 import numpy as np
 import awkward as ak
+import hist.dask as hda
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from coffea import processor
@@ -25,7 +27,7 @@ warnings.filterwarnings("ignore", module="coffea.nanoevents.methods")
 
 # --- FUNCTIONS & DEFINITIONS --- #
 signal_file_name = 'Stau_100_100mm'
-score_increment_scale_factor = 500 
+resolution = 500 # inverse score increment and plotting scale factor
 
 def get_bg(collection):
     bg = {}
@@ -35,25 +37,46 @@ def get_bg(collection):
         bg.update(collection[dataset][dataset])
     return bg
 
+def get_matched_jet_score(collection):
+    genpart = collection.StauTau
+    jets = collection.Jet
+    matched_jets = genpart.nearest(jets, threshold = max_dr)
+    collection['Jet'] = matched_jets
+    collection['disTauTag_score1'] = matched_jets.disTauTag_score1
+    return collection
+
 class BasicProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
 
     def process(self,events):
-        dataset = events.metadata['dataset']
+        dataset      = events.metadata['dataset']
+        dataset_axis = hist.axis.StrCategory([], growth=True, name="dataset", label="Primary dataset")
+        score_axis   = hist.axis.Regular(resolution, 0, resolution, name="score", label="Score")
+
+        h_signal = hda.hist.Hist(dataset_axis, score_axis, storage="weight", label="Counts")
+        h_bg     = hda.hist.Hist(dataset_axis, score_axis, storage="weight", label="Counts")
+        
+        if dataset == signal_file_name:
+            signal = ak.zip(
+                {
+                    "Jet": events.Jet,
+                    "StauTau": events.StauTau,
+                    "disTauTag_score1": events.Jet.disTauTag_score1,
+                    "num_signal_jets": ak.sum(ak.num(events.Jet)),
+                },
+            )
+        else:
+            bg = ak.zip(
+                {
+                    "Jet": events.Jet,
+                    "disTauTag_score1": events.Jet.disTauTag_score1,
+                },
+            )
         return {
             dataset: {
-                "jets": cut,
-            }
-        }
-        jets = ak.zip(
-            {
-                "disTauTag_score1": events.Jet.disTauTag_score1,
-            },
-        )
-        return {
-            dataset: {
-                "jets": cut,
+                "bg":,
+                "signal": get_matched_jet_score,
             }
         }
     def postprocess(self,accumulator):
@@ -138,17 +161,17 @@ to_compute = apply_to_fileset(
 )
 
 (cut_jets,) = dask.compute(to_compute)
+print(cut_jets)
 
 # --- SIGNAL PROCESSING --- #
-signal_events = cut_jets['Stau_100_100mm']['Stau_100_100mm']
-stau_taus = signal_events['StauTau']  # h-decay taus with stau parents
-cut_signal_jets = signal_events['Jet'] # imported files are precut
-matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
-matched_signal_scores = matched_tau_jets.disTauTag_score1
-
-# --- BG PROCESSING --- #
-all_bg = get_bg(cut_jets)
-print(all_bg)
+#signal_events = cut_jets['Stau_100_100mm']['Stau_100_100mm']
+#stau_taus = signal_events['StauTau']  # h-decay taus with stau parents
+#cut_signal_jets = signal_events['Jet'] # imported files are precut
+#matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
+#matched_signal_scores = matched_tau_jets.disTauTag_score1
+#
+## --- BG PROCESSING --- #
+#all_bg = get_bg(cut_jets)
 #bg_scores = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']
 #fake_tau_jets = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets'] # No staus present in bg
 #matched_bg_scores = bg_scores
