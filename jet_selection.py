@@ -4,14 +4,24 @@ from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 import os
 import json
 
+def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
+            mval = first.metric_table(second)
+            return ak.all(mval > threshold, axis=-1)
+
 def process_events(events):
     """Process events to select staus and their tau children and filter events."""
-    
+    '''
     # add dxy to jet fields
     charged_sel = events.Jet.constituents.pf.charge != 0
     dxy = ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = 2)
     events['Jet'] = ak.with_field(events.Jet, dxy, where="dxy")
-
+    
+    # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
+    events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
+    events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
+    events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Muon, 0.4)]
+    events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.DisMuon, 0.4)]
+    '''
     ## find staus and their tau children
     gpart = events.GenPart
     events['staus'] = gpart[(abs(gpart.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))] # most likely last copy of stay in the chain
@@ -29,11 +39,12 @@ def process_events(events):
     one_taul_evt = (ak.sum(mask_taul, axis=-1) > 0) & (ak.sum(mask_taul, axis=-1) < 3)
 
     filtered_events = events[one_tauh_evt & one_taul_evt]  # Filtered events are events with one hadronic tau and one leptonic tau
-
+    '''
     tau_selections = ak.any((filtered_events.staus_taus.pt > 20) & (abs(filtered_events.staus.eta) < 2.4), axis=-1)
     num_taus = ak.num(filtered_events.staus_taus[tau_selections])
     num_tau_mask = num_taus > 1
-    cut_filtered_events = filtered_events[num_tau_mask]
+    '''    
+    cut_filtered_events = filtered_events
     return cut_filtered_events
 
 def select_and_define_leading_jets(cut_filtered_events):
@@ -44,7 +55,8 @@ def select_and_define_leading_jets(cut_filtered_events):
       - highest_score_jets: the leading jet in each event based on disTauTag_score1
     """
     # Select jets with |eta| < 2.4 and pt > 20
-    jets = cut_filtered_events.Jet[(abs(cut_filtered_events.Jet.eta) < 2.4) & (cut_filtered_events.Jet.pt > 20)]
+    #jets = cut_filtered_events.Jet[(abs(cut_filtered_events.Jet.eta) < 2.4) & (cut_filtered_events.Jet.pt > 20)]
+    jets = cut_filtered_events.Jet
     total_nJets = ak.num(jets)
     
     # Sort the selected jets by pt (descending) and take the first jet per event
@@ -80,7 +92,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     # Select gen taus.
     gen_taus = cut_filtered_events.staus_taus[mask_tauh_filtered]
 
-    # Calculate dxy for gen taus.
+    # Calculate dxy for gen taus
     gen_taus["dxy"] = (gen_taus.vy - cut_filtered_events.GenVtx.y) * np.cos(gen_taus.phi) - \
                       (gen_taus.vx - cut_filtered_events.GenVtx.x) * np.sin(gen_taus.phi)
 
