@@ -41,7 +41,7 @@ def select_and_define_leading_jets(cut_filtered_events):
     Select jets from events with |eta| < 2.4 and pt > 20, and then
     define two sets of leading jets:
       - leading_pt_jets: the leading jet in each event based on pt
-      - leading_score_jets: the leading jet in each event based on disTauTag_score1
+      - highest_score_jets: the leading jet in each event based on disTauTag_score1
     """
     # Select jets with |eta| < 2.4 and pt > 20
     jets = cut_filtered_events.Jet[(abs(cut_filtered_events.Jet.eta) < 2.4) & (cut_filtered_events.Jet.pt > 20)]
@@ -52,17 +52,20 @@ def select_and_define_leading_jets(cut_filtered_events):
     leading_pt_jets = ak.singletons(ak.firsts(sorted_by_pt))
 
     # Sort the selected jets by dxy (descending) and take the first jet per event
-    sorted_by_dxy = jets[ak.argsort(jets.dxy, ascending=False)]
-    leading_dxy_jets = ak.singletons(ak.firsts(sorted_by_dxy))
+    sorted_by_dxy = jets[ak.argsort(abs(jets.dxy), ascending=False)]
+    highest_dxy_jets = ak.singletons(ak.firsts(sorted_by_dxy))
+
+    # Make cut on highest score jets
+    jets = jets[jets.disTauTag_score1 > 0.90]
 
     # Sort the selected jets by disTauTag_score1 (descending) and take the first jet per event
     sorted_by_score = jets[ak.argsort(jets.disTauTag_score1, ascending=False)]
-    leading_score_jets = ak.singletons(ak.firsts(sorted_by_score))
+    highest_score_jets = ak.singletons(ak.firsts(sorted_by_score))
     
-    return (jets, leading_pt_jets, leading_score_jets, leading_dxy_jets, total_nJets)
+    return (jets, leading_pt_jets, highest_score_jets, highest_dxy_jets, total_nJets)
 
 
-def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leading_score_jets, jets, total_nJets, sample_name):
+def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highest_score_jets, jets, total_nJets, sample_name):
     """
     Match gen taus to jets using two different selections.
     """
@@ -92,7 +95,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
     #nMatched_gen_taus_by_pt = ak.sum(ak.num(gen_taus_matched_by_pt)).compute()
 
     # Matching using the dxy leading jets
-    gen_taus_matched_by_dxy = leading_dxy_jets.nearest(gen_taus, threshold=0.4)
+    gen_taus_matched_by_dxy = highest_dxy_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_dxy = ak.drop_none(gen_taus_matched_by_dxy)
 
     # Get sum of gen_taus_matched_by_dxy
@@ -102,16 +105,22 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
     jet_matched_gen_taus_pt = ak.drop_none(jet_matched_gen_taus_pt)
 
     # Matching using the leading-score jets.
-    gen_taus_matched_by_score = leading_score_jets.nearest(gen_taus, threshold=0.4)
+    gen_taus_matched_by_score = highest_score_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_score = ak.drop_none(gen_taus_matched_by_score)
-    jet_matched_gen_taus_score = gen_taus.nearest(leading_score_jets, threshold=0.4)
+    jet_matched_gen_taus_score = gen_taus.nearest(highest_score_jets, threshold=0.4)
     jet_matched_gen_taus_score = ak.drop_none(jet_matched_gen_taus_score)
+
+    # Get sum of leading score jets
+    num_highest_score_jets = ak.sum(ak.num(highest_score_jets)).compute()
+
+    # Get sum of jets that are matched to gen taus based on highest score jet
+    nMatched_jets_matched_to_gen_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_taus_score)).compute()
 
     # Get all jets matched to a gen_tau
     all_jets_matched_to_gen_tau = gen_taus.nearest(jets, threshold=0.4)
-    '''
+    
     # Compute efficiency
-    efficiency = float(nMatched_gen_taus_by_dxy / num_had_gen_taus) if num_had_gen_taus > 0 else 0.0
+    efficiency = float(nMatched_jets_matched_to_gen_tau_highest_score_jet / num_highest_score_jets) if num_highest_score_jets > 0 else 0.0
 
     # Get mass and lifetime from sample_name (e.g., "Stau_100_1mm")
     parts = sample_name.split('_')
@@ -126,7 +135,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
     }
 
     # Save to JSON file
-    json_filename = "efficiency_results.json"
+    json_filename = "score_efficiency_results.json"
 
     # Ensure JSON file exists and is not empty before loading
     if os.path.exists(json_filename) and os.path.getsize(json_filename) > 0:
@@ -144,7 +153,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
 
     with open(json_filename, "w") as f:
         json.dump(existing_data, f, indent=4)
-    '''    
+       
     # From all jets matched to gen_tau, select highest pT jets
     sort_by_pt = all_jets_matched_to_gen_tau[ak.argsort(all_jets_matched_to_gen_tau.pt, ascending=False)]
     leading_jets_matched_to_gen_tau = ak.singletons(ak.firsts(sort_by_pt))
@@ -220,12 +229,12 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, leading_dxy_jets, leadi
             gen_taus_matched_by_score, jet_matched_gen_taus_score,
             matched_leading_jets_flat, all_unmatched_jets_pt)
 
-def flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt, leading_dxy_jets, gen_taus_matched_by_dxy):
+def flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt, highest_dxy_jets, gen_taus_matched_by_dxy):
 
     # Flatten the dxy fields
     gen_taus_flat_dxy = ak.flatten(gen_taus.dxy, axis=1)
     gen_taus_matched_by_flat_dxy = ak.flatten(gen_taus_matched_by_dxy.dxy, axis=1)
-    leading_dxy_jets_flat_dxy = ak.flatten(ak.drop_none(leading_dxy_jets.dxy, axis=1))
+    highest_dxy_jets_flat_dxy = ak.flatten(ak.drop_none(highest_dxy_jets.dxy, axis=1))
 
     # Flatten the pt fields
     gen_taus_flat_pt = ak.flatten(gen_taus.pt, axis=1)
@@ -233,6 +242,6 @@ def flatten_gen_tau_vars(gen_taus, gen_taus_matched_by_pt, leading_dxy_jets, gen
     gen_taus_matched_by_pt_flat_dxy = ak.flatten(gen_taus_matched_by_pt.dxy, axis=1)
     gen_taus_matched_by_pt_flat_pt = ak.flatten(gen_taus_matched_by_pt.pt, axis=1)
 
-    return (gen_taus_flat_dxy, gen_taus_matched_by_flat_dxy, leading_dxy_jets_flat_dxy, gen_taus_flat_pt,
+    return (gen_taus_flat_dxy, gen_taus_matched_by_flat_dxy, highest_dxy_jets_flat_dxy, gen_taus_flat_pt,
             gen_taus_matched_by_pt_flat_dxy, gen_taus_matched_by_pt_flat_pt)
 

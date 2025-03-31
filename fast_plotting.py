@@ -83,11 +83,11 @@ if __name__ == '__main__':
             gen_taus_matched_by_pt_flat_dxy, gen_taus_matched_by_pt_flat_pt) = flatten_gen_tau_vars(
             gen_taus, gen_taus_matched_by_pt, leading_dxy_jets, gen_taus_matched_by_dxy)
 
-        overlay_dxy_match_hists(gen_taus_matched_by_flat_dxy, leading_dxy_jets_flat_dxy, output_dir, sample_name)
+        #overlay_dxy_match_hists(gen_taus_matched_by_flat_dxy, leading_dxy_jets_flat_dxy, output_dir, sample_name)
 
     
     # Now call plot_sample_grid using stored efficiency results
-    #plot_efficiency_from_json("efficiency_results.json", "efficiency_grid.pdf")
+    plot_efficiency_from_json("score_efficiency_results.json", "efficiency_grid.pdf")
 
 
 
