@@ -1,5 +1,7 @@
 import sys
 import os
+import fsspec_xrootd
+from  fsspec_xrootd import XRootDFileSystem
 import uproot
 import uproot.exceptions
 from uproot.exceptions import KeyInFileError
@@ -27,10 +29,10 @@ import time
 from distributed import Client
 from lpcjobqueue import LPCCondorCluster
 
-
 import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging 
+
 
 # Can also be put in a utils file later
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
@@ -47,9 +49,6 @@ class MyProcessor(processor.ProcessorABC):
 
     def process(self, events):
         
-        output = {} 
-        output[events.metadata['dataset']] = {}
-
         if events is None: 
             return output
 
@@ -166,10 +165,11 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = {}
 
 
-        muon_vars =  events.DisMuon.fields 
-        jet_vars =   events.Jet.fields 
+        muon_vars  = events.DisMuon.fields 
+        jet_vars   = events.Jet.fields 
         gpart_vars = events.GenPart.fields 
         gvist_vars = events.GenVisTau.fields 
+        gvtx_vars  = events.GenVtx.fields
         tau_vars   = events.Tau.fields                        
         MET_vars   = events.PFMET.fields  
  
@@ -185,6 +185,9 @@ class MyProcessor(processor.ProcessorABC):
         for branch in gvist_vars:
             if branch[-1] == "G": continue
             out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
+        for branch in gvtx_vars:
+            if branch[-1] == "G": continue
+            out_dict["GenVtx_" + branch]     = dak.drop_none(events["GenVtx"][branch])
         for branch in tau_vars:
             if branch[-1] == "G": continue
             out_dict["Tau_"       + branch]  = dak.drop_none(events["Tau"][branch])
@@ -216,6 +219,7 @@ class MyProcessor(processor.ProcessorABC):
 
 if __name__ == "__main__":
 
+    XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 50)
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -246,7 +250,7 @@ if __name__ == "__main__":
     for samp in fileset: 
         print(type(to_compute))
         print(to_compute)
-        outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root/"+samp, compute=False, tree_name='Events')
+        outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_GenVtx/"+samp, compute=False, tree_name='Events')
         dask.compute(outfile)
         
     elapsed = time.time() - tic
