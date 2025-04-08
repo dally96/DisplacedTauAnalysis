@@ -44,7 +44,7 @@ def apply_lepton_veto(evt_collection: ak.highlevel.Array):
         delta_r_mask(evt_collection.Jet, evt_collection.DisMuon, max_lep_dr) ]
     return evt_collection
 
-def apply_cuts(collection):
+def apply_jet_cuts(collection):
     cut_collection = apply_lepton_veto(collection)
     jets = cut_collection.Jet
     
@@ -60,13 +60,29 @@ def apply_cuts(collection):
 
     return cut_jets
 
+def apply_gpart_cuts(collection):
+    pt_mask = collection.pt >= min_pT
+    eta_mask = abs(collection.eta) < max_eta
+    #valid_mask = collection.genPartIdx > 0 
+    
+    #collection_length = ak.sum(ak.num(collection.partonFlavour))
+    #inclusion_mask = collection.genPartIdx < collection_length
+
+    #cut_collection = collection[
+    #    pt_mask & eta_mask & valid_mask & inclusion_mask ]
+
+    cut_collection = collection[
+        pt_mask & eta_mask]
+    
+    return cut_collection
+
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
 
     def process(self,events):
         dataset = events.metadata['dataset']
-        cut = apply_cuts(events)
+        cut = apply_jet_cuts(events)
 
         return {
             dataset: {
@@ -89,8 +105,9 @@ signal_events = NanoEventsFactory.from_root(
 
 # Signal processing
 taus = signal_events.GenPart[signal_events.GenVisTau.genPartIdxMother] # hadronically-decaying taus
-stau_taus = taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
-cut_signal_jets = apply_cuts(signal_events)
+cut_taus = apply_gpart_cuts(taus) 
+stau_taus = cut_taus[abs(taus.distinctParent.pdgId) == 1000015] # h-decay taus with stau parents
+cut_signal_jets = apply_jet_cuts(signal_events)
 matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
 matched_signal_scores = matched_tau_jets.disTauTag_score1
 
@@ -192,7 +209,7 @@ for increment in range(0, score_increment_scale_factor+1):
 
 # Plot stuff
 fig, ax = plt.subplots()
-rocs = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma', edgecolors='k')
+rocs = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma')
 
 cbar = fig.colorbar(rocs, ax=ax, label='Score threshold')
 

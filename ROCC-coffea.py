@@ -56,27 +56,26 @@ class BasicProcessor(processor.ProcessorABC):
 
         h_signal = hda.hist.Hist(dataset_axis, score_axis, storage="weight", label="Counts")
         h_bg     = hda.hist.Hist(dataset_axis, score_axis, storage="weight", label="Counts")
-        
-        if dataset == signal_file_name:
-            signal = ak.zip(
-                {
-                    "Jet": events.Jet,
-                    "StauTau": events.StauTau,
-                    "disTauTag_score1": events.Jet.disTauTag_score1,
-                    "num_signal_jets": ak.sum(ak.num(events.Jet)),
-                },
-            )
-        else:
-            bg = ak.zip(
-                {
-                    "Jet": events.Jet,
-                    "disTauTag_score1": events.Jet.disTauTag_score1,
-                },
-            )
+
+        signal = ak.zip({
+                "tauParents": events.GenPart[events.GenVisTau.genPartIdxMother].distinctParent.pdgId,
+                })
+        bg = ak.zip({
+                "Jet": events.Jet,
+                "score": events.Jet.disTauTag_score1,
+                })
+
+        stau_taus = signal.tauParents[abs(signal.tauParents) == 1000015]
+        tau_jets = stau_taus.nearest(bg.Jet, threshold = max_dr)
+        signal_scores = tau_jets.score
+
+        h_signal.fill(dataset=dataset, score=signal.score)
+        h_bg.fill(dataset=dataset, score=bg.score)
+
         return {
             dataset: {
-                "bg":,
-                "signal": get_matched_jet_score,
+                "bg": h_bg,
+                "signal": h_signal,
             }
         }
     def postprocess(self,accumulator):
@@ -108,9 +107,9 @@ fileset = {
     },
     'QCD80_120' : {
         "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part096.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part097.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/part099.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part096.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part097.root': "Events",
+            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part099.root': "Events",
         }
     },
     'TTto2L2Nu' : {
@@ -155,7 +154,7 @@ dataset_runnable, dataset_updated = preprocess(
 )
 
 to_compute = apply_to_fileset(
-    BGProcessor(),
+    BasicProcessor(),
     max_chunks(dataset_runnable, 10),
     schemaclass=NanoAODSchema,
 )
