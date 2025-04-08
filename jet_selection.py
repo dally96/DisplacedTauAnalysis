@@ -3,11 +3,11 @@ import numpy as np
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 import os
 import json
-
+'''
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)
             return ak.all(mval > threshold, axis=-1)
-
+'''
 def process_events(events):
     """Process events to select staus and their tau children and filter events."""
     '''
@@ -43,7 +43,8 @@ def process_events(events):
     tau_selections = ak.any((filtered_events.staus_taus.pt > 20) & (abs(filtered_events.staus.eta) < 2.4), axis=-1)
     num_taus = ak.num(filtered_events.staus_taus[tau_selections])
     num_tau_mask = num_taus > 1
-    '''    
+    cut_filtered_events = filtered_events[num_tau_mask]
+    '''
     cut_filtered_events = filtered_events
     return cut_filtered_events
 
@@ -55,8 +56,7 @@ def select_and_define_leading_jets(cut_filtered_events):
       - highest_score_jets: the leading jet in each event based on disTauTag_score1
     """
     # Select jets with |eta| < 2.4 and pt > 20
-    #jets = cut_filtered_events.Jet[(abs(cut_filtered_events.Jet.eta) < 2.4) & (cut_filtered_events.Jet.pt > 20)]
-    jets = cut_filtered_events.Jet
+    jets = cut_filtered_events.Jet[(abs(cut_filtered_events.Jet.eta) < 2.4) & (cut_filtered_events.Jet.pt > 20)]
     total_nJets = ak.num(jets)
     
     # Sort the selected jets by pt (descending) and take the first jet per event
@@ -92,12 +92,12 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     # Select gen taus.
     gen_taus = cut_filtered_events.staus_taus[mask_tauh_filtered]
 
-    # Calculate dxy for gen taus
+    # Calculate dxy for gen taus.
     gen_taus["dxy"] = (gen_taus.vy - cut_filtered_events.GenVtx.y) * np.cos(gen_taus.phi) - \
                       (gen_taus.vx - cut_filtered_events.GenVtx.x) * np.sin(gen_taus.phi)
 
     # Get sum of all had gen taus used as denominator for grid plots
-    #num_had_gen_taus = ak.sum(ak.num(gen_taus)).compute()
+    num_had_gen_taus = ak.sum(ak.num(gen_taus)).compute()
 
     # Matching using the pt leading jets
     gen_taus_matched_by_pt = leading_pt_jets.nearest(gen_taus, threshold=0.4)
@@ -111,7 +111,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     gen_taus_matched_by_dxy = ak.drop_none(gen_taus_matched_by_dxy)
 
     # Get sum of gen_taus_matched_by_dxy
-    #nMatched_gen_taus_by_dxy = ak.sum(ak.num(gen_taus_matched_by_dxy)).compute()
+    nMatched_gen_taus_by_dxy = ak.sum(ak.num(gen_taus_matched_by_dxy)).compute()
 
     jet_matched_gen_taus_pt = gen_taus.nearest(leading_pt_jets, threshold=0.4)
     jet_matched_gen_taus_pt = ak.drop_none(jet_matched_gen_taus_pt)
@@ -132,7 +132,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     all_jets_matched_to_gen_tau = gen_taus.nearest(jets, threshold=0.4)
     
     # Compute efficiency
-    efficiency = float(nMatched_jets_matched_to_gen_tau_highest_score_jet / num_highest_score_jets) if num_highest_score_jets > 0 else 0.0
+    efficiency = float(nMatched_gen_taus_by_dxy / num_had_gen_taus) if num_had_gen_taus > 0 else 0.0
 
     # Get mass and lifetime from sample_name (e.g., "Stau_100_1mm")
     parts = sample_name.split('_')
@@ -147,7 +147,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     }
 
     # Save to JSON file
-    json_filename = "score_efficiency_results.json"
+    json_filename = "dxy_efficiency_results.json"
 
     # Ensure JSON file exists and is not empty before loading
     if os.path.exists(json_filename) and os.path.getsize(json_filename) > 0:
