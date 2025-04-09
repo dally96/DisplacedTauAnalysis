@@ -29,6 +29,10 @@ def process_events(events):
     events['staus_taus'] = events.staus.distinctChildren[ (abs(events.staus.distinctChildren.pdgId) == 15) & \
                                                       (events.staus.distinctChildren.hasFlags("isLastCopy")) \
                                                      ]
+
+    events['GenVisStauTaus'] = events.GenVisTau[(abs(events.GenVisTau.parent.pdgId) == 15) & (abs(events.GenVisTau.parent.distinctParent.pdgId) == 1000015)]
+
+    # for events where the same tau is listed multiple times, the following takes the first iteration
     events['staus_taus'] = ak.firsts(events.staus_taus[ak.argsort(events.staus_taus.pt, ascending=False)], axis = 2)
     staus_taus = events['staus_taus']
 
@@ -97,21 +101,21 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
                       (gen_taus.vx - cut_filtered_events.GenVtx.x) * np.sin(gen_taus.phi)
 
     # Get sum of all had gen taus used as denominator for grid plots
-    num_had_gen_taus = ak.sum(ak.num(gen_taus)).compute()
+    num_had_gen_taus = ak.sum(ak.num(gen_taus))
 
     # Matching using the pt leading jets
     gen_taus_matched_by_pt = leading_pt_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_pt = ak.drop_none(gen_taus_matched_by_pt)
 
     # Get sum of gen_taus_matched_by_pt
-    #nMatched_gen_taus_by_pt = ak.sum(ak.num(gen_taus_matched_by_pt)).compute()
+    nMatched_gen_taus_by_pt = ak.sum(ak.num(gen_taus_matched_by_pt))
 
     # Matching using the dxy leading jets
     gen_taus_matched_by_dxy = highest_dxy_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_dxy = ak.drop_none(gen_taus_matched_by_dxy)
 
     # Get sum of gen_taus_matched_by_dxy
-    nMatched_gen_taus_by_dxy = ak.sum(ak.num(gen_taus_matched_by_dxy)).compute()
+    nMatched_gen_taus_by_dxy = ak.sum(ak.num(gen_taus_matched_by_dxy))
 
     jet_matched_gen_taus_pt = gen_taus.nearest(leading_pt_jets, threshold=0.4)
     jet_matched_gen_taus_pt = ak.drop_none(jet_matched_gen_taus_pt)
@@ -123,16 +127,24 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     jet_matched_gen_taus_score = ak.drop_none(jet_matched_gen_taus_score)
 
     # Get sum of leading score jets
-    num_highest_score_jets = ak.sum(ak.num(highest_score_jets)).compute()
+    #num_highest_score_jets = ak.sum(ak.num(highest_score_jets))
 
     # Get sum of jets that are matched to gen taus based on highest score jet
-    nMatched_jets_matched_to_gen_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_taus_score)).compute()
+    #nMatched_jets_matched_to_gen_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_taus_score))
 
     # Get all jets matched to a gen_tau
     all_jets_matched_to_gen_tau = gen_taus.nearest(jets, threshold=0.4)
     
-    # Compute efficiency
-    efficiency = float(nMatched_gen_taus_by_dxy / num_had_gen_taus) if num_had_gen_taus > 0 else 0.0
+    # Compute dxy efficiency
+    #efficiency = float(nMatched_gen_taus_by_dxy / num_had_gen_taus).compute() if num_had_gen_taus.compute() > 0 else 0.0
+
+    gen_vis_taus_matched_by_pt = leading_pt_jets.nearest(cut_filtered_events.GenVisStauTaus, threshold=0.4)
+    gen_vis_taus_matched_by_pt = ak.drop_none(gen_vis_taus_matched_by_pt)
+    nMatched_gen_vis_taus_by_pt = ak.sum(ak.num(gen_vis_taus_matched_by_pt))
+    num_vis_gen_taus = ak.sum(ak.num(cut_filtered_events.GenVisStauTaus))
+
+    # Compute pT efficiency
+    efficiency = (nMatched_gen_vis_taus_by_pt / num_vis_gen_taus).compute() if num_vis_gen_taus.compute() > 0 else 0.0
 
     # Get mass and lifetime from sample_name (e.g., "Stau_100_1mm")
     parts = sample_name.split('_')

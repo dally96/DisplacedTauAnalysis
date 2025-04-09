@@ -400,7 +400,7 @@ def plot_efficiency_from_json(json_filename, output_file):
     
     ax.set_xlabel("Mass [GeV]")
     ax.set_ylabel("Lifetime [mm]")
-    ax.set_title("(num_jets_matched_to_gen_tau_highest_score_jet)/(total highest score jet)", fontsize=14, pad=15)
+    ax.set_title("(num_vis_gen_taus_matched_leading_pT_jet)/(total vis gen taus)", fontsize=14, pad=15)
 
     # Loop over data dimensions and create text annotations.
     for i in range(len(lifetimes)):
