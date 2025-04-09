@@ -5,6 +5,7 @@ from  fsspec_xrootd import XRootDFileSystem
 import uproot
 import uproot.exceptions
 from uproot.exceptions import KeyInFileError
+import dill as pickle
 
 import argparse
 import numpy as np
@@ -25,7 +26,6 @@ from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client, wait, progress, LocalCluster
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
-from fileset import *
 
 import time
 from distributed import Client
@@ -65,7 +65,7 @@ class skimProcessor(processor.ProcessorABC):
         self.leading_jet_var  = leading_var.jet
 
         self._accumulator = {}
-        for samp in fileset:
+        for samp in skimmed_fileset:
             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
     def process(self, events):
@@ -98,12 +98,12 @@ class skimProcessor(processor.ProcessorABC):
 
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
                        (events.DisMuon.tightId == 1)                                    &\
-                       (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
-                       (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
+                       (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_min"]) &\
+                       (abs(events.DisMuon.dxy) < selections["muon_dxy_prompt_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
                       )
 
-        good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
+        good_jets   = dak.flatten((events.Jet.disTauTag_score1 <= selections["jet_score"])   &\
                        (events.Jet.pt > selections["jet_pt"])
                       )
 
@@ -257,39 +257,36 @@ if __name__ == "__main__":
     
     XRootDFileSystem(hostid = "root://cmsxrootd.fnal.gov/", filehandle_cache_size = 250)
     tic = time.time()
-    #cluster = LPCCondorCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
+    cluster = LPCCondorCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
-    #cluster.scale(10)
-    #cluster.adapt(minimum=1, maximum=1000)
-    client = Client()
+    cluster.adapt(minimum=1, maximum=10000)
+    client = Client(cluster)
 
-    dataset_runnable, dataset_updated = preprocess(
-        fileset,
-        align_clusters=False,
-        step_size=10_00,
-        files_per_batch=1,
-        skip_bad_files=True,
-        save_form=False,
-        file_exceptions=(OSError, KeyInFileError),
-        allow_empty_datasets=False,
-    )
+    with open("sub_skimmed_preprocessed_fileset.pkl", "rb") as  f:
+        dataset_runnable = pickle.load(f)    
+
     to_compute = apply_to_fileset(
                  skimProcessor(leading_var.muon, leading_var.jet),
-                 max_chunks(dataset_runnable, 1000),
+                 max_chunks(dataset_runnable, 10000),
                  schemaclass=PFNanoAODSchema
     )
 
-    for samp in fileset: 
+    #for samp in skimmed_fileset: 
+    for samp in dataset_runnable.keys():
         print(samp)
+        print(to_compute)
         outfile = to_compute[samp]
         logger.info(f"There are {ak.num(to_compute[samp], axis = 0).compute()} events")
         logger.info(f"Look at events {to_compute[samp]}")
 
         try:
-            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/" + samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/prompt_score" + samp, compute=False, tree_name='Events')
             dask.compute(outfile)
+            
         except Exception as e:
             logger.info(f"Error writing out files: {e}")
 
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
+    client.shutdown()
+    cluster.close()

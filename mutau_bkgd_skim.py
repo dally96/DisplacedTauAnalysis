@@ -5,6 +5,7 @@ from  fsspec_xrootd import XRootDFileSystem
 import uproot
 import uproot.exceptions
 from uproot.exceptions import KeyInFileError
+import pickle
 
 import argparse
 import numpy as np
@@ -231,16 +232,9 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    dataset_runnable, dataset_updated = preprocess(
-        fileset,
-        align_clusters=False,
-        step_size=100_00,
-        files_per_batch=1,
-        skip_bad_files=True,
-        save_form=False,
-        file_exceptions=(OSError, KeyInFileError),
-        allow_empty_datasets=False,
-    )
+    with open("preprocessed_fileset.pkl", "rb") as  f:
+        dataset_runnable = pickle.load(f)    
+
     to_compute = apply_to_fileset(
                  MyProcessor(),
                  max_chunks(dataset_runnable, 1000000),

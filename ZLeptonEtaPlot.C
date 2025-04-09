@@ -52,74 +52,78 @@ void ZLeptonEtaPlot() {
   
 
   std::vector<std::string> fileName = {
-                                       eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-120to170_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-170to300_TuneCP5_13p6TeV_pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-170to300_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-3200_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-300to470_TuneCP5_13p6TeV_pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-300to470_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-470to600_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-50to80_TuneCP5_13p6TeV_pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/*.root",
-                                       eossubdir + "user/fiorendi"    + subdir + "DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8/*.root",
+                                       //eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-120to170_TuneCP5_13p6TeV_pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-120to170_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-170to300_TuneCP5_13p6TeV_pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-170to300_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "group/lpcdisptau" + subdir + "QCD_PT-3200_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-300to470_TuneCP5_13p6TeV_pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-300to470_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-470to600_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-50to80_TuneCP5_13p6TeV_pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "QCD_PT-80to120_TuneCP5_13p6TeV_pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/*.root",
+                                       //eossubdir + "user/fiorendi"    + subdir + "DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8/*.root",
+                                       "/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q.root",
+                                       "/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q_precision23.root",
                             };     
 
   std::vector<std::string> sampleName = {
-                                         "QCD_PT-1000to1400ext",
-                                         "QCD_PT-120to170",
-                                         "QCD_PT-120to170ext",
-                                         "QCD_PT-1400to1800ext",
-                                         "QCD_PT-170to300",
-                                         "QCD_PT-170to300ext",
-                                         "QCD_PT-1800to2400ext",
-                                         "QCD_PT-2400to3200ext",
-                                         "QCD_PT-3200ext",
-                                         "QCD_PT-300to470",
-                                         "QCD_PT-300to470ext",
-                                         "QCD_PT-470to600ext",
-                                         "QCD_PT-50to80",
-                                         "QCD_PT-600to800ext",
-                                         "QCD_PT-800to1000ext",
-                                         "QCD_PT-80to120",
-                                         "TTto2L2Nu",
-                                         "TTto4Q",
-                                         "TTtoLNu2Q",
-                                         "DYJetsToLL",
+                                         //"QCD_PT-1000to1400ext",
+                                         //"QCD_PT-120to170",
+                                         //"QCD_PT-120to170ext",
+                                         //"QCD_PT-1400to1800ext",
+                                         //"QCD_PT-170to300",
+                                         //"QCD_PT-170to300ext",
+                                         //"QCD_PT-1800to2400ext",
+                                         //"QCD_PT-2400to3200ext",
+                                         //"QCD_PT-3200ext",
+                                         //"QCD_PT-300to470",
+                                         //"QCD_PT-300to470ext",
+                                         //"QCD_PT-470to600ext",
+                                         //"QCD_PT-50to80",
+                                         //"QCD_PT-600to800ext",
+                                         //"QCD_PT-800to1000ext",
+                                         //"QCD_PT-80to120",
+                                         //"TTto2L2Nu",
+                                         //"TTto4Q",
+                                         //"TTtoLNu2Q",
+                                         //"DYJetsToLL",
+                                         "TTto4QNominal",
+                                         "TTto4QMorePrecision",
                             };     
                                  
   for (int f = 0; f < (int)fileName.size(); f++) {
     std::cout << "Working with file " << fileName[f] << std::endl;
     ROOT::EnableImplicitMT();
     
-    std::vector<std::string> files = expandWildcard(fileName[f]);
-    std::vector<std::string> infiles;
+    //std::vector<std::string> files = expandWildcard(fileName[f]);
+    //std::vector<std::string> infiles;
 
-    for (const auto& fname : files) {
-      TFile *file = TFile::Open(fname.c_str());
-      TTree *tree = dynamic_cast<TTree*>(file->Get("Events"));
-      if (!tree) { 
-        std::cerr << "No TTree 'Events' in: " << fname << std::endl;
-        file->Close();
-        delete file;
-        continue;
-        }   
-      infiles.push_back(fname);
-      file->Close();
-      delete file;
-    }      
+    //for (const auto& fname : files) {
+    //  TFile *file = TFile::Open(fname.c_str());
+    //  TTree *tree = dynamic_cast<TTree*>(file->Get("Events"));
+    //  if (!tree) { 
+    //    std::cerr << "No TTree 'Events' in: " << fname << std::endl;
+    //    file->Close();
+    //    delete file;
+    //    continue;
+    //    }   
+    //  infiles.push_back(fname);
+    //  file->Close();
+    //  delete file;
+    //}      
 
 
-    ROOT::RDataFrame df("Events", infiles);
+    ROOT::RDataFrame df("Events", fileName[f]);
 
     auto pt_cut       = [](float pt) { return pt > 20; };
     auto eta_cut      = [](float eta) { return std::abs(eta) < 2.4; };
@@ -233,6 +237,7 @@ void ZLeptonEtaPlot() {
     auto c1 = new TCanvas();
     electron_eta_hist->Draw();
     recoelectron_eta_hist->Draw("SAME");
+    recoelectron_eta_hist->SetLineColor(kRed);
     auto l1 = new TLegend();
     l1->AddEntry("h_e_eta", "Gen electrons");
     l1->AddEntry("h_recoe_eta_hist", "Reco electrons");
@@ -242,6 +247,7 @@ void ZLeptonEtaPlot() {
     auto c2 = new TCanvas();
     muon_eta_hist->Draw();
     recomuon_eta_hist->Draw("SAME");
+    recomuon_eta_hist->SetLineColor(kRed);
     auto l2 = new TLegend();
     l2->AddEntry("h_mu_eta", "Gen muons");
     l2->AddEntry("h_recomu_eta", "Reco muons");
@@ -251,6 +257,7 @@ void ZLeptonEtaPlot() {
     auto c3 = new TCanvas();
     tau_eta_hist->Draw();
     recotau_eta_hist->Draw("SAME");
+    recotau_eta_hist->SetLineColor(kRed);
     auto l3 = new TLegend();
     l3->AddEntry("h_tau_eta", "Gen had taus");
     l3->AddEntry("h_recotau_eta", "Reco jets");
