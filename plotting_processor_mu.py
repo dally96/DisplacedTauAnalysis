@@ -17,13 +17,29 @@ from  matplotlib import pyplot as plt
 from xsec import *
 import time
 import pickle
+import os
 
 start_time = time.time()
 
 
 SAMP = [
-      #['Stau_100_100mm', 'SIG'],
-      #['QCD50_80', 'QCD'],
+      ['Stau_100_1000mm', 'SIG'],
+      ['Stau_100_100mm', 'SIG'],
+      ['Stau_100_10mm', 'SIG'],
+      ['Stau_100_1mm', 'SIG'],
+      ['Stau_200_1000mm', 'SIG'],
+      ['Stau_200_100mm', 'SIG'],
+      ['Stau_200_10mm', 'SIG'],
+      ['Stau_200_1mm', 'SIG'],
+      ['Stau_300_1000mm', 'SIG'],
+      ['Stau_300_100mm', 'SIG'],
+      ['Stau_300_10mm', 'SIG'],
+      ['Stau_300_1mm', 'SIG'],
+      ['Stau_500_1000mm', 'SIG'],
+      ['Stau_500_100mm', 'SIG'],
+      ['Stau_500_10mm', 'SIG'],
+      ['Stau_500_1mm', 'SIG'],
+      ['QCD50_80', 'QCD'],
       ['QCD80_120','QCD'],
       ['QCD120_170','QCD'],
       ['QCD170_300','QCD'],
@@ -31,41 +47,42 @@ SAMP = [
       ['QCD470_600','QCD'],
       ['QCD600_800','QCD'],
       ['QCD800_1000','QCD'],
-      #['QCD1000_1400','QCD'],
-      #['QCD1400_1800','QCD'],
-      #['QCD1800_2400','QCD'],
-      #['QCD2400_3200','QCD'],
-      #['QCD3200','QCD'],
-      #["DYJetsToLL", 'EWK'],  
+      ['QCD1000_1400','QCD'],
+      ['QCD1400_1800','QCD'],
+      ['QCD1800_2400','QCD'],
+      ['QCD2400_3200','QCD'],
+      ['QCD3200','QCD'],
+      ["DYJetsToLL", 'EWK'],  
       #["WtoLNu2Jets", 'EWK'],
-      #["TTtoLNu2Q",  'TT'],
-      #["TTto4Q", 'TT'],
-      #["TTto2L2Nu", 'TT'],
+      ["TTtoLNu2Q",  'TT'],
+      ["TTto4Q", 'TT'],
+      ["TTto2L2Nu", 'TT'],
       ]
 
 lumi = 38.01 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
+Stau_colors = ['#EA7AF4', '#B43E8F', '#6200B3', '#218380']
 variables_with_bins = {
-    #"DisMuon_pt": [(245, 20, 1000), "GeV"],
-    #"DisMuon_eta": [(50, -2.5, 2.5), ""],
-    #"DisMuon_phi": [(64, -3.2, 3.2), ""],
-    #"DisMuon_dxy": [(200, -1, 1), "cm"],
-    #"DisMuon_dz" : [(200, -1, 1), "cm"],
+    "DisMuon_pt": [(245, 20, 1000), "GeV"],
+    "DisMuon_eta": [(50, -2.5, 2.5), ""],
+    "DisMuon_phi": [(64, -3.2, 3.2), ""],
+    "DisMuon_dxy": [(50, -50E-4, 50E-4), "cm"],
+    "DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
     "DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
-    "DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
-    "DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
-    "DisMuon_tkRelIso":       [(50, 0, 1), ""],
+    #"DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
+    #"DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
+    #"DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
-    #"Jet_pt" : [(245, 20, 1000), "GeV"],
-    #"Jet_eta": [(48, -2.4, 2.4), ""],
-    #"Jet_phi": [(64, -3.2, 3.2), ""],
-    #"Jet_disTauTag_score1": [(20, 0, 1), ""],
-    #"Jet_dxy": [(50, -1, 1), "cm"],
+    "Jet_pt" : [(24, 20, 32), "GeV"],
+    "Jet_eta": [(48, -2.4, 2.4), ""],
+    "Jet_phi": [(64, -3.2, 3.2), ""],
+    "Jet_disTauTag_score1": [(20, 0, 1), ""],
+    "Jet_dxy": [(50, -10, 10), "cm"],
 
     #"dR" : [(20, 0, 1), ""],
     #"deta": [(100, -5, 5), ""],
     #"dphi": [(64, -3.2, 3.2), ""],
-    #"PFMET_pt": [(225, 100, 1000), "GeV"],
+    "PFMET_pt": [(225, 100, 1000), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -138,15 +155,15 @@ background_samples["DY"] = []
 #
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append( ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPt" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPt" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(   ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPt" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(  ("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPt" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("skimmed_muon_root/noDisplacementCut_noJetCuts_noIsoCuts_allJets/" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPt" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -187,20 +204,98 @@ for var in variables_with_bins:
                               "DY": background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[2], colors[3]])
+    stau_counter = 0
     for sample in background_samples:
-        if "Stau" in sample: 
-            background_histograms[sample][var].plot(color = '#B80C09', label = sample)
+        if "Stau" in sample and "1000mm" in sample: 
+            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
+            stau_counter += 1
+
+    box = plt.subplot().get_position()
+    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
 
     plt.xlabel(var + ' ' + variables_with_bins[var][1])
     plt.ylabel("A.U.")
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend()
-    #plt.savefig(f"../www/pt30_tightId_displaced1mm_score90_jetPt32_MET105_pfRelIso0p19/mu_stacked_histogram_{var}.png")
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+    plt.savefig(f"../www/inverted_cuts_prompt_jetPt/mu_stacked_histogram_{var}_1000mm.png")
 
-with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:
-    pickle.dump(background_histograms["QCD"], f)
-print(f"pkl file written")
+    plt.cla()
+    plt.clf()
+    s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
+                              "TT" : background_histograms["TT"][var],
+                              "W": background_histograms["W"][var],
+                              "DY": background_histograms["DY"][var],       
+                                })
+    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[2], colors[3]])
+    stau_counter = 0
+    for sample in background_samples:
+        if "Stau" in sample and "100mm" in sample: 
+            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
+            stau_counter += 1
+
+    box = plt.subplot().get_position()
+    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
+
+    plt.xlabel(var + ' ' + variables_with_bins[var][1])
+    plt.ylabel("A.U.")
+    plt.yscale('log')
+    plt.ylim(top=get_stack_maximum(s)*10)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+    plt.savefig(f"../www/inverted_cuts_prompt_jetPt/mu_stacked_histogram_{var}_100mm.png")
+
+    plt.cla()
+    plt.clf()
+    s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
+                              "TT" : background_histograms["TT"][var],
+                              "W": background_histograms["W"][var],
+                              "DY": background_histograms["DY"][var],       
+                                })
+    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[2], colors[3]])
+    stau_counter = 0
+    for sample in background_samples:
+        if "Stau" in sample and "10mm" in sample: 
+            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
+            stau_counter += 1
+
+    box = plt.subplot().get_position()
+    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
+
+    plt.xlabel(var + ' ' + variables_with_bins[var][1])
+    plt.ylabel("A.U.")
+    plt.yscale('log')
+    plt.ylim(top=get_stack_maximum(s)*10)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+    plt.savefig(f"../www/inverted_cuts_prompt_jetPt/mu_stacked_histogram_{var}_10mm.png")
+
+    plt.cla()
+    plt.clf()
+    s = hist.Stack.from_dict({"QCD": background_histograms["QCD"][var],
+                              "TT" : background_histograms["TT"][var],
+                              "W": background_histograms["W"][var],
+                              "DY": background_histograms["DY"][var],       
+                                })
+    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[2], colors[3]])
+    stau_counter = 0
+    for sample in background_samples:
+        if "Stau" in sample and "1mm" in sample: 
+            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
+            stau_counter += 1
+
+    box = plt.subplot().get_position()
+    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
+
+    plt.xlabel(var + ' ' + variables_with_bins[var][1])
+    plt.ylabel("A.U.")
+    plt.yscale('log')
+    plt.ylim(top=get_stack_maximum(s)*10)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+    plt.savefig(f"../www/inverted_cuts_prompt_jetPt/mu_stacked_histogram_{var}_1mm.png")
+
+
+#with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:
+#    pickle.dump(background_histograms["QCD"], f)
+#print(f"pkl file written")
 
 
 
