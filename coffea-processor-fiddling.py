@@ -7,8 +7,6 @@ import warnings
 import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 from coffea.dataset_tools import (
@@ -32,16 +30,8 @@ score_granularity = 5
 def passing_mask(jets, score):
     return jets['score'] >= score
 
-def get_fake_rate(func_unmatched_jets, all_jets, score):
-    passing_jets  = func_unmatched_jets[passing_mask(func_unmatched_jets, score)]
-    total_passing = ak.sum( ak.num(passing_jets) )
-    return total_passing / all_jets
-
-def get_efficiency(func_matched_jets, score): 
-    passing_jets   = func_matched_jets[passing_mask(func_matched_jets, score)]
-    total_passing  = ak.sum( ak.num(passing_jets) )
-    number_matched = ak.sum( ak.num(func_matched_jets) )
-    return total_passing / number_matched
+def get_passing_jets(jets, score):
+    return jets[passing_mask(jets, score)]
 
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
@@ -58,12 +48,17 @@ class BGProcessor(processor.ProcessorABC):
         results = []
         scores = np.linspace(0, 1, score_granularity)
         for s in scores:
-            fr = get_fake_rate(unmatched_jets, total_jets, s)
-            eff = get_efficiency(matched_jets, s)
-            results.append((s, fr, eff))
+            pmj = get_passing_jets(matched_jets, s) # passing matched jets
+            pfj = get_passing_jets(unmatched_jets, s) # passing fake jets
+            num_pmj = ak.sum( ak.num(pmj) )
+            num_pfj = ak.sum( ak.num(pfj) )
+            results.append( (s, num_pmj, num_pfj) )
 
         return {
-            's-fr-eff': results,
+            'total_number_jets': total_jets,
+            'total_matched_jets': ak.sum( ak.num(matched_jets) ),
+            'total_unmatched_jets': ak.sum( ak.num(unmatched_jets) ),
+            's_pmj_pfj': results,
             }
 
     def postprocess(self,accumulator):
@@ -139,7 +134,7 @@ dataset_runnable, dataset_updated = preprocess(
     align_clusters=False,
     step_size=1_000,
     files_per_batch=1,
-    skip_bad_files=True,
+    skip_bad_files=False,
     save_form=False,
 )
 
