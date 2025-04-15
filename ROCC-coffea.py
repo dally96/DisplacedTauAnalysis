@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore", module="coffea.nanoevents.methods")
 
 # --- DEFINITIONS --- #
 max_dr = 0.3
-score_granularity = 5
+score_granularity = 500
 
 def passing_mask(jets, score):
     return jets['score'] >= score
@@ -118,8 +118,8 @@ tstart = time.time()
 dataset_runnable, dataset_updated = preprocess(
     fileset,
     align_clusters=False,
-    step_size=1_000,
-    #files_per_batch=1, # uncomment to run over only first
+    step_size=100_000,
+    files_per_batch=1,
     skip_bad_files=False,
     save_form=False,
 )
@@ -171,7 +171,13 @@ for s, vals in s_sums.items():
     fake_rate = vals[1] / all_jets
     fake_rates.append(fake_rate)
 
-tcalc = time.time() - tprocessor
+tcalc = time.time() - tstart - tprocessor
+print("Score thresholds:")
+print(thresholds)
+print("Fake rates:")
+print(fake_rates)
+print("Efficiencies:")
+print(efficiencies)
 print(f"{tcalc} seconds for calculations to finish")
 
 # Plot stuff
@@ -179,15 +185,15 @@ fig, ax = plt.subplots()
 roc = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma')
 cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
-ax.set_xscale("log")
-ax.set_ylim(0.85, 1.05)
+#ax.set_xscale("log")
+#ax.set_ylim(0.85, 1.05)
 
 plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
-plt.savefig('RC-skimmed-bg-tau-tagger-roc-scatter.pdf')
+plt.savefig('no-log-RC-skimmed-bg-tau-tagger-roc-scatter.pdf')
 
-tfinish = time.time() - tcalc
+tfinish = time.time() - tstart - tcalc
 print(f"{tfinish} seconds for plotting to finish")
-print(time.time(), "seconds total")
+print(time.time() - tstart, "seconds total")
