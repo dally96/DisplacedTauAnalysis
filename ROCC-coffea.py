@@ -1,227 +1,109 @@
-import hist
-import coffea
-import uproot
-import scipy
-import dask
-import warnings
 import numpy as np
 import awkward as ak
-import hist.dask as hda
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
 from coffea import processor
-from coffea.nanoevents.methods import vector
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
-from coffea.dataset_tools import (
-    apply_to_fileset,
-    max_chunks,
-    preprocess,
-)
+from coffea.processor import Runner
+from coffea.nanoevents import NanoAODSchema
+import matplotlib.pyplot as plt
 
-# Prevent lepton veto problems
-NanoAODSchema.mixins["DisMuon"] = "Muon"
+deltaR = 0.4
+score_resolution = 500
+score_thresholds = np.linspace(0, 1, score_resolution)
 
-# Silence obnoxious warning
-NanoAODSchema.warn_missing_crossrefs = False
-warnings.filterwarnings("ignore", module="coffea.nanoevents.methods")
+class TauTaggerProcessor(processor.ProcessorABC):
+    def __init__(self, score_thresholds, dr_match=deltaR):
+        self.score_thresholds = score_thresholds
+        self.dr_match = dr_match
 
-# --- FUNCTIONS & DEFINITIONS --- #
-signal_file_name = 'Stau_100_100mm'
-resolution = 500 # inverse score increment and plotting scale factor
+    def process(self, events):
+        jets = events.Jet
+        gen = events.GenPart
 
-def get_bg(collection):
-    bg = {}
-    for dataset in collection:
-        if dataset == signal_file_name:
-            continue
-        bg.update(collection[dataset][dataset])
-    return bg
+        # Select taus from staus
+        stau_taus = gen[
+            (abs(gen.pdgId) == 15)
+            & gen.hasFlags(["isLastCopy"])
+            & (abs(gen.mother(0).pdgId) == 1000015)
+        ]
 
-def get_matched_jet_score(collection):
-    genpart = collection.StauTau
-    jets = collection.Jet
-    matched_jets = genpart.nearest(jets, threshold = max_dr)
-    collection['Jet'] = matched_jets
-    collection['disTauTag_score1'] = matched_jets.disTauTag_score1
-    return collection
+        if len(jets) == 0 or len(stau_taus) == 0:
+            return {
+                "eff": np.zeros(len(self.score_thresholds)),
+                "fake": np.zeros(len(self.score_thresholds)),
+                "counts": 0,
+            }
 
-class BasicProcessor(processor.ProcessorABC):
-    def __init__(self):
-        pass
+        # Jet-tau matching
+        tau_eta = ak.broadcast_arrays(jets.eta, stau_taus.eta)[1]
+        tau_phi = ak.broadcast_arrays(jets.phi, stau_taus.phi)[1]
+        dphi = (jets.phi - tau_phi + np.pi) % (2 * np.pi) - np.pi
+        deta = jets.eta - tau_eta
+        dR = np.sqrt(deta**2 + dphi**2)
 
-    def process(self,events):
-        dataset      = events.metadata['dataset']
-        dataset_axis = hist.axis.StrCategory([], growth=True, name="dataset", label="Primary dataset")
-        score_axis   = hist.axis.Regular(resolution, 0, resolution, name="score", label="Score")
+        matched = ak.any(dR < self.dr_match, axis=-1)
 
-        h_signal = hda.hist.Hist(dataset_axis, score_axis, storage="weight", label="Counts")
-        h_bg     = hda.hist.Hist(dataset_axis, score_axis, storage="weight", label="Counts")
+        score = jets.disTauTag_score1
+        total_matched = ak.sum(matched)
+        total_jets = len(jets)
 
-        signal = ak.zip({
-                "tauParents": events.GenPart[events.GenVisTau.genPartIdxMother].distinctParent.pdgId,
-                })
-        bg = ak.zip({
-                "Jet": events.Jet,
-                "score": events.Jet.disTauTag_score1,
-                })
+        eff = []
+        fake = []
 
-        stau_taus = signal.tauParents[abs(signal.tauParents) == 1000015]
-        tau_jets = stau_taus.nearest(bg.Jet, threshold = max_dr)
-        signal_scores = tau_jets.score
+        for t in self.score_thresholds:
+            passing = score > t
+            matched_passing = passing & matched
+            fake_passing = passing & ~matched
 
-        h_signal.fill(dataset=dataset, score=signal.score)
-        h_bg.fill(dataset=dataset, score=bg.score)
+            eff.append(
+                ak.sum(matched_passing) / total_matched if total_matched > 0 else 0
+            )
+            fake.append(ak.sum(fake_passing) / total_jets if total_jets > 0 else 0)
 
         return {
-            dataset: {
-                "bg": h_bg,
-                "signal": h_signal,
-            }
+            "eff": np.array(eff),
+            "fake": np.array(fake),
+            "counts": 1,
         }
-    def postprocess(self,accumulator):
-        pass
 
-# Import dataset
-fileset = {
-    'QCD300_470' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD300_470_root/part0.root': "Events",
-            }
-    },
-    'QCD470_600' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD470_600_root/part0.root': "Events",
-            }
-    },
-    'QCD50_80' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part05.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part06.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part07.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part08.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part09.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part27.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part29.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part31.root': "Events",
-            }
-    },
-    'QCD80_120' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part096.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part097.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part099.root': "Events",
-        }
-    },
-    'TTto2L2Nu' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
-        }
-    },
-    'TTtoLNu2Q' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
-        }
-    },
-    'Stau_100_100mm' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part00.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part01.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part02.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part03.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part04.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part05.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part06.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part07.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part08.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part09.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part10.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part11.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part12.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part13.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part14.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part15.root': "Events",
-        }
-    }
-}
+    def postprocess(self, accumulator):
+        return accumulator
 
-dataset_runnable, dataset_updated = preprocess(
-    fileset,
-    align_clusters=False,
-    step_size=100_000,
-    files_per_batch=1,
-    skip_bad_files=False,
-    save_form=False,
+# Load files
+with open("rocc-filelist.txt") as f:
+    files = [line.strip() for line in f if line.strip()]
+
+# Basic runner
+runner = Runner(
+    executor=processor.futures_executor,
+    executor_args={"workers": 4, "schema": NanoAODSchema},
+    chunksize=100_000,  # tune as needed
 )
 
-to_compute = apply_to_fileset(
-    BasicProcessor(),
-    max_chunks(dataset_runnable, 10),
-    schemaclass=NanoAODSchema,
+# Run processor
+output = runner(
+    files,
+    treename="Events",
+    processor_instance=TauTaggerProcessor(score_thresholds=thresholds),
+    executor_args={
+        "schema": NanoAODSchema,
+        "client": client,
+    },
 )
 
-(cut_jets,) = dask.compute(to_compute)
-print(cut_jets)
+# ROC calculations
+thresholds = score_thresholds
+fake_rates = output["fake"]
+efficiencies = output["eff"]
 
-# --- SIGNAL PROCESSING --- #
-#signal_events = cut_jets['Stau_100_100mm']['Stau_100_100mm']
-#stau_taus = signal_events['StauTau']  # h-decay taus with stau parents
-#cut_signal_jets = signal_events['Jet'] # imported files are precut
-#matched_tau_jets = stau_taus.nearest(cut_signal_jets, threshold = max_dr) # jets dr-matched to stau_taus
-#matched_signal_scores = matched_tau_jets.disTauTag_score1
-#
-## --- BG PROCESSING --- #
-#all_bg = get_bg(cut_jets)
-#bg_scores = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets']['disTauTag_score1']
-#fake_tau_jets = cut_bg_jets['TT to 4Q']['TT to 4Q']['jets'] # No staus present in bg
-#matched_bg_scores = bg_scores
-#
-## Jet totals
-#total_matched_tau_jets = ak.sum(ak.num(matched_tau_jets))
-#total_fake_tau_jets = ak.sum(ak.num(bg_scores))
-#
-#total_jets = (
-#    ak.sum(ak.num(cut_signal_jets)) +
-#    ak.sum(ak.num(bg_scores)) )
-
-## ROC calculations
-#thresholds = []
-#fake_rates = []
-#efficiencies = []
-
-#for increment in range(0, score_increment_scale_factor+1):
-#    threshold = increment / score_increment_scale_factor
-#
-#    passing_signal_mask = matched_signal_scores >= threshold
-#    matched_passing_jets = matched_tau_jets[passing_signal_mask]
-#
-#    passing_bg_mask = matched_bg_scores >= threshold
-#    fake_passing_jets = fake_tau_jets[passing_bg_mask]
-#
-#    # --- Totals --- #
-#    total_matched_passing_jets = ak.sum(ak.num(matched_passing_jets))
-#    total_fake_passing_jets = ak.sum(ak.num(fake_passing_jets))
-#
-#    # --- Results --- #
-#    efficiency = total_matched_passing_jets / total_matched_tau_jets
-#    fake_rate = total_fake_passing_jets / total_jets
-#
-#    thresholds.append(threshold)
-#    fake_rates.append(fake_rate)
-#    efficiencies.append(efficiency)
-#
 # Plot stuff
-#fig, ax = plt.subplots()
-#color = np.linspace(0, 1, len(thresholds))
-#roc = colored_line(fake_rates, efficiencies, color, ax, linewidth=2, cmap='plasma')
-#cbar = fig.colorbar(roc)
-#cbar.set_label('Score threshold')
+fig, ax = plt.subplots()
+roc = ax.scatter(fake_rates, efficiencies, c=thresholdes, cmap='plasma')
+cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
-#ax.set_xscale("log")
-#ax.set_ylim(0.85, 1.05)
+ax.set_xscale("log")
+ax.set_ylim(0.85, 1.05)
 
-#plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
-#plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
+plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
+plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
-#plt.grid()
-#plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.pdf')
-#plt.savefig('small-RC-TT-4Q-bg-tau-tagger-rocc.png')
+plt.grid()
+plt.savefig('RC-skimmed-bg-tau-tagger-roc-scatter.pdf')

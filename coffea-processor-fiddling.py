@@ -127,6 +127,9 @@ fileset = {
     }
 }
 
+with open("rocc-filelist.txt") as f:
+    files = [line.strip() for line in f if line.strip()]
+
 tstart = time.time()
 
 dataset_runnable, dataset_updated = preprocess(
