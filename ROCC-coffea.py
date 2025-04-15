@@ -43,7 +43,17 @@ class BGProcessor(processor.ProcessorABC):
             return {}
         dataset        = events.metadata['dataset']
         total_jets     = ak.sum( ak.num(events.Jet) )
-        matched_jets   = ak.zip({"score": events.StauTau.nearest(events.Jet, threshold = max_dr).disTauTag_score1},)
+        tau_jets       = events.StauTau.nearest(events.Jet, threshold = max_dr)
+        match_mask     = ak.num(tau_jets) > 0 
+        matched_jets   = ak.zip({
+                        "jets": events.Jet[match_mask],
+                        "score": events.Jet[match_mask].disTauTag_score1
+                        })
+        unmatched_jets = ak.zip({
+                        "jets": events.Jet[~match_mask],
+                        "score": events.Jet[~match_mask].disTauTag_score1
+                        })
+    
 
         results = []
         scores = np.linspace(0, 1, score_granularity)
@@ -57,6 +67,7 @@ class BGProcessor(processor.ProcessorABC):
         return {
             'total_number_jets': total_jets,
             'total_matched_jets': ak.sum( ak.num(matched_jets) ),
+            'total_unmatched_jets': ak.sum( ak.num(unmatched_jets) ),
             's_pmj_pfj': results,
             }
 
@@ -136,6 +147,8 @@ all_jets = sum(
     for val in out.values()
     if "total_number_jets" in val
 )
+
+print(f"{all_jets} total jets, with {all_matched} matched")
 
 # Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
 s_sums = defaultdict(lambda: [0, 0])

@@ -42,8 +42,17 @@ class BGProcessor(processor.ProcessorABC):
             return {}
         dataset        = events.metadata['dataset']
         total_jets     = ak.sum( ak.num(events.Jet) )
-        matched_jets   = ak.zip({"score": events.StauTau.nearest(events.Jet, threshold = max_dr).disTauTag_score1},)
-        unmatched_jets = ak.zip({"score": events.Jet[ak.min( events.Jet.metric_table(events.StauTau), axis=-1 ) > (max_dr**2)].disTauTag_score1},)
+        tau_jets       = events.StauTau.nearest(events.Jet, threshold = max_dr)
+        match_mask     = ak.num(tau_jets) > 0
+        matched_jets   = ak.zip({
+                        "jets": events.Jet[match_mask],
+                        "score": events.Jet[match_mask].disTauTag_score1
+                        })
+        unmatched_jets = ak.zip({
+                        "jets": events.Jet[~match_mask],
+                        "score": events.Jet[~match_mask].disTauTag_score1
+                        })
+        
 
         results = []
         scores = np.linspace(0, 1, score_granularity)
@@ -136,14 +145,14 @@ dataset_runnable, dataset_updated = preprocess(
     fileset,
     align_clusters=False,
     step_size=1_000,
-    files_per_batch=1,
+#    files_per_batch=1,
     skip_bad_files=False,
     save_form=False,
 )
 
 to_compute = apply_to_fileset(
     BGProcessor(),
-    max_chunks(dataset_runnable, 10), # remove 10 to run over all
+    max_chunks(dataset_runnable, ), # remove 10 to run over all
     schemaclass=NanoAODSchema,
 )
 
