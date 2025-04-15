@@ -8,6 +8,7 @@ import numpy as np
 import awkward as ak
 import matplotlib.pyplot as plt
 from coffea import processor
+from collections import defaultdict
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 from coffea.dataset_tools import (
     apply_to_fileset,
@@ -33,10 +34,6 @@ def passing_mask(jets, score):
 def get_passing_jets(jets, score):
     return jets[passing_mask(jets, score)]
 
-def get_efficiency(collection, score):
-    collection[total_matched_jets]
-    return matched_passing / total_matched
-
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
@@ -47,7 +44,6 @@ class BGProcessor(processor.ProcessorABC):
         dataset        = events.metadata['dataset']
         total_jets     = ak.sum( ak.num(events.Jet) )
         matched_jets   = ak.zip({"score": events.StauTau.nearest(events.Jet, threshold = max_dr).disTauTag_score1},)
-        unmatched_jets = ak.zip({"score": events.Jet[ak.min( events.Jet.metric_table(events.StauTau), axis=-1 ) > (max_dr**2)].disTauTag_score1},)
 
         results = []
         scores = np.linspace(0, 1, score_granularity)
@@ -61,7 +57,6 @@ class BGProcessor(processor.ProcessorABC):
         return {
             'total_number_jets': total_jets,
             'total_matched_jets': ak.sum( ak.num(matched_jets) ),
-            'total_unmatched_jets': ak.sum( ak.num(unmatched_jets) ),
             's_pmj_pfj': results,
             }
 
@@ -113,14 +108,14 @@ dataset_runnable, dataset_updated = preprocess(
     fileset,
     align_clusters=False,
     step_size=1_000,
-    files_per_batch=1,
+    #files_per_batch=1, # uncomment to run over only first
     skip_bad_files=False,
     save_form=False,
 )
 
 to_compute = apply_to_fileset(
     BGProcessor(),
-    max_chunks(dataset_runnable, 10), # remove 10 to run over all
+    max_chunks(dataset_runnable, ), # add 10 to run over 10
     schemaclass=NanoAODSchema,
 )
 
@@ -131,13 +126,16 @@ print(f"{tprocessor} seconds for processor to finish")
 
 # --- ROC Calculations --- #
 # Totals
-all_matched = 0
-all_jets = 0
-for data in sets:
-    all_matched += out[data][total_matched_jets]
-    all_jets += out[data][total_number_jets]
-
-from collections import defaultdict
+all_matched = sum(
+    val["total_matched_jets"]
+    for val in out.values()
+    if "total_matched_jets" in val
+)
+all_jets = sum(
+    val["total_number_jets"]
+    for val in out.values()
+    if "total_number_jets" in val
+)
 
 # Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
 s_sums = defaultdict(lambda: [0, 0])
