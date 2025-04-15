@@ -33,6 +33,10 @@ def passing_mask(jets, score):
 def get_passing_jets(jets, score):
     return jets[passing_mask(jets, score)]
 
+def get_efficiency(collection, score):
+    collection[total_matched_jets]
+    return matched_passing / total_matched
+
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
@@ -65,70 +69,43 @@ class BGProcessor(processor.ProcessorABC):
         pass
 
 # --- IMPORT DATASETS --- #
-fileset = {
-    'QCD300_470' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD300_470_root/part0.root': "Events",
-            }
-    },
-    'QCD470_600' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD470_600_root/part0.root': "Events",
-            }
-    },
-    'QCD50_80' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part05.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part06.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part07.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part08.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part09.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part27.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part29.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD50_80_root/part31.root': "Events",
-            }
-    },
-    'QCD80_120' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part096.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part097.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_QCD80_120_root/part099.root': "Events",
-        }
-    },
-    'TTto2L2Nu' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
-        }
-    },
-    'TTtoLNu2Q' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_TTto2L2Nu_root/part0.root': "Events",
-        }
-    },
-    'Stau_100_100mm' : {
-        "files" : {
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part00.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part01.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part02.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part03.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part04.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part05.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part06.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part07.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part08.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part09.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part10.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part11.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part12.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part13.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part14.root': "Events",
-            'root://cmseos.fnal.gov//store/user/dally/DisplacedTauAnalysis/skimmed_muon_Stau_100_100mm_root/part15.root': "Events",
-        }
-    }
-}
+with open("root_files.txt") as f:
+    lines = [line.strip() for line in f if line.strip()]
 
-with open("rocc-filelist.txt") as f:
-    files = [line.strip() for line in f if line.strip()]
+xrootd_prefix    = 'root://cmseos.fnal.gov/'
+base_prefix_full = '/eos/uscms/store/user/dally/DisplacedTauAnalysis/skimmed_muon_'
+base_prefix      = '/eos/uscms'
+base_suffix      = '_root:'
+
+paths = []
+sets  = []
+
+i = 0 
+while i < len(lines):
+    if '.root' in lines[i]:
+        i += 1
+        continue
+
+    base_path = lines[i]
+    dataset_name = base_path.removeprefix(base_prefix_full).removesuffix(base_suffix)
+    sets.append(dataset_name)
+    xrootd_path = base_path.removeprefix(base_prefix).removesuffix(':')
+
+    # Look ahead for .root file
+    if i + 1 < len(lines) and '.root' in lines[i + 1]: 
+        root_file = lines[i + 1]
+        paths.append(xrootd_prefix + xrootd_path + '/' + root_file)
+        i += 2  # Move past both lines
+    else:
+        i += 1  # Only move past base path
+
+fileset = {}
+
+for data in sets:
+    matched_paths = [p for p in paths if data in p]
+    fileset[data] = {
+        "files": {p: "Events" for p in matched_paths}
+    }
 
 tstart = time.time()
 
@@ -149,14 +126,46 @@ to_compute = apply_to_fileset(
 
 (out,) = dask.compute(to_compute)
 
-print(out)
+tprocessor = time.time() - tstart
+print(f"{tprocessor} seconds for processor to finish")
 
-elapsed_time = time.time() - tstart
-print(elapsed_time)
+# --- ROC Calculations --- #
+# Totals
+all_matched = 0
+all_jets = 0
+for data in sets:
+    all_matched += out[data][total_matched_jets]
+    all_jets += out[data][total_number_jets]
+
+from collections import defaultdict
+
+# Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
+s_sums = defaultdict(lambda: [0, 0])
+
+for entry in out.values():
+    if 's_pmj_pfj' not in entry:
+        continue
+    for s, val2, val3 in entry['s_pmj_pfj']:
+        s_sums[s][0] += val2
+        s_sums[s][1] += val3
+
+thresholds   = []
+fake_rates   = []
+efficiencies = []
+
+for s, vals in s_sums.items():
+    thresholds.append(s)
+    efficiency = vals[0] / all_matched
+    efficiencies.append(efficiency)
+    fake_rate = vals[1] / all_jets
+    fake_rates.append(fake_rate)
+
+tcalc = time.time() - tprocessor
+print(f"{tcalc} seconds for calculations to finish")
 
 # Plot stuff
 fig, ax = plt.subplots()
-roc = ax.scatter(fake_rates, efficiencies, c=thresholdes, cmap='plasma')
+roc = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma')
 cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
 ax.set_xscale("log")
@@ -167,3 +176,7 @@ plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_m
 
 plt.grid()
 plt.savefig('RC-skimmed-bg-tau-tagger-roc-scatter.pdf')
+
+tfinish = time.time() - tcalc
+print(f"{tfinish} seconds for plotting to finish")
+print(time.time(), "seconds total")
