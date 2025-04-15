@@ -29,5 +29,12 @@ while i < len(lines):
     else:
         i += 1  # Only move past base path
 
-print(paths)
-print(sets)
+fileset = {}
+
+for dataset in sets:
+    matched_paths = [p for p in paths if dataset in p]
+    fileset[dataset] = {
+        "files": {p: "Events" for p in matched_paths}
+    }
+
+print(fileset)
