@@ -192,8 +192,9 @@ plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
-plt.savefig('no-log-RC-skimmed-bg-tau-tagger-roc-scatter.pdf')
+plt.savefig('no-log-skimmed-bg-tau-tagger-roc-scatter.pdf')
 
-tfinish = time.time() - tstart - tcalc
-print(f"{tfinish} seconds for plotting to finish")
-print(time.time() - tstart, "seconds total")
+tplotting = time.time() - tstart - tprocessor - tcalc
+tfinish   = time.time() - tstart
+print(f"{tplotting} seconds for plotting to finish")
+print(f"{tfinish} seconds total")
