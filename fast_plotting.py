@@ -14,8 +14,8 @@ from jet_selection import (
     process_events,
     select_and_define_leading_jets,
     match_gen_taus,
-    flatten_gen_tau_vars,
-    delta_r_mask
+    flatten_gen_tau_vars
+    #delta_r_mask
 )
 
 # Import functions from jet_plotting.py
@@ -26,23 +26,24 @@ from jet_plotting import (
 
 # Load the file
 filenames = {
-    'Stau_100_1mm'    : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_100_1mm/*.root',
-    'Stau_100_10mm'   : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_100_10mm/*.root',
-    'Stau_100_100mm'  : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_100_100mm/*.root',
-    'Stau_100_1000mm' : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_100_1000mm/*.root',
-    'Stau_200_1mm'    : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_200_1mm/*.root',
-    'Stau_200_10mm'   : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_200_10mm/*.root',
-    'Stau_200_100mm'  : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_200_100mm/*.root',
-    'Stau_200_1000mm' : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_200_1000mm/*.root',
-    'Stau_300_1mm'    : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_300_1mm/*.root',
-    'Stau_300_10mm'   : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_300_10mm/*.root',
-    'Stau_300_100mm'  : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_300_100mm/*.root',
-    'Stau_300_1000mm' : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_300_1000mm/*.root',
-    'Stau_500_1mm'    : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_500_1mm/*.root',
-    'Stau_500_10mm'   : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_500_10mm/*.root',
-    'Stau_500_100mm'  : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_500_100mm/*.root',
-    'Stau_500_1000mm' : 'root://cmseos.fnal.gov///store/user/dally/first_skim_muon_root/Stau_500_1000mm/*.root',
+    'Stau_100_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_100_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_100_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_100_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_200_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_200_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_200_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_200_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_300_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_300_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_300_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_300_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_500_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_500_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_500_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_500_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
 }
+
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 samples = {}
 for sample_name, files in filenames.items():

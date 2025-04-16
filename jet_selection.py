@@ -10,12 +10,12 @@ def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshol
 '''
 def process_events(events):
     """Process events to select staus and their tau children and filter events."""
-    '''
+    
     # add dxy to jet fields
     charged_sel = events.Jet.constituents.pf.charge != 0
     dxy = ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = 2)
     events['Jet'] = ak.with_field(events.Jet, dxy, where="dxy")
-    
+    '''
     # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
     events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Photon, 0.4)]
     events['Jet'] = events.Jet[delta_r_mask(events.Jet, events.Electron, 0.4)]
@@ -43,12 +43,12 @@ def process_events(events):
     one_taul_evt = (ak.sum(mask_taul, axis=-1) > 0) & (ak.sum(mask_taul, axis=-1) < 3)
 
     filtered_events = events[one_tauh_evt & one_taul_evt]  # Filtered events are events with one hadronic tau and one leptonic tau
-    '''
+    
     tau_selections = ak.any((filtered_events.staus_taus.pt > 20) & (abs(filtered_events.staus.eta) < 2.4), axis=-1)
     num_taus = ak.num(filtered_events.staus_taus[tau_selections])
     num_tau_mask = num_taus > 1
     cut_filtered_events = filtered_events[num_tau_mask]
-    '''
+    
     cut_filtered_events = filtered_events
     return cut_filtered_events
 
@@ -103,6 +103,8 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     # Get sum of all had gen taus used as denominator for grid plots
     num_had_gen_taus = ak.sum(ak.num(gen_taus))
 
+    cut_filtered_events.GenVisStauTaus = cut_filtered_events.GenVisStauTaus[(cut_filtered_events.GenVisStauTaus.pt > 20) & (abs(cut_filtered_events.GenVisStauTaus.eta) < 2.4)]
+
     # Matching using the pt leading jets
     gen_taus_matched_by_pt = leading_pt_jets.nearest(gen_taus, threshold=0.4)
     gen_taus_matched_by_pt = ak.drop_none(gen_taus_matched_by_pt)
@@ -127,10 +129,10 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     jet_matched_gen_taus_score = ak.drop_none(jet_matched_gen_taus_score)
 
     # Get sum of leading score jets
-    #num_highest_score_jets = ak.sum(ak.num(highest_score_jets))
+    num_highest_score_jets = ak.sum(ak.num(highest_score_jets))
 
     # Get sum of jets that are matched to gen taus based on highest score jet
-    #nMatched_jets_matched_to_gen_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_taus_score))
+    nMatched_jets_matched_to_gen_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_taus_score))
 
     # Get all jets matched to a gen_tau
     all_jets_matched_to_gen_tau = gen_taus.nearest(jets, threshold=0.4)
@@ -144,7 +146,23 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     num_vis_gen_taus = ak.sum(ak.num(cut_filtered_events.GenVisStauTaus))
 
     # Compute pT efficiency
-    efficiency = (nMatched_gen_vis_taus_by_pt / num_vis_gen_taus).compute() if num_vis_gen_taus.compute() > 0 else 0.0
+    #efficiency = (nMatched_gen_vis_taus_by_pt / num_vis_gen_taus).compute() if num_vis_gen_taus.compute() > 0 else 0.0
+
+    # Matching using the leading-score jets.
+    gen_vis_taus_matched_by_score = highest_score_jets.nearest(cut_filtered_events.GenVisStauTaus, threshold=0.4)
+    gen_vis_taus_matched_by_score = ak.drop_none(gen_vis_taus_matched_by_score)
+    jet_matched_gen_vis_taus_score = cut_filtered_events.GenVisStauTaus.nearest(highest_score_jets, threshold=0.4)
+    jet_matched_gen_vis_taus_score = ak.drop_none(jet_matched_gen_vis_taus_score)
+    nMatched_jets_matched_to_gen_vis_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_vis_taus_score))
+
+    print("Number of had gen taus:", num_had_gen_taus.compute())
+    print("Number of gen vis taus:", num_vis_gen_taus.compute())
+    print("Number of highest score jets:", num_highest_score_jets.compute())
+    print("Number of jets matched to gen taus (highest score):", nMatched_jets_matched_to_gen_tau_highest_score_jet.compute())
+    print("Number of jets matched to gen vis taus (highest score):", nMatched_jets_matched_to_gen_vis_tau_highest_score_jet.compute())
+
+    # Compute score efficiency
+    efficiency = (nMatched_jets_matched_to_gen_vis_tau_highest_score_jet / num_vis_gen_taus).compute() if num_vis_gen_taus.compute() > 0 else 0.0
 
     # Get mass and lifetime from sample_name (e.g., "Stau_100_1mm")
     parts = sample_name.split('_')
@@ -159,7 +177,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     }
 
     # Save to JSON file
-    json_filename = "dxy_efficiency_results.json"
+    json_filename = "score_efficiency_results.json"
 
     # Ensure JSON file exists and is not empty before loading
     if os.path.exists(json_filename) and os.path.getsize(json_filename) > 0:
