@@ -44,12 +44,16 @@ def process_events(events):
 
     filtered_events = events[one_tauh_evt & one_taul_evt]  # Filtered events are events with one hadronic tau and one leptonic tau
     
-    tau_selections = ak.any((filtered_events.staus_taus.pt > 20) & (abs(filtered_events.staus.eta) < 2.4), axis=-1)
-    num_taus = ak.num(filtered_events.staus_taus[tau_selections])
+    #tau_selections = ak.any((filtered_events.staus_taus.pt > 20) & (abs(filtered_events.staus.eta) < 2.4), axis=-1)
+    #num_taus = ak.num(filtered_events.staus_taus[tau_selections])
+    #num_tau_mask = num_taus > 1
+    #cut_filtered_events = filtered_events[num_tau_mask]
+    num_taus = ak.num(filtered_events.staus_taus)
     num_tau_mask = num_taus > 1
     cut_filtered_events = filtered_events[num_tau_mask]
+
+    #cut_filtered_events = filtered_events
     
-    cut_filtered_events = filtered_events
     return cut_filtered_events
 
 def select_and_define_leading_jets(cut_filtered_events):
@@ -103,7 +107,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     # Get sum of all had gen taus used as denominator for grid plots
     num_had_gen_taus = ak.sum(ak.num(gen_taus))
 
-    cut_filtered_events.GenVisStauTaus = cut_filtered_events.GenVisStauTaus[(cut_filtered_events.GenVisStauTaus.pt > 20) & (abs(cut_filtered_events.GenVisStauTaus.eta) < 2.4)]
+    #cut_filtered_events.GenVisStauTaus = cut_filtered_events.GenVisStauTaus[(cut_filtered_events.GenVisStauTaus.pt > 20) & (abs(cut_filtered_events.GenVisStauTaus.eta) < 2.4)]
 
     # Matching using the pt leading jets
     gen_taus_matched_by_pt = leading_pt_jets.nearest(gen_taus, threshold=0.4)
