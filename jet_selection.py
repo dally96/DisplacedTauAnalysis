@@ -40,7 +40,6 @@ def process_events(events):
     mask_tauh = ~mask_taul
 
     tauh_evt = (ak.sum(mask_tauh, axis=-1) > 0)
-    debugging_had_gen_taus = events.staus_taus[mask_tauh]
     debugging_had_gen_taus = events.staus_taus[tauh_evt]
     debugging_num_had_gen_taus = ak.sum(ak.num(debugging_had_gen_taus))
     debugging_num_vis_gen_taus = ak.sum(ak.num(events.GenVisStauTaus))
