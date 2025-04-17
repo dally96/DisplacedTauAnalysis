@@ -38,9 +38,8 @@ def process_events(events):
 
     mask_taul = ak.any((abs(staus_taus.distinctChildren.pdgId) == 11) | (abs(staus_taus.distinctChildren.pdgId) == 13), axis=-1)
     mask_tauh = ~mask_taul
-
-    tauh_evt = (ak.sum(mask_tauh, axis=-1) > 0)
-    debugging_had_gen_taus = events.staus_taus[tauh_evt]
+    
+    debugging_had_gen_taus = events.staus_taus[mask_tauh]
     debugging_num_had_gen_taus = ak.sum(ak.num(debugging_had_gen_taus))
     debugging_num_vis_gen_taus = ak.sum(ak.num(events.GenVisStauTaus))
     print("Number of had gen taus:", debugging_num_had_gen_taus.compute())
