@@ -39,6 +39,15 @@ def process_events(events):
     mask_taul = ak.any((abs(staus_taus.distinctChildren.pdgId) == 11) | (abs(staus_taus.distinctChildren.pdgId) == 13), axis=-1)
     mask_tauh = ~mask_taul
 
+    tauh_evt = (ak.sum(mask_tauh, axis=-1) > 0)
+    debugging_had_gen_taus = events.staus_taus[mask_tauh]
+    debugging_had_gen_taus = events.staus_taus[tauh_evt]
+    debugging_num_had_gen_taus = ak.sum(ak.num(debugging_had_gen_taus))
+    debugging_num_vis_gen_taus = ak.sum(ak.num(events.GenVisStauTaus))
+    print("Number of had gen taus:", debugging_num_had_gen_taus.compute())
+    print("Number of gen vis taus:", debugging_num_vis_gen_taus.compute())
+
+
     one_tauh_evt = (ak.sum(mask_tauh, axis=-1) > 0) & (ak.sum(mask_tauh, axis=-1) < 3)
     one_taul_evt = (ak.sum(mask_taul, axis=-1) > 0) & (ak.sum(mask_taul, axis=-1) < 3)
 
@@ -159,12 +168,13 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
     jet_matched_gen_vis_taus_score = ak.drop_none(jet_matched_gen_vis_taus_score)
     nMatched_jets_matched_to_gen_vis_tau_highest_score_jet = ak.sum(ak.num(jet_matched_gen_vis_taus_score))
 
-    print("Number of had gen taus:", num_had_gen_taus.compute())
-    print("Number of gen vis taus:", num_vis_gen_taus.compute())
-    print("Number of highest score jets:", num_highest_score_jets.compute())
-    print("Number of jets matched to gen taus (highest score):", nMatched_jets_matched_to_gen_tau_highest_score_jet.compute())
-    print("Number of jets matched to gen vis taus (highest score):", nMatched_jets_matched_to_gen_vis_tau_highest_score_jet.compute())
+    #print("Number of had gen taus:", num_had_gen_taus.compute())
+    #print("Number of gen vis taus:", num_vis_gen_taus.compute())
+    #print("Number of highest score jets:", num_highest_score_jets.compute())
+    #print("Number of jets matched to gen taus (highest score):", nMatched_jets_matched_to_gen_tau_highest_score_jet.compute())
+    #print("Number of jets matched to gen vis taus (highest score):", nMatched_jets_matched_to_gen_vis_tau_highest_score_jet.compute())
 
+    '''
     # Compute score efficiency
     efficiency = (nMatched_jets_matched_to_gen_vis_tau_highest_score_jet / num_vis_gen_taus).compute() if num_vis_gen_taus.compute() > 0 else 0.0
 
@@ -199,6 +209,7 @@ def match_gen_taus(cut_filtered_events, leading_pt_jets, highest_dxy_jets, highe
 
     with open(json_filename, "w") as f:
         json.dump(existing_data, f, indent=4)
+    '''
        
     # From all jets matched to gen_tau, select highest pT jets
     sort_by_pt = all_jets_matched_to_gen_tau[ak.argsort(all_jets_matched_to_gen_tau.pt, ascending=False)]
