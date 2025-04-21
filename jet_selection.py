@@ -3,6 +3,7 @@ import numpy as np
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 import os
 import json
+import collections
 '''
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
             mval = first.metric_table(second)
@@ -30,7 +31,28 @@ def process_events(events):
                                                       (events.staus.distinctChildren.hasFlags("isLastCopy")) \
                                                      ]
 
-    events['GenVisStauTaus'] = events.GenVisTau[(abs(events.GenVisTau.parent.pdgId) == 15) & (abs(events.GenVisTau.parent.distinctParent.pdgId) == 1000015)]
+    events['GenVisStauTaus'] = events.GenVisTau
+    # Check how many GenVisTau.parent.pdgId are None
+    parent_is_none = ak.is_none(events.GenVisTau.parent.pdgId, axis=1)
+    parent_ids = events.GenVisTau.parent.pdgId
+    flat_parent_ids = ak.ravel(parent_ids).compute()
+    #for i, pdg in enumerate(flat_parent_ids):
+        #if pdg is None:
+            #print(f"[{i}] parent.pdgId = None")
+    n_parent_none = ak.sum(parent_is_none).compute()
+    if n_parent_none != 0:
+        print(f"Number of GenVisTau entries with parent.pdgId == None: {n_parent_none}")
+    genPartIdxMother = ak.flatten(events.GenVisTau[parent_is_none].genPartIdxMother, axis=None).compute()
+    print(f"genPartIdxMother: {genPartIdxMother}")
+
+    # Access suspicious distinct parents
+    #suspicious_distinct_parents = events.GenVisTau.parent.distinctParent.pdgId[parent_is_none]
+    #suspicious_pdgids = ak.to_numpy(ak.flatten(suspicious_distinct_parents.compute()))
+    #pdg_counts = collections.Counter(suspicious_pdgids)
+    #print("PDG IDs for distinctParent when parent is None:")
+    #for pdg, count in pdg_counts.items():
+        #print(f"PDG ID {pdg}: {count}")
+    #events['GenVisStauTaus'] = events.GenVisTau[(abs(events.GenVisTau.parent.pdgId) == 15) & (abs(events.GenVisTau.parent.distinctParent.pdgId) == 1000015)]
 
     # for events where the same tau is listed multiple times, the following takes the first iteration
     events['staus_taus'] = ak.firsts(events.staus_taus[ak.argsort(events.staus_taus.pt, ascending=False)], axis = 2)
@@ -42,9 +64,8 @@ def process_events(events):
     debugging_had_gen_taus = events.staus_taus[mask_tauh]
     debugging_num_had_gen_taus = ak.sum(ak.num(debugging_had_gen_taus))
     debugging_num_vis_gen_taus = ak.sum(ak.num(events.GenVisStauTaus))
-    print("Number of had gen taus:", debugging_num_had_gen_taus.compute())
-    print("Number of gen vis taus:", debugging_num_vis_gen_taus.compute())
-
+    #print("Number of had gen taus:", debugging_num_had_gen_taus.compute())
+    #xprint("Number of gen vis taus:", debugging_num_vis_gen_taus.compute())
 
     one_tauh_evt = (ak.sum(mask_tauh, axis=-1) > 0) & (ak.sum(mask_tauh, axis=-1) < 3)
     one_taul_evt = (ak.sum(mask_taul, axis=-1) > 0) & (ak.sum(mask_taul, axis=-1) < 3)
