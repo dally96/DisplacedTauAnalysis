@@ -20,8 +20,8 @@ from jet_selection import (
 
 # Import functions from jet_plotting.py
 from jet_plotting import (
-    plot_efficiency_from_json,
     overlay_dxy_match_hists
+    #plot_efficiency_from_json
 )
 
 # Load the file
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     
     # Now call plot_sample_grid using stored efficiency results
-    plot_efficiency_from_json("score_efficiency_results.json", "efficiency_grid.pdf")
+    #plot_efficiency_from_json("score_efficiency_results.json", "efficiency_grid.pdf")
 
 
 
