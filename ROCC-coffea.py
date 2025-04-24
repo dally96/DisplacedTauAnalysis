@@ -186,13 +186,14 @@ roc = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma')
 cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
 ax.set_xscale("log")
+ax.set_xlim(-1e-1, 6e-3)
 #ax.set_ylim(0.85, 1.05)
 
 plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
 plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
 
 plt.grid()
-plt.savefig('skimmed-bg-tau-tagger-roc-scatter.pdf')
+plt.savefig('limited-log-skimmed-bg-tau-tagger-roc-scatter.pdf')
 
 tplotting = time.time() - tstart - tprocessor - tcalc
 tfinish   = time.time() - tstart
