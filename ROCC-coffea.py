@@ -62,13 +62,13 @@ class BGProcessor(processor.ProcessorABC):
             pfj = get_passing_jets(unmatched_jets, s) # passing fake jets
             num_pmj = ak.sum( ak.num(pmj) )
             num_pfj = ak.sum( ak.num(pfj) )
-            results.append( (s, num_pmj, num_pfj) )
+            results.append( (dataset, s, num_pmj, num_pfj) )
 
         return {
             'total_number_jets': total_jets,
             'total_matched_jets': ak.sum( ak.num(matched_jets) ),
             'total_unmatched_jets': ak.sum( ak.num(unmatched_jets) ),
-            's_pmj_pfj': results,
+            'set_s_pmj_pfj': results,
             }
 
     def postprocess(self,accumulator):
@@ -151,12 +151,13 @@ all_jets = sum(
 print(f"{all_jets} total jets, with {all_matched} matched")
 
 # Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
+
 s_sums = defaultdict(lambda: [0, 0])
 
 for entry in out.values():
-    if 's_pmj_pfj' not in entry:
+    if 'set_s_pmj_pfj' not in entry:
         continue
-    for s, val2, val3 in entry['s_pmj_pfj']:
+    for s, val2, val3 in entry['set_s_pmj_pfj']:
         s_sums[s][0] += val2
         s_sums[s][1] += val3
 
@@ -172,6 +173,9 @@ for s, vals in s_sums.items():
     fake_rates.append(fake_rate)
 
 tcalc = time.time() - tstart - tprocessor
+
+print("sets")
+print(sets)
 print("Score thresholds:")
 print(thresholds)
 print("Fake rates:")
@@ -185,7 +189,7 @@ fig, ax = plt.subplots()
 roc = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma')
 cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
-ax.set_xscale("log")
+#ax.set_xscale("log")
 ax.set_xlim(-1e-1, 6e-3)
 #ax.set_ylim(0.85, 1.05)
 
@@ -199,3 +203,4 @@ tplotting = time.time() - tstart - tprocessor - tcalc
 tfinish   = time.time() - tstart
 print(f"{tplotting} seconds for plotting to finish")
 print(f"{tfinish} seconds total")
+
