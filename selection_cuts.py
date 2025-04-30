@@ -69,7 +69,7 @@ class skimProcessor(processor.ProcessorABC):
             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
     def process(self, events):
-        logger.info(f"Start process")
+        logger.info(f"Start process for {events.metadata['dataset']}")
 
         leading_muon_var = self.leading_muon_var
         leading_jet_var = self.leading_jet_var
@@ -103,8 +103,10 @@ class skimProcessor(processor.ProcessorABC):
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
                       )
 
-        good_jets   = dak.flatten((events.Jet.disTauTag_score1 <= selections["jet_score"])   &\
-                       (events.Jet.pt > selections["jet_pt"])
+        good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
+                       (events.Jet.pt > selections["jet_pt"])                               &\
+                       (abs(events.Jet.dxy) > selections["muon_dxy_prompt_min"])            &\
+                       (abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
                       )
 
         good_events = (events.PFMET.pt > selections["MET_pt"])
@@ -172,14 +174,20 @@ class skimProcessor(processor.ProcessorABC):
 
         meta = ak.Array([0], backend = "typetracer")
         event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
-        logger.info("Counting number of events in each partition")
         partition_counts = event_counts.compute()
-        logger.info("Computing the number of events in each partition")
-        non_empty_partitions = [
-                                events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
-                               ]
+        logger.info(f"Computing the number of events in each partition {type(partition_counts)}")
+        non_empty_partitions = []
+        if str(type(partition_counts)) == "<class 'awkward.highlevel.Array'>":
+            non_empty_partitions = [events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0]
+        else:
+            if partition_counts > 0:
+                non_empty_partitions = [events.partitions[0]]
+        logger.info(f"Printing the type of non_empty_partitons {type(non_empty_partitions)}")
+        logger.info(f"Printing the non_empty_partitons {non_empty_partitions}")
+                               
         if non_empty_partitions:
-            events = dak.concatenate(non_empty_partitions) 
+            
+            events = dak.concatenate(non_empty_partitions)
             logger.info(f"Concatenated non-empty partitions")
 
             for branch in muon_vars:
@@ -280,7 +288,7 @@ if __name__ == "__main__":
         logger.info(f"Look at events {to_compute[samp]}")
 
         try:
-            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/prompt_score" + samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/prompt_jetPrompt_" + samp, compute=False, tree_name='Events')
             dask.compute(outfile)
             
         except Exception as e:
