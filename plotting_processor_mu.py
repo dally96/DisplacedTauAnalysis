@@ -149,8 +149,7 @@ class ExampleProcessor(processor.ProcessorABC):
 
 background_samples = {} 
 background_samples["QCD"] = []
-background_samples["TT"] = []
-#background_samples["2L2Nu"] = []
+
 #background_samples["LNu2Q"] = []
 #background_samples["4Q"] = []
 background_samples["W"] = []
@@ -158,18 +157,18 @@ background_samples["DY"] = []
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["2L2Nu"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_prompt_isoTTto2L2Nu" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["LNu2Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_prompt_isoTTtoLNu2Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["4Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_prompt_isoTTto4Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        #background_samples["2L2Nu"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTto2L2Nu" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        #background_samples["LNu2Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTtoLNu2Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        #background_samples["4Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTto4Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_jetPrompt_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
