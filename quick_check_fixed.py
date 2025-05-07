@@ -1,32 +1,34 @@
 import os
 import awkward as ak
+import dask_awkward as dak
 import numpy as np
 import matplotlib.pyplot as plt
 import hist
 import vector
 from hist import Hist, axis, intervals
+import hist.dask as hda
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 import coffea.nanoevents.methods
 np.set_printoptions(precision=6, suppress=False, threshold=np.inf)
 
 # Load the file
 filenames = {
-    'Stau_100_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_100_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_100_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_100_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_200_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_200_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_200_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_200_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_300_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_300_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_300_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_300_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_500_1mm'    : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_500_10mm'   : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_500_100mm'  : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
-    'Stau_500_1000mm' : 'root://cmseos.fnal.gov///store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    'Stau_100_1mm'    : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_100_10mm'   : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_100_100mm'  : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_100_1000mm' : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-100_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_200_1mm'    : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_200_10mm'   : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_200_100mm'  : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_200_1000mm' : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-200_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_300_1mm'    : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_300_10mm'   : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_300_100mm'  : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_300_1000mm' : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-300_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_500_1mm'    : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-1mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_500_10mm'   : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-10mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_500_100mm'  : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
+    #'Stau_500_1000mm' : '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/SMS-TStauStau_MStau-500_ctau-1000mm_mLSP-1_TuneCP5_13p6TeV_madgraphMLM-pythia8/*.root',
 }
 
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
@@ -40,7 +42,7 @@ for sample_name, files in filenames.items():
 
 def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array: 
     mval = first.metric_table(second) 
-    return ak.all(mval < threshold, axis=-1)
+    return ak.any(mval < threshold, axis=-1)
 
 # ----------------------------------------------------------------------
 # Main loop: Process each sample and produce histograms.
@@ -74,6 +76,7 @@ if __name__ == '__main__':
 
         # Apply the mask to select distinctChildren (excluding neutrinos) these are the daughters
         gen_had_distinctChildren = debugging_had_gen_taus.distinctChildren[(abs(debugging_had_gen_taus.distinctChildren.pdgId) != 16)]
+        GVT_parent_children = events.GenVisStauTaus.parent.distinctChildren[(abs(events.GenVisStauTaus.parent.distinctChildren.pdgId) != 16)]
 
         hadTauDaughterVec = vector.zip(
             {
@@ -98,18 +101,46 @@ if __name__ == '__main__':
         )
 
         hadTauDaughterAkVec = hadTauDaughterAkVec[delta_r_mask(hadTauDaughterAkVec, events.GenVisStauTaus, 0.4)]
+        hadTauDaughterAkVec = hadTauDaughterAkVec[hadTauDaughterAkVec.pt > 10]
+        hadTauDaughterAkVec_pt = hadTauDaughterAkVec.pt.compute()
+        GVT_pt = events.GenVisStauTaus.pt.compute() 
 
-        pt_diff = hadTauDaughterAkVec.pt.compute() - events.GenVisStauTaus.pt.compute()
-        flat_pt_diff = ak.to_numpy(ak.flatten(pt_diff, axis=None))
+        bad_events = [10830, 26441, 42064, 63547, 76139, 122778, 125093, 127508, 156621, 158533]     
+        
+        #for i in range(len(hadTauDaughterAkVec_pt)):
+        #    if len(hadTauDaughterAkVec_pt[i]) != len(GVT_pt[i]):
+        #        bad_events.append(i)
 
-        # Plot
-        plt.hist(flat_pt_diff, bins=30, range=(-10, 10), histtype='step', linewidth=1.5)
-        plt.xlabel("pT (daughter) - pT (GenVisTau) [GeV]")
-        plt.ylabel("Counts")
-        plt.title(f"{sample_name}: pT Difference per Tau Daughter")
-        plt.grid(True)
-        plt.savefig(f"{sample_name}_HadTauDaughterVsGenVisTau_pTDiff.pdf")
-        plt.close()
+        #print(bad_events) 
+
+
+
+        for i in bad_events:
+            print(delta_r_mask(hadTauDaughterAkVec, events.GenVisStauTaus, 0.4)[i].compute())
+            print(f"Event {i} hadTauDaughterVec pt: {hadTauDaughterVec[i].pt.compute()}, GenVisStauTau pt: {GVT_pt[i]}")
+            print(f"hadTauDaughterVec eta: {hadTauDaughterVec[i].eta.compute()}, GenVisStauTau pt: {events.GenVisStauTaus[i].eta.compute()}")
+            print(f"hadTauDaughterVec phi: {hadTauDaughterVec[i].phi.compute()}, GenVisStauTau phi: {events.GenVisStauTaus[i].phi.compute()}")
+
+        #print(hadTauDaughterAkVec.pt.compute())
+        #print(events.GenVisStauTaus.pt.compute())
+
+        pt_diff = hadTauDaughterAkVec.pt - events.GenVisStauTaus.pt
+        print(f"pt diff {pt_diff.compute()}")
+        #flat_pt_diff = ak.to_numpy(ak.flatten(pt_diff.compute(), axis=None))
+
+        #h = hda.hist.Hist(hist.axis.Regular(80, -1, 1, name=f"{sample_name}_ptDiff", label = "ptDiff [GeV]"))
+        #h.fill(dak.flatten(pt_diff, axis = None))
+        #h =  h.compute()
+
+        ## Plot
+        ##plt.hist(flat_pt_diff, bins=30, range=(-10, 10), histtype='step', linewidth=1.5)
+        #h.plot1d()
+        #plt.xlabel("pT (daughter) - pT (GenVisTau) [GeV]")
+        #plt.ylabel("Counts")
+        #plt.title(f"{sample_name}: pT Difference per Tau Daughter")
+        #plt.grid(True)
+        #plt.savefig(f"{sample_name}_HadTauDaughterVsGenVisTau_pTDiff.pdf")
+        #plt.close()
 
         '''
         debugging_num_had_gen_taus = ak.num(hadTauDaughterAkVec)
