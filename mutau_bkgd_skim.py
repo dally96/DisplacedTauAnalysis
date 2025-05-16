@@ -188,13 +188,16 @@ class MyProcessor(processor.ProcessorABC):
             out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
         for branch in gvtx_vars:
             if branch[-1] == "G": continue
-            out_dict["GenVtx_" + branch]     = dak.drop_none(events["GenVtx"][branch])
+            out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
         for branch in tau_vars:
             if branch[-1] == "G": continue
             out_dict["Tau_"       + branch]  = dak.drop_none(events["Tau"][branch])
         for branch in MET_vars: 
             if branch[-1] == "G": continue
             out_dict["PFMET_"     + branch]  = dak.drop_none(events["PFMET"][branch])    
+        for branch in events.Muon.fields:
+            if branch[-1] == "G": continue
+            out_dict["Muon_"      + branch]  = dak.drop_none(events["Muon"][branch])  
 
         out_dict["event"]           = dak.drop_none(events.event)
         out_dict["run"]             = dak.drop_none(events.run)
@@ -205,13 +208,14 @@ class MyProcessor(processor.ProcessorABC):
         out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
         out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
         out_dict["nTau"]            = dak.num(dak.drop_none(events.Tau))
+        out_dict["nMuon"]           = dak.num(dak.drop_none(events.Muon))
 
 
         logger.info(f"Filled dictionary")
         
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
-        logger.info(f"Dictionary zipped: {type(out_dict)}")
+        logger.info(f"Dictionary zipped: {events.metadata['dataset']}")
         return out_dict
 
     def postprocess(self, accumulator):
@@ -235,17 +239,25 @@ if __name__ == "__main__":
     with open("preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
 
-    to_compute = apply_to_fileset(
-                 MyProcessor(),
-                 max_chunks(dataset_runnable, 1000000),
-                 schemaclass=PFNanoAODSchema
-    )
+#    to_compute = apply_to_fileset(
+#                 MyProcessor(),
+#                 max_chunks(dataset_runnable, 1000000),
+#                 schemaclass=PFNanoAODSchema
+#    )
 
     for samp in fileset: 
-        print(type(to_compute))
-        print(to_compute)
-        outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_GenVtx/"+samp, compute=False, tree_name='Events')
-        dask.compute(outfile)
+        if "TT" in samp and "Q" in samp: 
+            samp_runnable = {}
+            samp_runnable[samp] = dataset_runnable[samp]
+            to_compute = apply_to_fileset(
+                     MyProcessor(),
+                     max_chunks(samp_runnable, 1000000),
+                     schemaclass=PFNanoAODSchema
+            )
+            print(type(to_compute))
+            print(to_compute)
+            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_wMuonCollection/"+samp, compute=False, tree_name='Events')
+            dask.compute(outfile)
         
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")

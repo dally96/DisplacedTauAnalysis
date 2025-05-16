@@ -17,27 +17,28 @@ from xsec import *
 import time
 import pickle
 import os
+NanoAODSchema.warn_missing_crossrefs = False
 
 SAMP = [ 
-      ['QCD50_80', 'QCD'],
-      ['QCD80_120','QCD'],
-      ['QCD120_170','QCD'],
-      ['QCD170_300','QCD'],
-      ['QCD300_470','QCD'],
-      ['QCD470_600','QCD'],
-      ['QCD600_800','QCD'],
-      ['QCD800_1000','QCD'],
-      ['QCD1000_1400','QCD'],
-      ['QCD1400_1800','QCD'],
-      ['QCD1800_2400','QCD'],
-      ['QCD2400_3200','QCD'],
-      ['QCD3200','QCD'],
+      ['QCD50_80',     '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-50to80_TuneCP5_13p6TeV_pythia8'],
+      ['QCD80_120',    '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-80to120_TuneCP5_13p6TeV_pythia8'],
+      ['QCD120_170',   '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8', '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD170_300',   '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-170to300_TuneCP5_13p6TeV_pythia8', '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-170to300_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD300_470',   '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-300to470_TuneCP5_13p6TeV_pythia8', '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-300to470_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD470_600',   '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-470to600_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD600_800',   '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD800_1000',  '/eos/uscms/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD1000_1400', '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD1400_1800', '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD1800_2400', '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD2400_3200', '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8_ext'],
+      ['QCD3200',      '/eos/uscms/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-3200_TuneCP5_13p6TeV_pythia8_ext'],
       ]   
 
 lumi = 38.01 ##fb-1
-colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D', '#EA7AF4', '#B43E8F', '#6200B3', '#218380', '#FF9770', "#E9FF70', '#FF70A6"]
+colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D', '#EA7AF4', '#B43E8F', '#6200B3', '#218380', '#FF9770', '#E9FF70', '#FF70A6']
 variables_with_bins = { 
-    "DisMuon_pt": [(245, 20, 1000), "GeV"],
+#    "DisMuon_pt": [(245, 20, 1000), "GeV"],
 #     "DisMuon_eta": [(50, -2.5, 2.5), ""],
 #     "DisMuon_phi": [(64, -3.2, 3.2), ""],
 #     "DisMuon_dxy": [(50, -50E-4, 50E-4), "cm"],
@@ -47,7 +48,7 @@ variables_with_bins = {
     #"DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
     #"DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
-    "Jet_pt" : [(245, 20, 1000), "GeV"],
+    "Jet_pt" : [(348, 20, 3500), "GeV"],
 #     "Jet_eta": [(48, -2.4, 2.4), ""],
 #     "Jet_phi": [(64, -3.2, 3.2), ""],
 #     "Jet_disTauTag_score1": [(20, 0, 1), ""],
@@ -118,14 +119,18 @@ class ExampleProcessor(processor.ProcessorABC):
 
 background_samples = {}
 for samp in SAMP:
-    background_samples[samp[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samp[0] + "/*.root", xsecs[samp[0]] * lumi * 1000 * 1/num_events[samp[0]])]
+    if len(samp) == 2:
+        background_samples[samp[0]] = [(samp[1] + "/*.root", xsecs[samp[0]] * lumi * 1000 * 1/num_events[samp[0]])]
+    if len(samp) == 3:
+        background_samples[samp[0]] = []
+        background_samples[samp[0]].append( (samp[1] + "/*.root", xsecs[samp[0]] * lumi * 1000 * 1/num_events[samp[0]]) )
+        background_samples[samp[0]].append( (samp[2] + "/*.root", xsecs[samp[0]] * lumi * 1000 * 1/num_events[samp[0]]) )        
 
-col = 0 
+background_histograms = {}
 # Process each background
 for background, samples in background_samples.items():
     background_histograms[background] = {}
-    for var in variables_with_bins:
-        background_histograms[background][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
+    background_histograms[background] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins["Jet_pt"][0], name="Jet_pt", label = "Jet_pt" + ' ' + variables_with_bins["Jet_pt"][1])).compute()
 
     print(f"For {background} here are samples {samples}") 
     for sample_file, sample_weight in samples:
@@ -138,14 +143,31 @@ for background, samples in background_samples.items():
             processor_instance = ExampleProcessor(variables_with_bins)
             output = processor_instance.process(events, sample_weight)
             print(f'{sample_file} finished successfully')
+            print(output)
 
             # Loop through each variable's histogram in the output
-            for var, dask_histo in output["histograms"].items():
-                hist.plot.histplot(dask_histo.compute(), bins = variables_with_bins[var][0], label = background, color = colors[col]) 
-                plt.legend()
-                plt.savefig("QCD_slice_jet_pt.pdf")
+            background_histograms[background] += output["histograms"]["Jet_pt"].compute()
 
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
-    col += 1
 
+
+full_QCD = hda.hist.Hist(hist.axis.Regular(*variables_with_bins["Jet_pt"][0], name="Jet_pt", label = "Jet_pt" + ' ' + variables_with_bins["Jet_pt"][1])).compute()
+print(background_histograms)
+col = 0
+for var, hist in background_histograms.items():
+    full_QCD += hist
+    hist.plot(color=colors[col],label = var)
+    print(col)
+    col += 1
+    
+plt.yscale('log')
+plt.legend(fontsize="5")
+plt.savefig("QCD_slice_saraNano_jet_pt.pdf")
+
+
+plt.cla()
+plt.clf()
+plt.yscale('log')
+full_QCD.plot(histtype="fill")
+plt.savefig("fullQCD_saraNano_jet_pt.pdf")
