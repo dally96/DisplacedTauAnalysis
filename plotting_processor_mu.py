@@ -149,7 +149,7 @@ class ExampleProcessor(processor.ProcessorABC):
 
 background_samples = {} 
 background_samples["QCD"] = []
-
+background_samples["TT"] = []
 #background_samples["LNu2Q"] = []
 #background_samples["4Q"] = []
 background_samples["W"] = []

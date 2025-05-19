@@ -180,15 +180,15 @@ class MyProcessor(processor.ProcessorABC):
         for branch in jet_vars:
             if branch[-1] == "G": continue
             out_dict["Jet_"       + branch]  = dak.drop_none(events["Jet"][branch])
-        for branch in gpart_vars:
-            if branch[-1] == "G": continue
-            out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
-        for branch in gvist_vars:
-            if branch[-1] == "G": continue
-            out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
-        for branch in gvtx_vars:
-            if branch[-1] == "G": continue
-            out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
+        #for branch in gpart_vars:          
+        #if branch[-1] == "G": continue
+        #    out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
+        #for branch in gvist_vars:
+        #    if branch[-1] == "G": continue
+        #    out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
+        #for branch in gvtx_vars:
+        #    if branch[-1] == "G": continue
+        #    out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
         for branch in tau_vars:
             if branch[-1] == "G": continue
             out_dict["Tau_"       + branch]  = dak.drop_none(events["Tau"][branch])
@@ -205,8 +205,8 @@ class MyProcessor(processor.ProcessorABC):
         out_dict["Jet_dxy"]         = dak.drop_none(events["Jet_dxy"])
         out_dict["nDisMuon"]        = dak.num(dak.drop_none(events.DisMuon))
         out_dict["nJet"]            = dak.num(dak.drop_none(events.Jet))
-        out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
-        out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
+        #out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
+        #out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
         out_dict["nTau"]            = dak.num(dak.drop_none(events.Tau))
         out_dict["nMuon"]           = dak.num(dak.drop_none(events.Muon))
 
@@ -224,7 +224,7 @@ class MyProcessor(processor.ProcessorABC):
 
 if __name__ == "__main__":
 
-    XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 50)
+    XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 250)
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -246,7 +246,7 @@ if __name__ == "__main__":
 #    )
 
     for samp in fileset: 
-        if "TT" in samp and "Q" in samp: 
+        if "TT" in samp: 
             samp_runnable = {}
             samp_runnable[samp] = dataset_runnable[samp]
             to_compute = apply_to_fileset(
@@ -256,7 +256,7 @@ if __name__ == "__main__":
             )
             print(type(to_compute))
             print(to_compute)
-            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_wMuonCollection/"+samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_onlyMuonCollection/"+samp, compute=False, tree_name='Events')
             dask.compute(outfile)
         
     elapsed = time.time() - tic
