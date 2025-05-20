@@ -15,9 +15,9 @@ from coffea.dataset_tools import (
     preprocess,
 )
 from distributed import Client
+from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 
-
-client = Client()
+#client = Client()
 
 lumi = 38.01 ##fb-1
 
@@ -63,33 +63,31 @@ class MyProcessor(processor.ProcessorABC):
         pass
 
     def process(self, events, weights):
-        dataset = events.metadata['dataset']
         taus = ak.zip(
             {
-                "pt": events.Tau_pt,
-                "eta": events.Tau_eta,
-                "phi": events.Tau_phi,
-                "mass": events.Tau_mass,
-                "charge": events.Tau_charge,
+                "pt": events.Tau.pt,
+                "eta": events.Tau.eta,
+                "phi": events.Tau.phi,
+                "mass": events.Tau.mass,
+                "charge": events.Tau.charge,
             },
             with_name="PtEtaPhiMCandidate",
             behavior=candidate.behavior,
         )
 
-        h_mass = (
-            hda.Hist.new
-            .StrCat(["opposite"], name="sign")
-            .Regular(130, 20., 150., name="mass", label="$m_{\tau\tau}$ [GeV]")
-            .Int64()
+        h_mass = hda.hist.Hist(
+            hist.axis.Regular(280, 20., 300., name="mass", label=r"$m_{\tau\tau}$ [GeV]")
         )
 
         cut = (ak.num(taus) == 2) & (ak.sum(taus.charge, axis=1) == 0)
+        print(ak.any(cut, axis = -1).compute())
         # add first and second muon in every event together
         ditau = taus[cut][:, 0] + taus[cut][:, 1]
-        h_mass.fill(sign="opposite", mass=ditau.mass, weight = weights)
+
+        h_mass.fill(mass=ditau.mass, weight = weights)
 
         return {
-            dataset: {
+            "TT": {
                 "entries": ak.num(events, axis=0),
                 "mass": h_mass,
             }
@@ -104,7 +102,12 @@ background_samples["TT"] = []
 
 for samples in SAMP:
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/prompt_score_muon_tau_only" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+
+
+hist_mass =  hda.hist.Hist(
+            hist.axis.Regular(280, 20., 300., name="mass", label=r"$m_{\tau\tau}$ [GeV]")
+        ).compute()
 
 
 for background, samples in background_samples.items(): 
@@ -115,5 +118,10 @@ for background, samples in background_samples.items():
         output = processor_instance.process(events, sample_weight)
         print(f'{sample_file} finished successfully')
 
-
+        (computed,) = dask.compute(output)
+        print(computed)
+        print(computed["TT"]["mass"].show())
+        hist_mass += computed["TT"]["mass"]
+hist_mass.plot1d()
+plt.savefig("ditau_mass.pdf")
 

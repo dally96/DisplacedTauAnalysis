@@ -63,26 +63,26 @@ lumi = 38.01 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 Stau_colors = ['#EA7AF4', '#B43E8F', '#6200B3', '#218380']
 variables_with_bins = {
-    "DisMuon_pt": [(245, 20, 1000), "GeV"],
-    "DisMuon_eta": [(50, -2.5, 2.5), ""],
-    "DisMuon_phi": [(64, -3.2, 3.2), ""],
-    "DisMuon_dxy": [(50, -50E-4, 50E-4), "cm"],
-    "DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
-    "DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
+    #"DisMuon_pt": [(245, 20, 1000), "GeV"],
+    #"DisMuon_eta": [(50, -2.5, 2.5), ""],
+    #"DisMuon_phi": [(64, -3.2, 3.2), ""],
+    #"DisMuon_dxy": [(50, -50E-4, 50E-4), "cm"],
+    #"DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
+    #"DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
     #"DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
     #"DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
     #"DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
-    "Jet_pt" : [(245, 20, 1000), "GeV"],
-    "Jet_eta": [(48, -2.4, 2.4), ""],
-    "Jet_phi": [(64, -3.2, 3.2), ""],
-    "Jet_disTauTag_score1": [(20, 0, 1), ""],
-    "Jet_dxy": [(50, -50E-4, 50E-4), "cm"],
+    #"Jet_pt" : [(245, 20, 1000), "GeV"],
+    #"Jet_eta": [(48, -2.4, 2.4), ""],
+    #"Jet_phi": [(64, -3.2, 3.2), ""],
+    #"Jet_disTauTag_score1": [(20, 0, 1), ""],
+    "Jet_dxy": [(50, -0.5, 0.5), "cm"],
 
     #"dR" : [(20, 0, 1), ""],
     #"deta": [(100, -5, 5), ""],
     #"dphi": [(64, -3.2, 3.2), ""],
-    "PFMET_pt": [(225, 100, 1000), "GeV"],
+    #"PFMET_pt": [(225, 100, 1000), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -157,18 +157,18 @@ background_samples["DY"] = []
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["2L2Nu"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTto2L2Nu" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["LNu2Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTtoLNu2Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["4Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTto4Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        #background_samples["2L2Nu"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_isoTTto2L2Nu" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        #background_samples["LNu2Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_isoTTtoLNu2Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        #background_samples["4Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_isoTTto4Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -234,7 +234,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_jetPrompt/mu_stacked_histogram_{var}_1000mm.png")
+    plt.savefig(f"../www/pt30_tightId_displaced1mm_score90_jetPt32_MET105_pfRelIso0p19/mu_stacked_histogram_{var}_1000mm.png")
 
     plt.cla()
     plt.clf()
@@ -261,7 +261,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_jetPrompt/mu_stacked_histogram_{var}_100mm.png")
+    plt.savefig(f"../www/pt30_tightId_displaced1mm_score90_jetPt32_MET105_pfRelIso0p19/mu_stacked_histogram_{var}_100mm.png")
 
     plt.cla()
     plt.clf()
@@ -288,7 +288,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_jetPrompt/mu_stacked_histogram_{var}_10mm.png")
+    plt.savefig(f"../www/pt30_tightId_displaced1mm_score90_jetPt32_MET105_pfRelIso0p19/mu_stacked_histogram_{var}_10mm.png")
 
     plt.cla()
     plt.clf()
@@ -315,7 +315,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_jetPrompt/mu_stacked_histogram_{var}_1mm.png")
+    plt.savefig(f"../www/pt30_tightId_displaced1mm_score90_jetPt32_MET105_pfRelIso0p19/mu_stacked_histogram_{var}_1mm.png")
 
 
 #with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:

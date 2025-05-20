@@ -77,7 +77,7 @@ class MyProcessor(processor.ProcessorABC):
             & (abs(events.DisMuon.eta) < 2.4) # Acceptance of the CMS muon system
         )
         logger.info(f"Defined good muons")
-
+        events['DisMuon'] = events.DisMuon[good_muon_mask]
         logger.info(f"Applied mask to DisMuon")
         num_evts = ak.num(events, axis=0)
         logger.info("Counted the number of original events")
