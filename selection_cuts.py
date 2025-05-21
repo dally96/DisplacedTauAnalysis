@@ -99,7 +99,7 @@ class skimProcessor(processor.ProcessorABC):
 
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
                        (abs(events.DisMuon.eta) < 2.4)                                  &\
-                       (events.DisMuon.tightId == 1)                                    &\
+                       (events.DisMuon.mediumId == 1)                                    &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
@@ -340,7 +340,7 @@ if __name__ == "__main__":
         )
 
         try:
-            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/jet_dxy_" + samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/allcuts_mediumId_" + samp, compute=False, tree_name='Events')
             dask.compute(outfile)
         
         except Exception as e:

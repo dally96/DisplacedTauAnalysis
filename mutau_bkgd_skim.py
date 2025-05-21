@@ -180,15 +180,15 @@ class MyProcessor(processor.ProcessorABC):
         for branch in jet_vars:
             if branch[-1] == "G": continue
             out_dict["Jet_"       + branch]  = dak.drop_none(events["Jet"][branch])
-        #for branch in gpart_vars:          
-        #if branch[-1] == "G": continue
-        #    out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
-        #for branch in gvist_vars:
-        #    if branch[-1] == "G": continue
-        #    out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
-        #for branch in gvtx_vars:
-        #    if branch[-1] == "G": continue
-        #    out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
+        for branch in gpart_vars:          
+            if branch[-1] == "G": continue
+            out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
+        for branch in gvist_vars:
+            if branch[-1] == "G": continue
+            out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
+        for branch in gvtx_vars:
+            if branch[-1] == "G": continue
+            out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
         for branch in tau_vars:
             if branch[-1] == "G": continue
             out_dict["Tau_"       + branch]  = dak.drop_none(events["Tau"][branch])
@@ -205,8 +205,8 @@ class MyProcessor(processor.ProcessorABC):
         out_dict["Jet_dxy"]         = dak.drop_none(events["Jet_dxy"])
         out_dict["nDisMuon"]        = dak.num(dak.drop_none(events.DisMuon))
         out_dict["nJet"]            = dak.num(dak.drop_none(events.Jet))
-        #out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
-        #out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
+        out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
+        out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
         out_dict["nTau"]            = dak.num(dak.drop_none(events.Tau))
         out_dict["nMuon"]           = dak.num(dak.drop_none(events.Muon))
 
@@ -236,8 +236,12 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("preprocessed_fileset.pkl", "rb") as  f:
-        dataset_runnable = pickle.load(f)    
+    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
+        lower_lifetime_dataset_runnable = pickle.load(f)    
+    with open("W_preprocessed_fileset.pkl", "rb") as  f:
+        W_dataset_runnable = pickle.load(f)    
+    
+    dataset_runnable = lower_lifetime_dataset_runnable.update(W_dataset_runnable)
 
 #    to_compute = apply_to_fileset(
 #                 MyProcessor(),
@@ -246,7 +250,6 @@ if __name__ == "__main__":
 #    )
 
     for samp in fileset: 
-        if "TT" in samp: 
             samp_runnable = {}
             samp_runnable[samp] = dataset_runnable[samp]
             to_compute = apply_to_fileset(
@@ -256,7 +259,7 @@ if __name__ == "__main__":
             )
             print(type(to_compute))
             print(to_compute)
-            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_onlyMuonCollection/"+samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root/"+samp, compute=False, tree_name='Events')
             dask.compute(outfile)
         
     elapsed = time.time() - tic
