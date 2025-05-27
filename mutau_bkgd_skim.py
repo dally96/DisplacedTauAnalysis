@@ -1,13 +1,12 @@
-import sys
-import os
+import sys, argparse, os
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 import uproot
 import uproot.exceptions
 from uproot.exceptions import KeyInFileError
 import pickle
+import json, gzip, correctionlib
 
-import argparse
 import numpy as np
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
@@ -25,6 +24,8 @@ import dask_awkward as dak
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client, wait, progress, LocalCluster
 from fileset import *
+
+from selections.lumi_selections import select_lumis
 
 import time
 from distributed import Client
@@ -48,6 +49,41 @@ class MyProcessor(processor.ProcessorABC):
         for samp in fileset:
             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
+        # Load pileup weights evaluators 
+        jsonpog = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration"
+        pileup_file = jsonpog + "/POG/LUM/2022_Summer22EE/puWeights.json.gz"
+
+        with gzip.open(pileup_file, 'rt') as f:
+            self.pileup_set = correctionlib.CorrectionSet.from_string(f.read().strip())
+
+    def get_pileup_weights(self, events, also_syst=False):
+        # Apply pileup weights
+        evaluator = self.pileup_set["Collisions2022_359022_362760_eraEFG_GoldenJson"]
+        sf = evaluator.evaluate(events.Pileup.nTrueInt, "nominal")
+#         if also_syst:
+#             sf_up = evaluator.evaluate(events.Pileup.nTrueInt, "up")
+#             sf_down = evaluator.evaluate(events.Pileup.nTrueInt, "down")
+#         return {'nominal': sf, 'up': sf_up, 'down': sf_down}
+        return {'nominal': sf}
+
+
+    def process_weight_corrs_and_systs(self, events, weights):
+        pileup_weights = self.get_pileup_weights(events)
+        # Compute nominal weight and systematic variations by multiplying relevant factors
+        # For pileup, do not multiply nominal correction factor, as it is already included in the up/down variations
+        # To see this, one can reproduce the ratio in
+        # https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/misc/LUM/2018_UL/puWeights.png?ref_type=heads
+        # from the plain correctionset
+        weight_dict = {
+            'weight': weights * pileup_weights['nominal'] #* muon_weights['muon_trigger_SF'],
+#             'weight_pileup_up': weights * pileup_weights['up'] * muon_weights['muon_trigger_SF'],
+#             'weight_pileup_down': weights * pileup_weights['down'] * muon_weights['muon_trigger_SF'],
+#             'weight_muon_trigger_up': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] + muon_weights['muon_trigger_SF_syst']),
+#             'weight_muon_trigger_down': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] - muon_weights['muon_trigger_SF_syst']),
+        }
+
+        return weight_dict
+
     def process(self, events):
         
         if events is None: 
@@ -55,16 +91,17 @@ class MyProcessor(processor.ProcessorABC):
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
-        if is_MC: sumWeights = ak.sum(events.genWeight)
-        logger.info("Starting process")
+        if is_MC: 
+            sumWeights = ak.sum(events.genWeight)
 
-        lumi = 0
         if not is_MC:
-            lumi_mask = LumiMask("./tools/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt")
-            lumi_data = LumiData("./tools/LumiData_2018_20200401.csv", is_inst_lumi=True)
-            events = events[lumi_mask(events.run, events.luminosityBlock)]
-            lumi_list = LumiList(*dask.compute(events.run, events.luminosityBlock))
-            lumi = lumi_data.get_lumi(lumi_list)/10**9 # convert from inverse microbarn to inverse femtobarn
+            try:
+                lumimask = select_lumis('2022', events)
+                events = events[lumimask]
+            except:
+                print (f"[ lumimask ] Skip now! Unable to find year info of {dataset_name}")
+
+        logger.info("Starting process")
 
         charged_sel = events.Jet.constituents.pf.charge != 0            
 
@@ -146,33 +183,45 @@ class MyProcessor(processor.ProcessorABC):
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
 
+        if is_MC: 
+#           weights = ak.ones_like(events.event) 
+            weights = events.genWeight / sumWeights 
+        else: 
+            weights = ak.ones_like(events.event) # create a 1d-array of ones, the appropriate weight for data
+
+        logger.info("mc weights")
+
+        # scale factor correction
+        # Handle systematics and weights
+        if is_MC:
+            weight_branches = {'weight': weights}
+        else:
+            weight_branches = self.process_weight_corrs_and_systs(events, weights)
+        logger.info("all weights")
+
         
         ### This chunk of code gets rid of empty partitions
-        meta = ak.Array([0], backend = "typetracer")
-        event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
-        partition_counts = event_counts.compute()
-        non_empty_partitions = [
-                                events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
-                               ]
-        if non_empty_partitions:
-            events = ak.concatenate(non_empty_partitions) 
+#        meta = ak.Array([0], backend = "typetracer")
+#        event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
+#        partition_counts = event_counts.compute()
+#        non_empty_partitions = [
+#                                events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
+#                               ]
+#        if non_empty_partitions:
+#            events = ak.concatenate(non_empty_partitions) 
         ###
        
-        if is_MC: weights = events.genWeight / sumWeights 
-        else: weights = ak.ones_like(events.event) # Classic move to create a 1d-array of ones, the appropriate weight for data
-        logger.info("Defined weights")
-
-
         out_dict = {}
-
 
         muon_vars  = events.DisMuon.fields 
         jet_vars   = events.Jet.fields 
-        gpart_vars = events.GenPart.fields 
-        gvist_vars = events.GenVisTau.fields 
-        gvtx_vars  = events.GenVtx.fields
         tau_vars   = events.Tau.fields                        
         MET_vars   = events.PFMET.fields  
+
+        if is_MC:
+            gpart_vars = events.GenPart.fields 
+            gvist_vars = events.GenVisTau.fields 
+            gvtx_vars  = events.GenVtx.fields
  
         for branch in muon_vars:
             if branch[-1] == "G": continue
@@ -180,35 +229,35 @@ class MyProcessor(processor.ProcessorABC):
         for branch in jet_vars:
             if branch[-1] == "G": continue
             out_dict["Jet_"       + branch]  = dak.drop_none(events["Jet"][branch])
-        for branch in gpart_vars:          
-            if branch[-1] == "G": continue
-            out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
-        for branch in gvist_vars:
-            if branch[-1] == "G": continue
-            out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
-        for branch in gvtx_vars:
-            if branch[-1] == "G": continue
-            out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
         for branch in tau_vars:
             if branch[-1] == "G": continue
             out_dict["Tau_"       + branch]  = dak.drop_none(events["Tau"][branch])
         for branch in MET_vars: 
             if branch[-1] == "G": continue
             out_dict["PFMET_"     + branch]  = dak.drop_none(events["PFMET"][branch])    
-        for branch in events.Muon.fields:
-            if branch[-1] == "G": continue
-            out_dict["Muon_"      + branch]  = dak.drop_none(events["Muon"][branch])  
+        if is_MC:
+            for branch in gpart_vars:          
+                if branch[-1] == "G": continue
+                out_dict["GenPart_"   + branch]  = dak.drop_none(events["GenPart"][branch])
+            for branch in gvist_vars:
+                if branch[-1] == "G": continue
+                out_dict["GenVisTau_" + branch]  = dak.drop_none(events["GenVisTau"][branch])
+            for branch in gvtx_vars:
+                if branch[-1] == "G": continue
+                out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
 
         out_dict["event"]           = dak.drop_none(events.event)
+        out_dict["weight"]          = dak.drop_none(weight_branches["weight"])
         out_dict["run"]             = dak.drop_none(events.run)
         out_dict["luminosityBlock"] = dak.drop_none(events.luminosityBlock)
         out_dict["Jet_dxy"]         = dak.drop_none(events["Jet_dxy"])
         out_dict["nDisMuon"]        = dak.num(dak.drop_none(events.DisMuon))
-        out_dict["nJet"]            = dak.num(dak.drop_none(events.Jet))
-        out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
-        out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
         out_dict["nTau"]            = dak.num(dak.drop_none(events.Tau))
-        out_dict["nMuon"]           = dak.num(dak.drop_none(events.Muon))
+        out_dict["nJet"]            = dak.num(dak.drop_none(events.Jet))
+
+        if is_MC:
+            out_dict["nGenPart"]        = dak.num(dak.drop_none(events.GenPart))
+            out_dict["nGenVisTau"]      = dak.num(dak.drop_none(events.GenVisTau))
 
 
         logger.info(f"Filled dictionary")
@@ -236,25 +285,32 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
-        lower_lifetime_dataset_runnable = pickle.load(f)    
-    with open("W_preprocessed_fileset.pkl", "rb") as  f:
-        W_dataset_runnable = pickle.load(f)    
-    
-    dataset_runnable = lower_lifetime_dataset_runnable.update(W_dataset_runnable)
+    with open("data_preprocessed_fileset.pkl", "rb") as  f:
+        dataset_runnable = pickle.load(f)    
 
+#    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
+#        lower_lifetime_dataset_runnable = pickle.load(f)    
+#    with open("W_preprocessed_fileset.pkl", "rb") as  f:
+#        W_dataset_runnable = pickle.load(f)    
+#    
+#    dataset_runnable = lower_lifetime_dataset_runnable | W_dataset_runnable
+#    print(lower_lifetime_dataset_runnable.keys())
+#    print(W_dataset_runnable.keys())
+#    print(dataset_runnable.keys())
+#
 #    to_compute = apply_to_fileset(
 #                 MyProcessor(),
 #                 max_chunks(dataset_runnable, 1000000),
 #                 schemaclass=PFNanoAODSchema
 #    )
 
-    for samp in fileset: 
+    for samp in dataset_runnable.keys(): 
+        if "2022" in samp:
             samp_runnable = {}
             samp_runnable[samp] = dataset_runnable[samp]
             to_compute = apply_to_fileset(
                      MyProcessor(),
-                     max_chunks(samp_runnable, 1000000),
+                     max_chunks(samp_runnable, 1000),
                      schemaclass=PFNanoAODSchema
             )
             print(type(to_compute))

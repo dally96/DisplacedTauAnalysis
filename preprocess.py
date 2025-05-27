@@ -39,6 +39,7 @@ from fileset import *
 from skimmed_fileset import *
 from lower_lifetime_fileset import *
 from W_fileset import *
+from data_fileset import *
 
 
 if __name__ == "__main__":
@@ -77,12 +78,40 @@ if __name__ == "__main__":
     #    file_exceptions=(OSError, KeyInFileError),
     #    allow_empty_datasets=False,
     #)
-
-    #with open("TT_test_sub_skimmed_preprocessed_fileset.pkl", "wb") as f:
+    #
+    #with open("skimmed_preprocessed_fileset.pkl", "wb") as f:
     #    pickle.dump(skimmed_dataset_runnable, f)
 
-    lower_lifetime_dataset_runnable, lower_lifetime_dataset_updated = preprocess(
-        lower_lifetime_fileset,
+    #lower_lifetime_dataset_runnable, lower_lifetime_dataset_updated = preprocess(
+    #    lower_lifetime_fileset,
+    #    align_clusters=False,
+    #    step_size=10_000,
+    #    files_per_batch=100,
+    #    skip_bad_files=True,
+    #    save_form=False,
+    #    file_exceptions=(OSError, KeyInFileError),
+    #    allow_empty_datasets=False,
+    #)
+
+    #with open("lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
+    #    pickle.dump(lower_lifetime_dataset_runnable, f)
+
+    #W_dataset_runnable, W_dataset_updated = preprocess(
+    #    W_fileset,
+    #    align_clusters=False,
+    #    step_size=10_000,
+    #    files_per_batch=100,
+    #    skip_bad_files=True,
+    #    save_form=False,
+    #    file_exceptions=(OSError, KeyInFileError),
+    #    allow_empty_datasets=False,
+    #)
+
+    #with open("W_preprocessed_fileset.pkl", "wb") as f:
+    #    pickle.dump(W_dataset_runnable, f)
+
+    data_dataset_runnable, data_dataset_updated = preprocess(
+        data_fileset,
         align_clusters=False,
         step_size=10_000,
         files_per_batch=100,
@@ -91,23 +120,9 @@ if __name__ == "__main__":
         file_exceptions=(OSError, KeyInFileError),
         allow_empty_datasets=False,
     )
-
-    with open("lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
-        pickle.dump(lower_lifetime_dataset_runnable, f)
-
-    W_dataset_runnable, W_dataset_updated = preprocess(
-        W_fileset,
-        align_clusters=False,
-        step_size=10_000,
-        files_per_batch=100,
-        skip_bad_files=True,
-        save_form=False,
-        file_exceptions=(OSError, KeyInFileError),
-        allow_empty_datasets=False,
-    )
-
-    with open("W_preprocessed_fileset.pkl", "wb") as f:
-        pickle.dump(W_dataset_runnable, f)
+    
+    with open("data_preprocessed_fileset.pkl", "wb") as f:
+        pickle.dump(data_dataset_runnable, f)
 
     elapsed = time.time() - tic 
     print(f"Preproccessing datasets finished in {elapsed:.1f}s") 
