@@ -72,8 +72,10 @@ void ZLeptonEtaPlot() {
                                        //eossubdir + "user/fiorendi"    + subdir + "TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/*.root",
                                        //eossubdir + "user/fiorendi"    + subdir + "TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/*.root",
                                        //eossubdir + "user/fiorendi"    + subdir + "DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8/*.root",
-                                       "/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q.root",
-                                       "/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q_precision23.root",
+                                       //"/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q.root",
+                                       //"/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q_precision23.root",
+                                       //"/afs/cern.ch/work/f/fiorendi/public/displacedTaus/customNano_TT4Q_63kevents.root",
+                                       "/eos/cms/store/user/fiorendi/displacedTaus/cmsRun_out_precision23_morefiles.root",
                             };     
 
   std::vector<std::string> sampleName = {
@@ -94,11 +96,12 @@ void ZLeptonEtaPlot() {
                                          //"QCD_PT-800to1000ext",
                                          //"QCD_PT-80to120",
                                          //"TTto2L2Nu",
+                                         "TTto2L2NuMorePrecision",
                                          //"TTto4Q",
                                          //"TTtoLNu2Q",
                                          //"DYJetsToLL",
-                                         "TTto4QNominal",
-                                         "TTto4QMorePrecision",
+                                         //"TTto4QNominal",
+                                         //"TTto4QMorePrecision",
                             };     
                                  
   for (int f = 0; f < (int)fileName.size(); f++) {
@@ -197,14 +200,14 @@ void ZLeptonEtaPlot() {
     auto df_HadTau_combomask = df_HadTau_masked.Define("CombinedMask", "eta_mask && pt_mask");
     auto df_HadTau_filtered = df_HadTau_combomask.Define("Filtered_eta", "HadTau_eta[CombinedMask]").Define("Filtered_pt", "HadTau_pt[CombinedMask]").Define("Filtered_phi", "HadTau_phi[CombinedMask]");  
 
-    auto df_DisMuon_matchId = df.Define("DisMuon_genPdgId", idxToPdgId, {"DisMuon_genPartIdx", "GenPart_pdgId"});
-    auto df_DisMuon_mask = df_DisMuon_matchId.Define("DisMuon_isGenMuon", isMuon, {"DisMuon_genPdgId"});
-    auto df_DisMuon_pt = df_DisMuon_mask.Define("MatchedDisMuon_pt", "DisMuon_pt[DisMuon_isGenMuon]");
-    auto df_DisMuon_eta = df_DisMuon_pt.Define("MatchedDisMuon_eta", "DisMuon_eta[DisMuon_isGenMuon]");
+    auto df_Muon_matchId = df.Define("Muon_genPdgId", idxToPdgId, {"Muon_genPartIdx", "GenPart_pdgId"});
+    auto df_Muon_mask = df_Muon_matchId.Define("Muon_isGenMuon", isMuon, {"Muon_genPdgId"});
+    auto df_Muon_pt = df_Muon_mask.Define("MatchedMuon_pt", "Muon_pt[Muon_isGenMuon]");
+    auto df_Muon_eta = df_Muon_pt.Define("MatchedMuon_eta", "Muon_eta[Muon_isGenMuon]");
 
-    auto df_DisMuon_masked = df_DisMuon_eta.Define("eta_mask", "abs(MatchedDisMuon_eta) < 2.4").Define("pt_mask", "MatchedDisMuon_pt > 20");
-    auto df_DisMuon_combomask = df_DisMuon_masked.Define("CombinedMask", "eta_mask && pt_mask");
-    auto df_DisMuon_filtered = df_DisMuon_combomask.Define("Filtered_eta", "MatchedDisMuon_eta[CombinedMask]").Define("Filtered_pt", "MatchedDisMuon_pt[CombinedMask]");
+    auto df_Muon_masked = df_Muon_eta.Define("eta_mask", "abs(MatchedMuon_eta) < 2.4").Define("pt_mask", "MatchedMuon_pt > 20");
+    auto df_Muon_combomask = df_Muon_masked.Define("CombinedMask", "eta_mask && pt_mask");
+    auto df_Muon_filtered = df_Muon_combomask.Define("Filtered_eta", "MatchedMuon_eta[CombinedMask]").Define("Filtered_pt", "MatchedMuon_pt[CombinedMask]");
 
     auto df_Electron_matchId = df.Define("Electron_genPdgId", idxToPdgId, {"Electron_genPartIdx", "GenPart_pdgId"}); 
     auto df_Electron_mask = df_Electron_matchId.Define("Electron_isGenElectron", isElectron, {"Electron_genPdgId"}); 
@@ -228,7 +231,7 @@ void ZLeptonEtaPlot() {
     auto recoelectron_eta_hist = df_Electron_filtered.Histo1D({"h_recoe_eta", (sampleName[f] + ";#eta;").c_str(), 500, -2.4, 2.4}, "Filtered_eta");
 
     auto muon_eta_hist = muon.Histo1D({"h_mu_eta", (sampleName[f] + ";#eta;").c_str(), 500, -2.4, 2.4}, "mu_Filtered_eta");
-    auto recomuon_eta_hist = df_DisMuon_filtered.Histo1D({"h_recomu_eta", (sampleName[f] + ";#eta;").c_str(), 500, -2.4, 2.4}, "Filtered_eta");
+    auto recomuon_eta_hist = df_Muon_filtered.Histo1D({"h_recomu_eta", (sampleName[f] + ";#eta;").c_str(), 500, -2.4, 2.4}, "Filtered_eta");
 
     auto tau_eta_hist = df_HadTau_filtered.Histo1D({"h_tau_eta", (sampleName[f] + ";#eta;").c_str(), 500, -2.4, 2.4}, "Filtered_eta");
     auto recotau_eta_hist = df_Jet_filtered.Histo1D({"h_recotau_eta", (sampleName[f] + ";#eta;").c_str(), 500, -2.4, 2.4}, "JetFiltered_eta");

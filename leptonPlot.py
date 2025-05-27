@@ -52,7 +52,7 @@ def makeEffPlot(lepton, plot_type, dict_entries, xvar, bins, xmin, xmax, xbinsiz
       h_eff_num_dict[dict_entries[ent]].SetBinContent(i + 1, len(ak.flatten(pass_arr[ent][(pass_arr[ent] > (xmin + (i * xbinsize))) & (pass_arr[ent] < (xmin + ((i + 1) * xbinsize)))], axis = None)))      
 
   can.SetLogy(log_set)
-  l_eff = ROOT.TLegend(0.2, 0.7, 0.45, 0.85)
+  l_eff = ROOT.TLegend()
   l_eff.SetBorderSize(0)
   l_eff.SetFillStyle(0)
   l_eff.SetTextSize(0.025)

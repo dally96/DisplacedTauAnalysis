@@ -24,8 +24,6 @@ cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some 
 import dask_awkward as dak
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client, wait, progress, LocalCluster
-import fsspec_xrootd
-from  fsspec_xrootd import XRootDFileSystem
 
 import time
 from distributed import Client
@@ -86,7 +84,7 @@ class skimProcessor(processor.ProcessorABC):
                                                          (events.Stau.distinctChildren.hasFlags("isLastCopy"))]
 
         events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
-        
+
         logger.info(f"StauTau branch  created")
 
         events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
@@ -146,7 +144,7 @@ class skimProcessor(processor.ProcessorABC):
 
         logger.info(f"Filtered events")        
 
-        muon_vars =  [ 
+         muon_vars =  [   
                      "pt",
                      "eta",
                      "phi",
@@ -164,17 +162,17 @@ class skimProcessor(processor.ProcessorABC):
                      "pfRelIso04_all",
                      "tkRelIso",
                      "genPartIdx",
-                     ]
+                     ]   
 
-        jet_vars =   [
+        jet_vars =   [   
                      "pt",
                      "eta",
                      "phi",
                      "disTauTag_score1",
                      "dxy",
-                     ]
+                     ]   
 
-        gpart_vars = [
+        gpart_vars = [ 
                      "genPartIdxMother", 
                      "statusFlags", 
                      "pdgId",
@@ -188,9 +186,9 @@ class skimProcessor(processor.ProcessorABC):
                      "vx", 
                      "vy", 
                      "vz",
-                     ]
+                     ]   
 
-        gvist_vars = [
+        gvist_vars = [ 
                      "genPartIdxMother", 
                      "charge",
                      "status", 
@@ -198,7 +196,7 @@ class skimProcessor(processor.ProcessorABC):
                      "mass", 
                      "phi", 
                      "pt", 
-                     ]
+                     ]   
 
         tau_vars   = events.Tau.fields                        
         #tau_vars    = [
@@ -221,7 +219,7 @@ class skimProcessor(processor.ProcessorABC):
         #             "genPartIdx",
         #             ]
 
-        MET_vars   = events.PFMET.fields  
+        MET_vars   = events.PFMET.fields
 
         meta = ak.Array([0], backend = "typetracer")
         event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
@@ -319,8 +317,8 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("sub_skimmed_preprocessed_fileset.pkl", "rb") as  f:
-        dataset_runnable = pickle.load(f)    
+    with open("sub_skimmed_preprocessed_fileset.pkl", "rb") as  f:  
+        dataset_runnable = pickle.load(f)
 
     #to_compute = apply_to_fileset(
     #             skimProcessor(leading_var.muon, leading_var.jet),
@@ -346,7 +344,7 @@ if __name__ == "__main__":
         except Exception as e:
             logger.info(f"Error writing out files: {e}")
 
-    elapsed = time.time() - tic
+    elapsed = time.time() - tic 
     print(f"Finished in {elapsed:.1f}s")
     client.shutdown()
     cluster.close()
