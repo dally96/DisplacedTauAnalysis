@@ -49,41 +49,6 @@ class MyProcessor(processor.ProcessorABC):
         for samp in fileset:
             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
-        # Load pileup weights evaluators 
-        jsonpog = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration"
-        pileup_file = jsonpog + "/POG/LUM/2022_Summer22EE/puWeights.json.gz"
-
-        with gzip.open(pileup_file, 'rt') as f:
-            self.pileup_set = correctionlib.CorrectionSet.from_string(f.read().strip())
-
-    def get_pileup_weights(self, events, also_syst=False):
-        # Apply pileup weights
-        evaluator = self.pileup_set["Collisions2022_359022_362760_eraEFG_GoldenJson"]
-        sf = evaluator.evaluate(events.Pileup.nTrueInt, "nominal")
-#         if also_syst:
-#             sf_up = evaluator.evaluate(events.Pileup.nTrueInt, "up")
-#             sf_down = evaluator.evaluate(events.Pileup.nTrueInt, "down")
-#         return {'nominal': sf, 'up': sf_up, 'down': sf_down}
-        return {'nominal': sf}
-
-
-    def process_weight_corrs_and_systs(self, events, weights):
-        pileup_weights = self.get_pileup_weights(events)
-        # Compute nominal weight and systematic variations by multiplying relevant factors
-        # For pileup, do not multiply nominal correction factor, as it is already included in the up/down variations
-        # To see this, one can reproduce the ratio in
-        # https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/misc/LUM/2018_UL/puWeights.png?ref_type=heads
-        # from the plain correctionset
-        weight_dict = {
-            'weight': weights * pileup_weights['nominal'] #* muon_weights['muon_trigger_SF'],
-#             'weight_pileup_up': weights * pileup_weights['up'] * muon_weights['muon_trigger_SF'],
-#             'weight_pileup_down': weights * pileup_weights['down'] * muon_weights['muon_trigger_SF'],
-#             'weight_muon_trigger_up': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] + muon_weights['muon_trigger_SF_syst']),
-#             'weight_muon_trigger_down': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] - muon_weights['muon_trigger_SF_syst']),
-        }
-
-        return weight_dict
-
     def process(self, events):
         
         if events is None: 
@@ -91,9 +56,6 @@ class MyProcessor(processor.ProcessorABC):
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
-        if is_MC: 
-            sumWeights = ak.sum(events.genWeight)
-
         if not is_MC:
             try:
                 lumimask = select_lumis('2022', events)
@@ -183,32 +145,16 @@ class MyProcessor(processor.ProcessorABC):
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
 
-        if is_MC: 
-#           weights = ak.ones_like(events.event) 
-            weights = events.genWeight / sumWeights 
-        else: 
-            weights = ak.ones_like(events.event) # create a 1d-array of ones, the appropriate weight for data
-
-        logger.info("mc weights")
-
-        # scale factor correction
-        # Handle systematics and weights
-        if is_MC:
-            weight_branches = {'weight': weights}
-        else:
-            weight_branches = self.process_weight_corrs_and_systs(events, weights)
-        logger.info("all weights")
-
         
         ### This chunk of code gets rid of empty partitions
-#        meta = ak.Array([0], backend = "typetracer")
-#        event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
-#        partition_counts = event_counts.compute()
-#        non_empty_partitions = [
-#                                events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
-#                               ]
-#        if non_empty_partitions:
-#            events = ak.concatenate(non_empty_partitions) 
+        #meta = ak.Array([0], backend = "typetracer")
+        #event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
+        #partition_counts = event_counts.compute()
+        #non_empty_partitions = [
+        #                        events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
+        #                       ]
+        #if non_empty_partitions:
+        #    events = ak.concatenate(non_empty_partitions) 
         ###
        
         out_dict = {}
@@ -245,9 +191,10 @@ class MyProcessor(processor.ProcessorABC):
             for branch in gvtx_vars:
                 if branch[-1] == "G": continue
                 out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
+            for branch in events.Pileup.fields:
+                out_dict["Pileup_"    + branch]  = dak.drop_none(events["Pileup"][branch])
 
         out_dict["event"]           = dak.drop_none(events.event)
-        out_dict["weight"]          = dak.drop_none(weight_branches["weight"])
         out_dict["run"]             = dak.drop_none(events.run)
         out_dict["luminosityBlock"] = dak.drop_none(events.luminosityBlock)
         out_dict["Jet_dxy"]         = dak.drop_none(events["Jet_dxy"])
@@ -310,9 +257,11 @@ if __name__ == "__main__":
             to_compute = apply_to_fileset(
                      MyProcessor(),
                      max_chunks(samp_runnable, 1000),
-                     schemaclass=PFNanoAODSchema
+                     schemaclass=PFNanoAODSchema,
+                     uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024)}
+                     #uproot_options = {"allow_read_errors_with_report": True}
             )
-            print(type(to_compute))
+            #failed_chunks = get_failed_steps_for_fileset(
             print(to_compute)
             outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root/"+samp, compute=False, tree_name='Events')
             dask.compute(outfile)
