@@ -145,18 +145,6 @@ class MyProcessor(processor.ProcessorABC):
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
 
-        
-        ### This chunk of code gets rid of empty partitions
-        #meta = ak.Array([0], backend = "typetracer")
-        #event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
-        #partition_counts = event_counts.compute()
-        #non_empty_partitions = [
-        #                        events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0
-        #                       ]
-        #if non_empty_partitions:
-        #    events = ak.concatenate(non_empty_partitions) 
-        ###
-       
         out_dict = {}
 
         muon_vars  = events.DisMuon.fields 
@@ -220,7 +208,7 @@ class MyProcessor(processor.ProcessorABC):
 
 if __name__ == "__main__":
 
-    XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 250)
+    XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 2500)
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)

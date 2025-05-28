@@ -275,82 +275,35 @@ class skimProcessor(processor.ProcessorABC):
 #            weight_branches = {'weight': weights}
 #        logger.info("all weights")
 
-        meta = ak.Array([0], backend = "typetracer")
-        event_counts = events.map_partitions(lambda part: ak.num(part, axis = 0), meta = meta)
-        partition_counts = event_counts.compute()
-        logger.info(f"Computing the number of events in each partition {type(partition_counts)}")
-        non_empty_partitions = []
-        if str(type(partition_counts)) == "<class 'awkward.highlevel.Array'>":
-            non_empty_partitions = [events.partitions[i] for i in range(len(partition_counts)) if partition_counts[i] > 0]
-        else:
-            if partition_counts > 0:
-                non_empty_partitions = [events.partitions[0]]
-                               
-        if non_empty_partitions:
+        for branch in muon_vars:
+            out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
+        for branch in jet_vars:
+            out_dict["Jet_"       + branch]  = ak.drop_none(events["Jet"][branch])
+        for branch in tau_vars:
+            out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
+        for branch in MET_vars: 
+            out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
+        if is_MC:
+            for branch in gpart_vars:
+                out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
+            for branch in gpart_vars:
+                out_dict["Stau_"      + branch]  = ak.drop_none(events["Stau"][branch])
+            for branch in gpart_vars:
+                out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
+            for branch in gvist_vars:
+                out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
+
+        out_dict["event"]           = ak.drop_none(events.event)
+#        out_dict["weight"]          = dak.drop_none(weight_branches["weight"])
+        out_dict["run"]             = ak.drop_none(events.run)
+        out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
+        out_dict["nDisMuon"]        = dak.num(ak.drop_none(events.DisMuon))
+        out_dict["nJet"]            = dak.num(ak.drop_none(events.Jet))
+        out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
+        if is_MC:
+            out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
+            out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
             
-            events = dak.concatenate(non_empty_partitions)
-            logger.info(f"Concatenated non-empty partitions")
-
-            for branch in muon_vars:
-                out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
-            for branch in jet_vars:
-                out_dict["Jet_"       + branch]  = ak.drop_none(events["Jet"][branch])
-            for branch in tau_vars:
-                out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
-            for branch in MET_vars: 
-                out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
-            if is_MC:
-                for branch in gpart_vars:
-                    out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
-                for branch in gpart_vars:
-                    out_dict["Stau_"      + branch]  = ak.drop_none(events["Stau"][branch])
-                for branch in gpart_vars:
-                    out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
-                for branch in gvist_vars:
-                    out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
-
-            out_dict["event"]           = ak.drop_none(events.event)
-#            out_dict["weight"]          = dak.drop_none(weight_branches["weight"])
-            out_dict["run"]             = ak.drop_none(events.run)
-            out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
-            out_dict["nDisMuon"]        = dak.num(ak.drop_none(events.DisMuon))
-            out_dict["nJet"]            = dak.num(ak.drop_none(events.Jet))
-            out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
-            if is_MC:
-                out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
-                out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
-            
-        else:
-            logger.info("No events  after cuts")
-
-            for branch in muon_vars:
-                out_dict["DisMuon_"   + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-            for branch in jet_vars:
-                out_dict["Jet_"       + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-            for branch in tau_vars:
-                out_dict["Tau_"       + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-            for branch in MET_vars: 
-                out_dict["PFMET_"     + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-            if is_MC:
-                for branch in gpart_vars:
-                    out_dict["GenPart_"   + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-                for branch in gpart_vars:
-                    out_dict["Stau_"      + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-                for branch in gpart_vars:
-                    out_dict["StauTau_"   + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-                for branch in gvist_vars:
-                    out_dict["GenVisTau_" + branch]  = dak.from_awkward(ak.Array([]), npartitions = 1)
-
-            out_dict["event"]           = dak.from_awkward(ak.Array([]), npartitions = 1)
-#            out_dict["weight"]          = dak.from_awkward(ak.Array([]), npartitions = 1)
-            out_dict["run"]             = dak.from_awkward(ak.Array([]), npartitions = 1)
-            out_dict["luminosityBlock"] = dak.from_awkward(ak.Array([]), npartitions = 1)
-            out_dict["nDisMuon"]        = dak.from_awkward(ak.Array([]), npartitions = 1)
-            out_dict["nJet"]            = dak.from_awkward(ak.Array([]), npartitions = 1)
-            out_dict["nTau"]            = dak.from_awkward(ak.Array([]), npartitions = 1)
-            if is_MC:
-                out_dict["nGenPart"]        = dak.from_awkward(ak.Array([]), npartitions = 1)
-                out_dict["nGenVisTau"]      = dak.from_awkward(ak.Array([]), npartitions = 1)
             
         try:
             out_dict = dak.zip(out_dict, depth_limit = 1)
