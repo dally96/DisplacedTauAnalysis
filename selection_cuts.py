@@ -4,6 +4,8 @@ import uproot.exceptions
 from uproot.exceptions import KeyInFileError
 import dill as pickle
 import json, gzip, correctionlib
+import fsspec_xrootd
+from  fsspec_xrootd import XRootDFileSystem
 
 import argparse
 import numpy as np
@@ -136,7 +138,7 @@ class skimProcessor(processor.ProcessorABC):
 
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
                        (abs(events.DisMuon.eta) < 2.4)                                  &\
-                       (events.DisMuon.mediumId == 1)                                    &\
+                       (events.DisMuon.tightId == 1)                                    &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_prompt_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
@@ -183,7 +185,7 @@ class skimProcessor(processor.ProcessorABC):
 
         logger.info(f"Filtered events")        
 
-         muon_vars =  [   
+        muon_vars =  [   
                      "pt",
                      "eta",
                      "phi",
