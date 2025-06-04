@@ -7,9 +7,13 @@ import numpy as np
 import array
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-import ROOT
+from xsec import *
+
+lumi = 38.01 ##fb-1
 
 import dask
+import hist
+import hist.dask as hda
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
 from dask.distributed import Client, wait, progress, LocalCluster 
@@ -50,73 +54,73 @@ lxyRANGE = ["0-0.5", "0.5-1", "1-1.5", "1.5-2", "2-2.5","2.5-3", "3-3.5", "3.5-4
             "10-10.5", "10.5-11", "11-11.5", "11.5-12", "12-12.5","12.5-13", "13-13.5", "13.5-14", "14-14.5", "14.5-15"]
 
 SAMP = [
-      ['Stau_100_1000mm', 'SIG'],
-      ['Stau_100_100mm', 'SIG'],
-      ['Stau_100_10mm', 'SIG'],
-      ['Stau_100_1mm', 'SIG'],
-      ['Stau_100_0p1mm', 'SIG'],
-      ['Stau_100_0p01mm', 'SIG'],
-      ['Stau_200_1000mm', 'SIG'],
-      ['Stau_200_100mm', 'SIG'],
-      ['Stau_200_10mm', 'SIG'],
-      ['Stau_200_1mm', 'SIG'],
-      ['Stau_200_0p1mm', 'SIG'],
-      ['Stau_200_0p01mm', 'SIG'],
-      ['Stau_300_1000mm', 'SIG'],
-      ['Stau_300_100mm', 'SIG'],
-      ['Stau_300_10mm', 'SIG'],
-      ['Stau_300_1mm', 'SIG'],
-      ['Stau_300_0p1mm', 'SIG'],
-      ['Stau_300_0p01mm', 'SIG'],
-      ['Stau_500_1000mm', 'SIG'],
-      ['Stau_500_100mm', 'SIG'],
-      ['Stau_500_10mm', 'SIG'],
-      ['Stau_500_1mm', 'SIG'],
-      ['Stau_500_0p1mm', 'SIG'],
-      ['Stau_500_0p01mm', 'SIG'],
-      ['QCD50_80', 'QCD'],
-      ['QCD80_120','QCD'],
-      ['QCD120_170','QCD'],
-      ['QCD170_300','QCD'],
+      #['Stau_100_1000mm', 'SIG'],
+      #['Stau_100_100mm', 'SIG'],
+      #['Stau_100_10mm', 'SIG'],
+      #['Stau_100_1mm', 'SIG'],
+      #['Stau_100_0p1mm', 'SIG'],
+      #['Stau_100_0p01mm', 'SIG'],
+      #['Stau_200_1000mm', 'SIG'],
+      #['Stau_200_100mm', 'SIG'],
+      #['Stau_200_10mm', 'SIG'],
+      #['Stau_200_1mm', 'SIG'],
+      #['Stau_200_0p1mm', 'SIG'],
+      #['Stau_200_0p01mm', 'SIG'],
+      #['Stau_300_1000mm', 'SIG'],
+      #['Stau_300_100mm', 'SIG'],
+      #['Stau_300_10mm', 'SIG'],
+      #['Stau_300_1mm', 'SIG'],
+      #['Stau_300_0p1mm', 'SIG'],
+      #['Stau_300_0p01mm', 'SIG'],
+      #['Stau_500_1000mm', 'SIG'],
+      #['Stau_500_100mm', 'SIG'],
+      #['Stau_500_10mm', 'SIG'],
+      #['Stau_500_1mm', 'SIG'],
+      #['Stau_500_0p1mm', 'SIG'],
+      #['Stau_500_0p01mm', 'SIG'],
+      #['QCD50_80', 'QCD'],
+      #['QCD80_120','QCD'],
+      #['QCD120_170','QCD'],
+      #['QCD170_300','QCD'],
       ['QCD300_470','QCD'],
-      ['QCD470_600','QCD'],
-      ['QCD600_800','QCD'],
-      ['QCD800_1000','QCD'],
-      ['QCD1000_1400','QCD'],
-      ['QCD1400_1800','QCD'],
-      ['QCD1800_2400','QCD'],
-      ['QCD2400_3200','QCD'],
-      ['QCD3200','QCD'],
-      ["DYJetsToLL", 'EWK'],  
-      #["WtoLNu2Jets", 'EWK'],
-      ["TTtoLNu2Q",  'TT'],
-      ["TTto4Q", 'TT'],
-      ["TTto2L2Nu", 'TT'],
+      #['QCD470_600','QCD'],
+      #['QCD600_800','QCD'],
+      #['QCD800_1000','QCD'],
+      #['QCD1000_1400','QCD'],
+      #['QCD1400_1800','QCD'],
+      #['QCD1800_2400','QCD'],
+      #['QCD2400_3200','QCD'],
+      #['QCD3200','QCD'],
+      #["DYJetsToLL", 'EWK'],  
+      ##["WtoLNu2Jets", 'EWK'],
+      #["TTtoLNu2Q",  'TT'],
+      #["TTto4Q", 'TT'],
+      #["TTto2L2Nu", 'TT'],
       ]
 
-ROOT.gStyle.SetOptStat(0)
-
+colors  = {'QCD': '#56CBF9', 'TT': '#FDCA40', 'DY': '#D3C0CD'}
+markers = {'medium': 'o', 'tight': '^'}
+ids     = ['medium', 'tight']
+var     = ['pt', 'eta']
 #file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_DisMuon_GenPartMatch.root" 
 #file = "SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root"
  
-#events = NanoEventsFactory.from_root({file:"Events"}, schemaclass=NanoAODSchema).events()
 NanoAODSchema.mixins["DisMuon"] = "Muon"
+#events = NanoEventsFactory.from_root({file:"Events"}, schemaclass=NanoAODSchema).events()
 class IDProcessor(processor.ProcessorABC):
     def __init__(self):
+        NanoAODSchema.mixins["DisMuon"] = "Muon"
         self._accumulator = {}
         for sample in SAMP:
-            self._accumulator[sample[0]] = {}        
-            self._accumulator[sample[0]]["tight"] = {}
-            self._accumulator[sample[0]]["medium"] = {}
-            self._accumulator[sample[0]]["gen"] = {}
+            self._accumulator["tight"] = {}
+            self._accumulator["medium"] = {}
+            self._accumulator["gen"] = {}
  
-    def process(self, events)    
+    def process(self, events):    
         id_dict = {}
-            
-        id_dict[events.metadata['dataset']] = {}
-        id_dict[events.metadata['dataset']]["tight"] = {}
-        id_dict[events.metadata['dataset']]["medium"] = {}
-        id_dict[events.metadata['dataset']]["gen"] = {}
+        id_dict["tight"] = {}
+        id_dict["medium"] = {}
+        id_dict["gen"] = {}
 
         gpart = events.GenPart
         #dxy = (events.GenPart.vertexY - events.GenVtx.y) * np.cos(events.GenPart.phi) - \
@@ -125,20 +129,20 @@ class IDProcessor(processor.ProcessorABC):
         #events['GenPart'] = ak.with_field(events.GenPart, dxy, where="dxy")
         #events['GenPart'] = ak.with_field(events.GenPart, lxy, where="lxy")
         #print(gpart.fields)
-        staus = gpart[(abs(gpart.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))]
+        #staus = gpart[(abs(gpart.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))]
         #print(staus.fields)
-        staus_taus = staus.distinctChildren[(abs(staus.distinctChildren.pdgId) == 15) & (staus.distinctChildren.hasFlags("isLastCopy")) & (staus.distinctChildren.hasFlags("fromHardProcess"))]
+        #staus_taus = staus.distinctChildren[(abs(staus.distinctChildren.pdgId) == 15) & (staus.distinctChildren.hasFlags("isLastCopy")) & (staus.distinctChildren.hasFlags("fromHardProcess"))]
         #print(staus_taus.fields)
-        staus_taus = ak.firsts(staus_taus[ak.argsort(staus_taus.pt, ascending=False)], axis = 2)
-        gen_mu = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 13) & (staus_taus.distinctChildren.hasFlags("isLastCopy"))]
-        
-        gen_mu = gen_mu[(gen_mu.pt > GenPtMin) & (abs(gen_mu.eta) < GenEtaMax)]
-        
+        #staus_taus = ak.firsts(staus_taus[ak.argsort(staus_taus.pt, ascending=False)], axis = 2)
+        #gen_mu = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 13) & (staus_taus.distinctChildren.hasFlags("isLastCopy"))]  
+        gen_mu = events.GenPart[(abs(events.GenPart.pdgId) == 13) & (events.GenPart.hasFlags("isLastCopy"))]
         ### Make sure that the reco muons can be traced back to a gen particle 
-        dis_mu = events.DisMuon[(events.DisMuon.genPartIdx > 0)]
+        #dis_mu = events.DisMuon[(events.DisMuon.genPartIdx > 0)]
         
         ### Make sure the sample of reco muons we're looking at have a gen particle that is the grandchild of a stau
-        reco_mu = dis_mu[(abs(events.GenPart[dis_mu.genPartIdx].distinctParent.distinctParent.pdgId) == 1000015)]
+        #reco_mu = dis_mu[(abs(events.GenPart[dis_mu.genPartIdx].distinctParent.distinctParent.pdgId) == 1000015)]
+        reco_mu = gen_mu.nearest(events.DisMuon)
+        print("Checking to see if nearest function works")
 
         ### Separate the reco muons into different IDs
         loosereco_mu  = reco_mu[reco_mu.looseId == 1]
@@ -146,22 +150,28 @@ class IDProcessor(processor.ProcessorABC):
         tightreco_mu  = reco_mu[reco_mu.tightId == 1]
         
         ### Now choose the gen particles those reco muons trace back to
-        rfg_mu       = events.GenPart[reco_mu.genPartIdx]
+        #rfg_mu       = events.GenPart[reco_mu.genPartIdx]
+        rfg_mu       = reco_mu.nearest(gen_mu)        
 
         ### Choose the gen muons based on the reco muon ID
-        looserfg_mu  = events.GenPart[loosereco_mu.genPartIdx] 
-        mediumrfg_mu = events.GenPart[mediumreco_mu.genPartIdx] 
-        tightrfg_mu  = events.GenPart[tightreco_mu.genPartIdx] 
+        #looserfg_mu  = events.GenPart[loosereco_mu.genPartIdx] 
+        #mediumrfg_mu = events.GenPart[mediumreco_mu.genPartIdx] 
+        #tightrfg_mu  = events.GenPart[tightreco_mu.genPartIdx] 
+        
+        looserfg_mu  = loosereco_mu.nearest(gen_mu) 
+        mediumrfg_mu = mediumreco_mu.nearest(gen_mu) 
+        tightrfg_mu  = tightreco_mu.nearest(gen_mu) 
         
         ### Apply fiducial cuts
         rfg_mu = rfg_mu[(rfg_mu.pt > GenPtMin) & (abs(rfg_mu.eta) < GenEtaMax)]
         looserfg_mu = looserfg_mu[(looserfg_mu.pt > GenPtMin) & (abs(looserfg_mu.eta) < GenEtaMax)]
         mediumrfg_mu = mediumrfg_mu[(mediumrfg_mu.pt > GenPtMin) & (abs(mediumrfg_mu.eta) < GenEtaMax)]
         tightrfg_mu = tightrfg_mu[(tightrfg_mu.pt > GenPtMin) & (abs(tightrfg_mu.eta) < GenEtaMax)]
+        gen_mu = gen_mu[(gen_mu.pt > GenPtMin) & (abs(gen_mu.eta) < GenEtaMax)]
         
         
-        id_dict[events.metadata['dataset']]["gen"]["pt"]  = gen_mu.pt
-        id_dict[events.metadata['dataset']]["gen"]["eta"] = gen_mu.eta
+        id_dict["gen"]["pt"]  = gen_mu.pt
+        id_dict["gen"]["eta"] = gen_mu.eta
         #GenMu_dxy = gen_mu.dxy
         #GenMu_lxy = gen_mu.lxy
         
@@ -175,13 +185,13 @@ class IDProcessor(processor.ProcessorABC):
         #LooseRecoMuonsFromGen_dxy  = looserfg_mu.dxy
         #LooseRecoMuonsFromGen_lxy  = looserfg_mu.lxy
         
-        id_dict[events.metadata['dataset']]["medium"]["pt"]  = mediumrfg_mu.pt
-        id_dict[events.metadata['dataset']]["medium"]["eta"]  = mediumrfg_mu.eta
+        id_dict["medium"]["pt"]  = mediumrfg_mu.pt
+        id_dict["medium"]["eta"]  = mediumrfg_mu.eta
         #MediumRecoMuonsFromGen_dxy = mediumrfg_mu.dxy
         #MediumRecoMuonsFromGen_lxy = mediumrfg_mu.lxy
         
-        id_dict[events.metadata['dataset']]["tight"]["pt"]   = tightrfg_mu.pt
-        id_dict[events.metadata['dataset']]["tight"]["eta"]  = tightrfg_mu.eta
+        id_dict["tight"]["pt"]   = tightrfg_mu.pt
+        id_dict["tight"]["eta"]  = tightrfg_mu.eta
         #TightRecoMuonsFromGen_dxy  = tightrfg_mu.dxy
         #TightRecoMuonsFromGen_lxy  = tightrfg_mu.lxy
         
@@ -199,15 +209,112 @@ background_samples["DY"] = []
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+#    if "Stau" in samples[0]:
+#        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+
+background_histograms = {}
+for background, samples in background_samples.items():
+    # Initialize a dictionary to hold ROOT histograms for the current background
+    background_histograms[background] = {}
+    
+    background_histograms[background]["medium"] = {}
+    background_histograms[background]["tight"] = {}
+    background_histograms[background]["gen"] = {}
+
+    background_histograms[background]["medium"]["pt"]  = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="medium_pt", label = 'pt [GeV]'))
+    background_histograms[background]["medium"]["eta"] = hda.hist.Hist(hist.axis.Regular(32, -3.2, 3.2, name="medium_eta", label = r'$\eta$'))
+
+    background_histograms[background]["tight"]["pt"]   = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="tight_pt", label = 'pt [GeV]'))
+    background_histograms[background]["tight"]["eta"]  = hda.hist.Hist(hist.axis.Regular(32, -3.2, 3.2, name="tight_eta", label = r'$\eta$'))
+
+    background_histograms[background]["gen"]["pt"]     = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="gen_pt", label = 'pt [GeV]'))
+    background_histograms[background]["gen"]["eta"]    = hda.hist.Hist(hist.axis.Regular(32, -3.2, 3.2, name="gen_eta", label = r'$\eta$'))
+
+    print(f"For {background} here are samples {samples}") 
+    for sample_file, sample_weight in samples:
+        try:
+            # Step 1: Load events for the sample using dask-awkward
+            events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= NanoAODSchema).events()
+            #events = uproot.dask(sample_file)
+            print(f'Starting {sample_file} histogram')         
+
+            processor_instance = IDProcessor()
+            output = processor_instance.process(events)
+            print(f'{sample_file} finished successfully')
+            print(output['gen']['pt'].compute())
+
+            background_histograms[background]["medium"]["pt"].fill(dak.flatten(output["medium"]["pt"], axis=None)) 
+            background_histograms[background]["medium"]["eta"].fill(dak.flatten(output["medium"]["eta"], axis=None))
+                                                              
+            background_histograms[background]["tight"]["pt"].fill(dak.flatten(output["tight"]["pt"], axis=None))  
+            background_histograms[background]["tight"]["eta"].fill(dak.flatten(output["tight"]["eta"], axis=None)) 
+
+            background_histograms[background]["gen"]["pt"].fill(dak.flatten(output["gen"]["pt"], axis=None))  
+            background_histograms[background]["gen"]["eta"].fill(dak.flatten(output["gen"]["eta"], axis=None)) 
+
+        except Exception as e:
+            print(f"Error processing {sample_file}: {e}")
+fig, ax = plt.subplots(2, 1, figsize=(10, 15))
+
+for background in background_histograms.keys():
+    print(f"Starting on {background}")
+    for variable in var:
+        plt.clf()
+        plt.cla()
+        print(f"Starting on {variable}")
+        for cut in ids:
+            background_histograms[background][cut][variable].compute().plot_ratio(
+                            background_histograms[background]["gen"][variable].compute(),
+                            rp_num_label        = cut + " " + variable,
+                            rp_denom_label      = "gen " + variable,
+                            rp_uncert_draw_type = "line",
+                            rp_uncertainty_type = "efficiency",
+                            ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
+                            )
+            print(f"Finished plotting {cut}")
+        print(ax[0])
+        ax[0].remove()
+        cut_counter = 0
+        for artist in ax[1].containers:
+            artist[0].set_color(colors[background])
+            artist[0].set_label(ids[cut_counter])
+            artist[0].set_marker(markers[ids[cut_counter]])
+            cut_counter += 1
+        ax[1].legend()
+        fig.savefig(f"MuonID_{background}_{variable}.pdf")
+        print(f"MuonID_{background}_{variable}.pdf saved!")
+
+#background_histograms["QCD"]["medium"]["pt"].compute().plot_ratio(
+#                            background_histograms["QCD"]["gen"]["pt"].compute(),
+#                            rp_num_label="medium pt",
+#                            rp_denom_label="gen pt",
+#                            rp_uncert_draw_type="line",
+#                            rp_uncertainty_type="efficiency",
+#                            ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
+#                            )
+#background_histograms["QCD"]["tight"]["pt"].compute().plot_ratio(
+#                            background_histograms["QCD"]["gen"]["pt"].compute(),
+#                            rp_num_label="tight pt",
+#                            rp_denom_label="gen pt",
+#                            rp_uncert_draw_type="line",
+#                            rp_uncertainty_type="efficiency",
+#                            ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
+#                            )
+#ax[0].remove()
+#for artist in ax[1].containers:
+#    artist[0].set_color("red")
+#    artist[0].set_label("red")
+#ax[1].legend()
+#fig.savefig("example.pdf")
+
+
 
 ### Efficiency Plots
 #makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "pt", 16, 20, 100, 5, "[GeV]",  [GenMu_pt.compute(),]*4,   [RecoMuonsFromGen_pt.compute(),  TightRecoMuonsFromGen_pt.compute(),  MediumRecoMuonsFromGen_pt.compute(),  LooseRecoMuonsFromGen_pt.compute()], 0, file)

@@ -53,7 +53,7 @@ selections = {
 
               "jet_score":                  0.9, 
               "jet_pt":                     32.,  ##GeV
-              "jet_dxy_displaced_min":      0.02, ##cm
+              "jet_dxy_displaced_min":      0.00, ##cm
 
               "MET_pt":                     105., ##GeV
              }
@@ -138,13 +138,13 @@ class skimProcessor(processor.ProcessorABC):
 
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
                        (abs(events.DisMuon.eta) < 2.4)                                  &\
-                       (events.DisMuon.tightId == 1)                                    &\
-                       (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_min"]) &\
-                       (abs(events.DisMuon.dxy) < selections["muon_dxy_prompt_max"]) &\
+                       #(events.DisMuon.tightId == 1)                                    &\
+                       (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
+                       (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
                       )
 
-        good_jets   = dak.flatten((events.Jet.disTauTag_score1 < selections["jet_score"])   &\
+        good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
                        (events.Jet.pt > selections["jet_pt"])                               &\
                        (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
                        #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
@@ -202,7 +202,7 @@ class skimProcessor(processor.ProcessorABC):
                      "pfRelIso03_chg",
                      "pfRelIso04_all",
                      "tkRelIso",
-                     #"genPartIdx",
+                     "genPartIdx",
                      ]
 
         jet_vars =   [   
@@ -354,7 +354,7 @@ if __name__ == "__main__":
             )
 
             try:
-                outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/prompt_score_wJetDxy" + samp, compute=False, tree_name='Events')
+                outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/SRcuts_noID_noJetDxy_" + samp, compute=False, tree_name='Events')
                 dask.compute(outfile)
             
             except Exception as e:

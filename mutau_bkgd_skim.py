@@ -28,6 +28,7 @@ from fileset import *
 from selections.lumi_selections import select_lumis
 
 import time
+from datetime import datetime
 from distributed import Client
 from lpcjobqueue import LPCCondorCluster
 
@@ -153,9 +154,10 @@ class MyProcessor(processor.ProcessorABC):
         MET_vars   = events.PFMET.fields  
 
         if is_MC:
-            gpart_vars = events.GenPart.fields 
-            gvist_vars = events.GenVisTau.fields 
-            gvtx_vars  = events.GenVtx.fields
+            gpart_vars  = events.GenPart.fields 
+            gvist_vars  = events.GenVisTau.fields 
+            gvtx_vars   = events.GenVtx.fields
+            pileup_vars = events.Pileup.fields 
  
         for branch in muon_vars:
             if branch[-1] == "G": continue
@@ -179,7 +181,7 @@ class MyProcessor(processor.ProcessorABC):
             for branch in gvtx_vars:
                 if branch[-1] == "G": continue
                 out_dict["GenVtx_"    + branch]  = dak.drop_none(events["GenVtx"][branch])
-            for branch in events.Pileup.fields:
+            for branch in pileup_vars:
                 out_dict["Pileup_"    + branch]  = dak.drop_none(events["Pileup"][branch])
 
         out_dict["event"]           = dak.drop_none(events.event)
@@ -199,8 +201,9 @@ class MyProcessor(processor.ProcessorABC):
         
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
-        logger.info(f"Dictionary zipped: {events.metadata['dataset']}")
-        return out_dict
+        logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
+        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_pileup_genvtx/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        return out_file
 
     def postprocess(self, accumulator):
         return accumulator
@@ -208,7 +211,8 @@ class MyProcessor(processor.ProcessorABC):
 
 if __name__ == "__main__":
 
-    XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 2500)
+    print("Time started:", datetime.now().strftime("%H:%M:%S"))
+    #XRootDFileSystem(hostid = "root://cmseos.fnal.gov/", filehandle_cache_size = 2500)
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -219,7 +223,7 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("data_preprocessed_fileset.pkl", "rb") as  f:
+    with open("preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
 
 #    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
@@ -239,20 +243,25 @@ if __name__ == "__main__":
 #    )
 
     for samp in dataset_runnable.keys(): 
-        if "2022" in samp:
+        if "2022" not in samp:
             samp_runnable = {}
             samp_runnable[samp] = dataset_runnable[samp]
+            print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
                      max_chunks(samp_runnable, 1000),
                      schemaclass=PFNanoAODSchema,
-                     uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024)}
-                     #uproot_options = {"allow_read_errors_with_report": True}
+                     uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024),
+                                     "allow_read_errors_with_report": True}
             )
             #failed_chunks = get_failed_steps_for_fileset(
             print(to_compute)
-            outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root/"+samp, compute=False, tree_name='Events')
-            dask.compute(outfile)
-        
+            #outfile = uproot.dask_write(to_compute[0][samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_test/"+samp, compute=False, tree_name='Events')
+            dask.compute(to_compute)
+    
+    client.shutdown()
+    cluster.close()
+    
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
+    
