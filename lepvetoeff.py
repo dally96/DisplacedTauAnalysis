@@ -39,21 +39,6 @@ NanoAODSchema.warn_missing_crossrefs = False
 GenPtMin = 20
 GenEtaMax = 2.4
 
-
-ptRANGE = ["20-25", "25-30", "30-35", "35-40", "40-45", "45-50", "50-55", "55-60", 
-           "60-65", "65-70", "70-75", "75-80", "80-85", "85-90", "90-95", "95-100"]
-
-etaRANGE = ["-2.4--2.2", "-2.2--2.0", "-2.0--1.8", "-1.8--1.6", "-1.6--1.4", "-1.4--1.2", "-1.2--1.0", "-1.0--0.8", "-0.8--0.6", "-0.6--0.4", "-0.4--0.2", "-0.2-0",
-            "0-0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", "0.8-1.0", "1.0-1.2", "1.2-1.4", "1.4-1.6", "1.6-1.8", "1.8-2.0", "2.0-2.2", "2.2-2.4"]
-
-dxyRANGE = ["0-0.5", "0.5-1", "1-1.5", "1.5-2", "2-2.5","2.5-3", "3-3.5", "3.5-4", "4-4.5", "4.5-5",
-            "5-5.5", "5.5-6", "6-6.5", "6.5-7", "7-7.5","7.5-8", "8-8.5", "8.5-9", "9-9.5", "9.5-10",
-            "10-10.5", "10.5-11", "11-11.5", "11.5-12", "12-12.5","12.5-13", "13-13.5", "13.5-14", "14-14.5", "14.5-15"]
-            
-lxyRANGE = ["0-0.5", "0.5-1", "1-1.5", "1.5-2", "2-2.5","2.5-3", "3-3.5", "3.5-4", "4-4.5", "4.5-5",
-            "5-5.5", "5.5-6", "6-6.5", "6.5-7", "7-7.5","7.5-8", "8-8.5", "8.5-9", "9-9.5", "9.5-10",
-            "10-10.5", "10.5-11", "11-11.5", "11.5-12", "12-12.5","12.5-13", "13-13.5", "13.5-14", "14-14.5", "14.5-15"]
-
 SAMP = [
       ['QCD50_80', 'QCD'],
       ['QCD80_120','QCD'],
@@ -271,42 +256,3 @@ for background in background_histograms.keys():
         ax[1].legend()
         fig.savefig(f"MuonID_{background}_{variable}.pdf")
         print(f"MuonID_{background}_{variable}.pdf saved!")
-
-#background_histograms["QCD"]["medium"]["pt"].compute().plot_ratio(
-#                            background_histograms["QCD"]["gen"]["pt"].compute(),
-#                            rp_num_label="medium pt",
-#                            rp_denom_label="gen pt",
-#                            rp_uncert_draw_type="line",
-#                            rp_uncertainty_type="efficiency",
-#                            ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
-#                            )
-#background_histograms["QCD"]["tight"]["pt"].compute().plot_ratio(
-#                            background_histograms["QCD"]["gen"]["pt"].compute(),
-#                            rp_num_label="tight pt",
-#                            rp_denom_label="gen pt",
-#                            rp_uncert_draw_type="line",
-#                            rp_uncertainty_type="efficiency",
-#                            ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
-#                            )
-#ax[0].remove()
-#for artist in ax[1].containers:
-#    artist[0].set_color("red")
-#    artist[0].set_label("red")
-#ax[1].legend()
-#fig.savefig("example.pdf")
-
-
-
-### Efficiency Plots
-#makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "pt", 16, 20, 100, 5, "[GeV]",  [GenMu_pt.compute(),]*4,   [RecoMuonsFromGen_pt.compute(),  TightRecoMuonsFromGen_pt.compute(),  MediumRecoMuonsFromGen_pt.compute(),  LooseRecoMuonsFromGen_pt.compute()], 0, file)
-#makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "eta", 24, -2.4, 2.4, 0.2, " ", [GenMu_eta.compute(),]*4, [RecoMuonsFromGen_eta.compute(), TightRecoMuonsFromGen_eta.compute(), MediumRecoMuonsFromGen_eta.compute(), LooseRecoMuonsFromGen_eta.compute()], 0, file)
-#makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "dxy", 30, 0, 15, 0.5, "[cm]",  [GenMu_dxy.compute(),]*4,  [RecoMuonsFromGen_dxy.compute(), TightRecoMuonsFromGen_dxy.compute(), MediumRecoMuonsFromGen_dxy.compute(), LooseRecoMuonsFromGen_dxy.compute()], 0, file)
-#makeEffPlot("mu", "ID", ["No ID", "Tight", "Med", "Loose"], "lxy", 30, 0, 15, 0.5, "[cm]",  [GenMu_lxy.compute(),]*4,  [RecoMuonsFromGen_lxy.compute(), TightRecoMuonsFromGen_lxy.compute(), MediumRecoMuonsFromGen_lxy.compute(), LooseRecoMuonsFromGen_lxy.compute()], 0, file) 
-#
-#makeEffPlot("e", "ID", ["No ID", "Tight", "Med", "Loose"], "pt", 16, 20, 100, 5, "[GeV]", GenE_pt, [RecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt], 0, file)
-#makeEffPlot("e", "ID", ["No ID", "Tight", "Med", "Loose"], "eta", 24, -2.4, 2.4, 0.2, " ", GenE_eta, [RecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta], 0, file)
-#makeEffPlot("e", "ID", ["No ID", "Tight", "Med", "Loose", "Veto"], "dxy", 30, 0, 15, 0.5, "[cm]", GenE_dxy, [RecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy], 0, file)
-#makeEffPlot("e", "ID", ["No ID", "Tight", "Med", "Loose"], "lxy", 30, 0, 15, 0.5, "[cm]", GenE_lxy, [RecoElectronsFromGen_lxy, TightRecoElectronsFromGen_lxy, MediumRecoElectronsFromGen_lxy, LooseRecoElectronsFromGen_lxy], 0, file) 
-
-#makeEffPlotEta("e", ["no ID", "convVeto & lostHits","Veto", "Loose ID", "Medium ID", "Tight ID"], "pt", "[GeV]", GenE_pt, GenE_eta,[RecoElectronsFromGen_pt, Hand2RecoElectronsFromGen_pt, VetoRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt], [RecoElectronsFromGen_eta, Hand2RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], [RecoElectronsFromGen_pt, Hand3RecoElectronsFromGen_pt, VetoRecoElectronsFromGen_pt, LooseRecoElectronsFromGen_pt, MediumRecoElectronsFromGen_pt, TightRecoElectronsFromGen_pt], [RecoElectronsFromGen_eta, Hand3RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0, file)
-#makeEffPlotEta("e", ["no ID", "convVeto & lostHits","Veto", "Loose ID", "Medium ID", "Tight ID"], "dxy", "[cm]", GenE_dxy, GenE_eta,[RecoElectronsFromGen_dxy, Hand2RecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy], [RecoElectronsFromGen_eta, Hand2RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], [RecoElectronsFromGen_dxy, Hand3RecoElectronsFromGen_dxy, VetoRecoElectronsFromGen_dxy, LooseRecoElectronsFromGen_dxy, MediumRecoElectronsFromGen_dxy, TightRecoElectronsFromGen_dxy], [RecoElectronsFromGen_eta, Hand3RecoElectronsFromGen_eta, VetoRecoElectronsFromGen_eta, LooseRecoElectronsFromGen_eta, MediumRecoElectronsFromGen_eta, TightRecoElectronsFromGen_eta], 0, file, np.linspace(0,15,16))

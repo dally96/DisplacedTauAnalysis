@@ -27,26 +27,26 @@ SAMP = [
       ['Stau_100_100mm', 'SIG'],
       ['Stau_100_10mm', 'SIG'],
       ['Stau_100_1mm', 'SIG'],
-      ['Stau_100_0p1mm', 'SIG'],
-      ['Stau_100_0p01mm', 'SIG'],
+      #['Stau_100_0p1mm', 'SIG'],
+      #['Stau_100_0p01mm', 'SIG'],
       ['Stau_200_1000mm', 'SIG'],
       ['Stau_200_100mm', 'SIG'],
       ['Stau_200_10mm', 'SIG'],
       ['Stau_200_1mm', 'SIG'],
-      ['Stau_200_0p1mm', 'SIG'],
-      ['Stau_200_0p01mm', 'SIG'],
+      #['Stau_200_0p1mm', 'SIG'],
+      #['Stau_200_0p01mm', 'SIG'],
       ['Stau_300_1000mm', 'SIG'],
       ['Stau_300_100mm', 'SIG'],
       ['Stau_300_10mm', 'SIG'],
       ['Stau_300_1mm', 'SIG'],
-      ['Stau_300_0p1mm', 'SIG'],
-      ['Stau_300_0p01mm', 'SIG'],
+      #['Stau_300_0p1mm', 'SIG'],
+      #['Stau_300_0p01mm', 'SIG'],
       ['Stau_500_1000mm', 'SIG'],
       ['Stau_500_100mm', 'SIG'],
       ['Stau_500_10mm', 'SIG'],
       ['Stau_500_1mm', 'SIG'],
-      ['Stau_500_0p1mm', 'SIG'],
-      ['Stau_500_0p01mm', 'SIG'],
+      #['Stau_500_0p1mm', 'SIG'],
+      #['Stau_500_0p01mm', 'SIG'],
       ['QCD50_80', 'QCD'],
       ['QCD80_120','QCD'],
       ['QCD120_170','QCD'],
@@ -71,26 +71,26 @@ lumi = 38.01 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 Stau_colors = ['#EA7AF4', '#B43E8F', '#6200B3', '#218380']
 variables_with_bins = {
-    #"DisMuon_pt": [(245, 20, 1000), "GeV"],
-    #"DisMuon_eta": [(50, -2.5, 2.5), ""],
-    #"DisMuon_phi": [(64, -3.2, 3.2), ""],
-    #"DisMuon_dxy": [(50, -50E-4, 50E-4), "cm"],
-    #"DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
-    #"DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
-    #"DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
-    #"DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
-    #"DisMuon_tkRelIso":       [(50, 0, 1), ""],
+    "DisMuon_pt": [(245, 20, 1000), "GeV"],
+    "DisMuon_eta": [(50, -2.5, 2.5), ""],
+    "DisMuon_phi": [(64, -3.2, 3.2), ""],
+    "DisMuon_dxy": [(50, -1, 1), "cm"],
+    "DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
+    "DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
+    "DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
+    "DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
+    "DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
     "Jet_pt" : [(49, 20, 1000), "GeV"],
-    #"Jet_eta": [(48, -2.4, 2.4), ""],
-    #"Jet_phi": [(64, -3.2, 3.2), ""],
-    #"Jet_disTauTag_score1": [(20, 0, 1), ""],
-    #"Jet_dxy": [(50, -0.5, 0.5), "cm"],
+    "Jet_eta": [(48, -2.4, 2.4), ""],
+    "Jet_phi": [(64, -3.2, 3.2), ""],
+    "Jet_disTauTag_score1": [(20, 0, 1), ""],
+    "Jet_dxy": [(50, -0.5, 0.5), "cm"],
 
     #"dR" : [(20, 0, 1), ""],
     #"deta": [(100, -5, 5), ""],
     #"dphi": [(64, -3.2, 3.2), ""],
-    #"PFMET_pt": [(225, 100, 1000), "GeV"],
+    "PFMET_pt": [(225, 100, 1000), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -158,25 +158,20 @@ class ExampleProcessor(processor.ProcessorABC):
 background_samples = {} 
 background_samples["QCD"] = []
 background_samples["TT"] = []
-#background_samples["LNu2Q"] = []
-#background_samples["4Q"] = []
 background_samples["W"] = []
 background_samples["DY"] = []
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["2L2Nu"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTto2L2Nu" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["LNu2Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTtoLNu2Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-        #background_samples["4Q"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_scoreprompt_isoTTto4Q" + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_prompt_score" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -219,13 +214,22 @@ for var in variables_with_bins:
     plt.cla()
     plt.clf()
 
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_event_num/total_event_number): background_histograms["QCD"][var],
+    QCD_frac = 0
+    TT_frac  = 0
+    DY_frac  = 0
+
+    if total_event_number > 0:
+        QCD_frac = QCD_event_num/total_event_number
+        TT_frac  = TT_event_num/total_event_number
+        DY_frac  = DY_event_num/total_event_number
+
+    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                               #"2L2Nu" : background_histograms["2L2Nu"][var],
                               #"LNu2Q" : background_histograms["LNu2Q"][var],
                               #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_event_num/total_event_number) : background_histograms["TT"][var],
+                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                               #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_event_num/total_event_number): background_histograms["DY"][var],       
+                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
     stau_counter = 0
@@ -242,17 +246,17 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_score/mu_stacked_histogram_{var}_lessbins_1000mm.png")
+    plt.savefig(f"../www//mu_stacked_histogram_{var}_1000mm.png")
 
     plt.cla()
     plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_event_num/total_event_number): background_histograms["QCD"][var],
+    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                               #"2L2Nu" : background_histograms["2L2Nu"][var],
                               #"LNu2Q" : background_histograms["LNu2Q"][var],
                               #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_event_num/total_event_number) : background_histograms["TT"][var],
+                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                               #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_event_num/total_event_number): background_histograms["DY"][var],       
+                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
     stau_counter = 0
@@ -269,17 +273,17 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_score/mu_stacked_histogram_{var}_lessbins_100mm.png")
+    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_100mm.png")
 
     plt.cla()
     plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_event_num/total_event_number): background_histograms["QCD"][var],
+    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                               #"2L2Nu" : background_histograms["2L2Nu"][var],
                               #"LNu2Q" : background_histograms["LNu2Q"][var],
                               #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_event_num/total_event_number) : background_histograms["TT"][var],
+                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                               #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_event_num/total_event_number): background_histograms["DY"][var],       
+                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
     stau_counter = 0
@@ -296,23 +300,22 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_score/mu_stacked_histogram_{var}_lessbins_10mm.png")
+    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_10mm.png")
 
     plt.cla()
     plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_event_num/total_event_number): background_histograms["QCD"][var],
+    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                               #"2L2Nu" : background_histograms["2L2Nu"][var],
                               #"LNu2Q" : background_histograms["LNu2Q"][var],
                               #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_event_num/total_event_number) : background_histograms["TT"][var],
+                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                               #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_event_num/total_event_number): background_histograms["DY"][var],       
+                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
     stau_counter = 0
     for sample in background_samples:
         if "Stau" in sample and "_1mm" in sample: 
-            print(f"Stau_counter {stau_counter}")
             background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
             stau_counter += 1
 
@@ -324,17 +327,17 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_score/mu_stacked_histogram_{var}_lessbins_1mm.png")
+    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_1mm.png")
 
     plt.cla()
     plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_event_num/total_event_number): background_histograms["QCD"][var],
+    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                               #"2L2Nu" : background_histograms["2L2Nu"][var],
                               #"LNu2Q" : background_histograms["LNu2Q"][var],
                               #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_event_num/total_event_number) : background_histograms["TT"][var],
+                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                               #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_event_num/total_event_number): background_histograms["DY"][var],       
+                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
     stau_counter = 0
@@ -351,17 +354,17 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_score/mu_stacked_histogram_{var}_lessbins_0p1mm.png")
+    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_0p1mm.png")
 
     plt.cla()
     plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_event_num/total_event_number): background_histograms["QCD"][var],
+    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                               #"2L2Nu" : background_histograms["2L2Nu"][var],
                               #"LNu2Q" : background_histograms["LNu2Q"][var],
                               #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_event_num/total_event_number) : background_histograms["TT"][var],
+                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                               #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_event_num/total_event_number): background_histograms["DY"][var],       
+                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 })
     s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
     stau_counter = 0
@@ -378,7 +381,7 @@ for var in variables_with_bins:
     plt.yscale('log')
     plt.ylim(top=get_stack_maximum(s)*10)
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/inverted_cuts_prompt_score/mu_stacked_histogram_{var}_lessbins__0p01mm.png")
+    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_0p01mm.png")
 
 
 #with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:

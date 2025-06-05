@@ -243,13 +243,14 @@ if __name__ == "__main__":
 #    )
 
     for samp in dataset_runnable.keys(): 
-        if "2022" not in samp:
+        #if ("2022" not in samp) and ("100_" not in samp) and ("200_" not in samp) and ("500_" not in samp):
+        if  ("4Q" in samp) and ("TT" in samp):
             samp_runnable = {}
             samp_runnable[samp] = dataset_runnable[samp]
             print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
-                     max_chunks(samp_runnable, 1000),
+                     max_chunks(samp_runnable, 100000),
                      schemaclass=PFNanoAODSchema,
                      uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024),
                                      "allow_read_errors_with_report": True}
