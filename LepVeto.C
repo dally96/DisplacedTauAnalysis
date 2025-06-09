@@ -170,13 +170,109 @@ void ZLeptonEtaPlot() {
       }
     };
 
-  df = df.Define("Jet_dxy", getJetDxy, {"Jet_pt", "PFCands_pt", "PFCands_dxy", "PFCands_charge", "JetPFCands_jetIdx", "JetPFCands_pFCandsIdx"})
+    df = df.Define("Jet_dxy", getJetDxy, {"Jet_pt", "PFCands_pt", "PFCands_dxy", "PFCands_charge", "JetPFCands_jetIdx", "JetPFCands_pFCandsIdx"});
 
-  auto filtered_Jet = df.Define("jet_mask", "Jet_pt > 20 && abs(Jet_eta) < 2.4")
+    auto filtered_Jet = df.Define("jet_mask", "Jet_pt > 20 && abs(Jet_eta) < 2.4")
                         .Define("jet_filtered_pt"   , "Jet_pt[jet_mask]")
                         .Define("jet_filtered_score", "Jet_disTauTag_score1[jet_mask]")
                         .Define("jet_filtered_dxy",   "Jet_dxy[jet_mask]")
                         .Define("jet_filtered_eta",   "Jet_eta[jet_mask]")
-                        .Define("jet_filtered_phi",   "Jet_phi[jet_mask]")
+                        .Define("jet_filtered_phi",   "Jet_phi[jet_mask]");
 
-  auto noId_Jet     = filtered_Jet.Define(  
+    auto noId_Jet     = filtered_Jet.Define("photon_veto",   lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Photon_eta", "Photon_phi"})
+                                    .Define("electron_veto", lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Electron_eta", "Electron_phi"}) 
+                                    .Define("muon_veto",     lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Muon_eta", "Muon_phi"})
+                                    .Define("dismuon_veto",  lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "DisMuon_eta", "DisMuon_phi"})
+                                    .Define("all_lepton_veto", "photon_veto && electron_veto && muon_veto && dismuon_veto")
+                                    .Define("noId_jet_pt", "jet_filtered_pt[all_lepton_veto]")
+                                    .Define("noId_jet_score", "jet_filtered_score[all_lepton_veto]")
+                                    .Define("noId_jet_dxy", "jet_filtered_dxy[all_lepton_veto]");
+
+    auto Id_Jet       = filtered_Jet.Define("photon_cuts",   "Photon_pt   > 20 && abs(Photon_eta)   < 2.4 && Photon_electronVeto")
+                                    .Define("electron_cuts", "Electron_pt > 20 && abs(Electron_eta) < 2.4 && Electron_convVeto  ")
+                                    .Define("muon_cuts",     "Muon_pt     > 20 && abs(Muon_eta)     < 2.4 && Muon_looseid       ")
+                                    .Define("dismuon_cuts",  "DisMuon_pt  > 20 && abs(DisMuon_eta)  < 2.4 && DisMuon_looseid    ")
+                                    .Define("photon_veto",   lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Photon_eta[photon_cuts]", "Photon_phi[photon_cuts"})
+                                    .Define("electron_veto", lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Electron_eta[electron_cuts]", "Electron_phi[electron_cuts]"}) 
+                                    .Define("muon_veto",     lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Muon_eta[muon_cuts]", "Muon_phi[muon_cuts]"})
+                                    .Define("dismuon_veto",  lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "DisMuon_eta[dismuon_cuts]", "DisMuon_phi[dismuon_cuts]"})
+                                    .Define("all_lepton_veto", "photon_veto && electron_veto && muon_veto && dismuon_veto")
+                                    .Define("Id_jet_pt", "jet_filtered_pt[all_lepton_veto]")
+                                    .Define("Id_jet_score", "jet_filtered_score[all_lepton_veto]")
+                                    .Define("Id_jet_dxy", "jet_filtered_dxy[all_lepton_veto]");
+
+    auto jet_pt_hist         = filtered_Jet.Histo1D({"h_jet_pt",         (sampleName[f] + ";p_{T} [GeV];").c_str(), 245, 20, 1000}, "jet_filtered_pt");
+    auto jet_dxy_hist        = filtered_Jet.Histo1D({"h_jet_dxy",        (sampleName[f] + ";d_{xy} [cm];").c_str(), 20, -5,  5},    "jet_filtered_dxy");
+    auto jet_score_hist      = filtered_Jet.Histo1D({"h_jet_score",      (sampleName[f] + ";score;"      ).c_str(), 20,  0,  1},    "jet_filtered_score");
+
+    auto noId_jet_pt_hist    = noId_Jet.Histo1D(    {"h_noId_jet_pt",    (sampleName[f] + ";p_{T} [GeV];").c_str(), 245, 20, 1000}, "noId_jet_pt");
+    auto noId_jet_dxy_hist   = noId_Jet.Histo1D(    {"h_noId_jet_dxy",   (sampleName[f] + ";d_{xy} [cm];").c_str(), 20, -5,  5},    "noId_jet_dxy");
+    auto noId_jet_score_hist = noId_Jet.Histo1D(    {"h_noId_jet_score", (sampleName[f] + ";score;"      ).c_str(), 20,  0,  1},    "noId_jet_score");
+
+    auto Id_jet_pt_hist      = Id_Jet.Histo1D(      {"h_Id_jet_pt",      (sampleName[f] + ";p_{T} [GeV];").c_str(), 245, 20, 1000}, "Id_jet_pt");
+    auto Id_jet_dxy_hist     = Id_Jet.Histo1D(      {"h_Id_jet_dxy",     (sampleName[f] + ";d_{xy} [cm];").c_str(), 20, -5,  5},    "Id_jet_dxy");
+    auto Id_jet_score_hist   = Id_Jet.Histo1D(      {"h_Id_jet_score",   (sampleName[f] + ";score;"      ).c_str(), 20,  0,  1},    "Id_jet_score");
+
+
+
+    auto c1 = new TCanvas();
+    jet_pt_hist->Draw();
+    c1->SaveAs((sampleName[f] + "jet_pt.pdf").c_str());
+
+    auto c2 = new TCanvas();
+    jet_score_hist->Draw();
+    c2->SaveAs((sampleName[f] + "jet_score.pdf").c_str());
+
+    auto c3 = new TCanvas();
+    jet_dxy_hist->Draw();
+    c3->SaveAs((sampleName[f] + "jet_dxy.pdf").c_str());
+
+    auto c4 = new TCanvas();
+    noId_jet_pt_hist->Draw();
+    c4->SaveAs((sampleName[f] + "noId_jet_pt.pdf").c_str());
+
+    auto c5 = new TCanvas();
+    noId_jet_score_hist->Draw();
+    c5->SaveAs((sampleName[f] + "noId_jet_score.pdf").c_str());
+
+    auto c6 = new TCanvas();
+    noId_jet_dxy_hist->Draw();
+    c6->SaveAs((sampleName[f] + "noId_jet_dxy.pdf").c_str());
+
+    auto c7 = new TCanvas();
+    Id_jet_pt_hist->Draw();
+    c7->SaveAs((sampleName[f] + "Id_jet_pt.pdf").c_str());
+
+    auto c8 = new TCanvas();
+    Id_jet_score_hist->Draw();
+    c8->SaveAs((sampleName[f] + "Id_jet_score.pdf").c_str());
+
+    auto c9 = new TCanvas();
+    Id_jet_dxy_hist->Draw();
+    c9->SaveAs((sampleName[f] + "Id_jet_dxy.pdf").c_str());
+    TFile outfile(("output_" + sampleName[f] + ".root").c_str(), "RECREATE");
+
+    jet_pt_hist->Write();
+    jet_score_hist->Write();
+    jet_dxy_hist->Write();
+   
+    noId_jet_pt_hist->Write();
+    noId_jet_score_hist->Write();
+    noId_jet_dxy_hist->Write();
+
+    Id_jet_pt_hist->Write();
+    Id_jet_score_hist->Write();
+    Id_jet_dxy_hist->Write();
+
+    outfile.Close();
+  }
+}
+
+int main() {
+LepVeto();
+}
+
+
+
+
+
