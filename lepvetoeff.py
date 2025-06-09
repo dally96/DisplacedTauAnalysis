@@ -1,5 +1,4 @@
 import uproot
-import scipy
 import matplotlib as mpl
 import awkward as ak
 import dask_awkward as dak
@@ -7,7 +6,10 @@ import numpy as np
 import array
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-from glob import glob
+import pickle
+import time
+from datetime import datetime
+import json, gzip, correctionlib
 from xsec import *
 
 lumi = 38.01 ##fb-1
@@ -19,8 +21,10 @@ from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
 from dask.distributed import Client, wait, progress, LocalCluster 
 from dask_jobqueue import HTCondorCluster
+from distributed import Client
+from lpcjobqueue import LPCCondorCluster
 
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 from coffea import processor
 from coffea.dataset_tools import (
     apply_to_fileset,
@@ -32,227 +36,214 @@ import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
 
-from leptonPlot import *
 
-NanoAODSchema.warn_missing_crossrefs = False
+PFNanoAODSchema.warn_missing_crossrefs = False
+
+SAMP = [
+        "user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-120to170_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-170to300_TuneCP5_13p6TeV_pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-170to300_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-300to470_TuneCP5_13p6TeV_pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-300to470_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-470to600_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-50to80_TuneCP5_13p6TeV_pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-600to800_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-80to120_TuneCP5_13p6TeV_pythia8",
+        #"group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1000to1400_TuneCP5_13p6TeV_pythia8_ext",
+        #"group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1400to1800_TuneCP5_13p6TeV_pythia8_ext",
+        #"group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-1800to2400_TuneCP5_13p6TeV_pythia8_ext",
+        #"group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-2400to3200_TuneCP5_13p6TeV_pythia8_ext",
+        #"group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-3200_TuneCP5_13p6TeV_pythia8_ext",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8",
+        #"user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8", 
+       ]
+
 
 GenPtMin = 20
 GenEtaMax = 2.4
 
-SAMP = [
-      ['QCD50_80', 'QCD'],
-      ['QCD80_120','QCD'],
-      ['QCD120_170','QCD'],
-      ['QCD170_300','QCD'],
-      ['QCD300_470','QCD'],
-      ['QCD470_600','QCD'],
-      ['QCD600_800','QCD'],
-      ['QCD800_1000','QCD'],
-      ['QCD1000_1400','QCD'],
-      ['QCD1400_1800','QCD'],
-      ['QCD1800_2400','QCD'],
-      ['QCD2400_3200','QCD'],
-      ['QCD3200','QCD'],
-      ["DYJetsToLL", 'EWK'],  
-      #["WtoLNu2Jets", 'EWK'],
-      ["TTtoLNu2Q",  'TT'],
-      ["TTto4Q", 'TT'],
-      ["TTto2L2Nu", 'TT'],
-      ]
-
 colors  = {'QCD': '#56CBF9', 'TT': '#FDCA40', 'DY': '#D3C0CD'}
-markers = {'medium': 'o', 'tight': '^'}
-ids     = ['medium', 'tight']
-var     = ['pt', 'eta']
-#file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_DisMuon_GenPartMatch.root" 
-#file = "SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root"
+markers = {'noId': 'o', 'Id': '^'}
+ids     = ['noId', 'Id', 'Jets']
+var     = ['pt', 'dxy', 'disTauTag_score1']
+
+var_bins = {'pt':               [(245,  20, 1000), "[GeV]"],
+            'dxy':              [(20,  -5,  5),    "[cm]" ],
+            'disTauTag_score1': [(20,   0,  1),    ""     ]
+            }
+
  
-NanoAODSchema.mixins["DisMuon"] = "Muon"
-#events = NanoEventsFactory.from_root({file:"Events"}, schemaclass=NanoAODSchema).events()
+def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
+            mval = first.metric_table(second)
+            return ak.all(mval > threshold, axis=-1)
+
+PFNanoAODSchema.mixins["DisMuon"] = "Muon"
+#events = NanoEventsFactory.from_root({file:"Events"}, schemaclass=PFNanoAODSchema).events()
 class IDProcessor(processor.ProcessorABC):
     def __init__(self):
-        NanoAODSchema.mixins["DisMuon"] = "Muon"
+        PFNanoAODSchema.mixins["DisMuon"] = "Muon"
         self._accumulator = {}
-        for sample in SAMP:
-            self._accumulator["tight"] = {}
-            self._accumulator["medium"] = {}
-            self._accumulator["gen"] = {}
- 
+        for cat in ids:
+            self._accumulator[cat] = {}
+            for v in var:
+                self._accumulator[cat][v] = hda.hist.Hist(hist.axis.Regular(*var_bins[v][0], name = cat + "_" + v, label = v + " " + var_bins[v][1])) 
+
     def process(self, events):    
         id_dict = {}
-        id_dict["tight"] = {}
-        id_dict["medium"] = {}
-        id_dict["gen"] = {}
 
-        gpart = events.GenPart
-        #dxy = (events.GenPart.vertexY - events.GenVtx.y) * np.cos(events.GenPart.phi) - \
-        #      (events.GenPart.vertexX - events.GenVtx.x) * np.sin(events.GenPart.phi)
-        #lxy = np.sqrt( (events.GenPart.vertexX - events.GenVtx.x) ** 2 + (events.GenPart.vertexY - events.GenVtx.y) ** 2)
-        #events['GenPart'] = ak.with_field(events.GenPart, dxy, where="dxy")
-        #events['GenPart'] = ak.with_field(events.GenPart, lxy, where="lxy")
-        #print(gpart.fields)
-        #staus = gpart[(abs(gpart.pdgId) == 1000015) & (gpart.hasFlags("isLastCopy"))]
-        #print(staus.fields)
-        #staus_taus = staus.distinctChildren[(abs(staus.distinctChildren.pdgId) == 15) & (staus.distinctChildren.hasFlags("isLastCopy")) & (staus.distinctChildren.hasFlags("fromHardProcess"))]
-        #print(staus_taus.fields)
-        #staus_taus = ak.firsts(staus_taus[ak.argsort(staus_taus.pt, ascending=False)], axis = 2)
-        #gen_mu = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 13) & (staus_taus.distinctChildren.hasFlags("isLastCopy"))]  
-        gen_mu = events.GenPart[(abs(events.GenPart.pdgId) == 13) & (events.GenPart.hasFlags("isLastCopy"))]
-        ### Make sure that the reco muons can be traced back to a gen particle 
-        #dis_mu = events.DisMuon[(events.DisMuon.genPartIdx > 0)]
-        
-        ### Make sure the sample of reco muons we're looking at have a gen particle that is the grandchild of a stau
-        #reco_mu = dis_mu[(abs(events.GenPart[dis_mu.genPartIdx].distinctParent.distinctParent.pdgId) == 1000015)]
-        reco_mu = gen_mu.nearest(events.DisMuon)
-        print("Checking to see if nearest function works")
+        for cat in ids:
+            id_dict[cat] = {}
 
-        ### Separate the reco muons into different IDs
-        loosereco_mu  = reco_mu[reco_mu.looseId == 1]
-        mediumreco_mu = reco_mu[reco_mu.mediumId == 1]
-        tightreco_mu  = reco_mu[reco_mu.tightId == 1]
-        
-        ### Now choose the gen particles those reco muons trace back to
-        #rfg_mu       = events.GenPart[reco_mu.genPartIdx]
-        rfg_mu       = reco_mu.nearest(gen_mu)        
 
-        ### Choose the gen muons based on the reco muon ID
-        #looserfg_mu  = events.GenPart[loosereco_mu.genPartIdx] 
-        #mediumrfg_mu = events.GenPart[mediumreco_mu.genPartIdx] 
-        #tightrfg_mu  = events.GenPart[tightreco_mu.genPartIdx] 
-        
-        looserfg_mu  = loosereco_mu.nearest(gen_mu) 
-        mediumrfg_mu = mediumreco_mu.nearest(gen_mu) 
-        tightrfg_mu  = tightreco_mu.nearest(gen_mu) 
-        
-        ### Apply fiducial cuts
-        rfg_mu = rfg_mu[(rfg_mu.pt > GenPtMin) & (abs(rfg_mu.eta) < GenEtaMax)]
-        looserfg_mu = looserfg_mu[(looserfg_mu.pt > GenPtMin) & (abs(looserfg_mu.eta) < GenEtaMax)]
-        mediumrfg_mu = mediumrfg_mu[(mediumrfg_mu.pt > GenPtMin) & (abs(mediumrfg_mu.eta) < GenEtaMax)]
-        tightrfg_mu = tightrfg_mu[(tightrfg_mu.pt > GenPtMin) & (abs(tightrfg_mu.eta) < GenEtaMax)]
-        gen_mu = gen_mu[(gen_mu.pt > GenPtMin) & (abs(gen_mu.eta) < GenEtaMax)]
-        
-        
-        id_dict["gen"]["pt"]  = gen_mu.pt
-        id_dict["gen"]["eta"] = gen_mu.eta
-        #GenMu_dxy = gen_mu.dxy
-        #GenMu_lxy = gen_mu.lxy
-        
-        #RecoMuonsFromGen_pt  = rfg_mu.pt
-        #RecoMuonsFromGen_eta = rfg_mu.eta
-        #RecoMuonsFromGen_dxy = rfg_mu.dxy
-        #RecoMuonsFromGen_lxy = rfg_mu.lxy
-        
-        LooseRecoMuonsFromGen_pt   = looserfg_mu.pt
-        LooseRecoMuonsFromGen_eta  = looserfg_mu.eta
-        #LooseRecoMuonsFromGen_dxy  = looserfg_mu.dxy
-        #LooseRecoMuonsFromGen_lxy  = looserfg_mu.lxy
-        
-        id_dict["medium"]["pt"]  = mediumrfg_mu.pt
-        id_dict["medium"]["eta"]  = mediumrfg_mu.eta
-        #MediumRecoMuonsFromGen_dxy = mediumrfg_mu.dxy
-        #MediumRecoMuonsFromGen_lxy = mediumrfg_mu.lxy
-        
-        id_dict["tight"]["pt"]   = tightrfg_mu.pt
-        id_dict["tight"]["eta"]  = tightrfg_mu.eta
-        #TightRecoMuonsFromGen_dxy  = tightrfg_mu.dxy
-        #TightRecoMuonsFromGen_lxy  = tightrfg_mu.lxy
-        
+        events['Jet'] = events.Jet[(events.Jet.pt > 20) & (abs(events.Jet.eta) < 2.4)]
+        print(f"Added fiducial cuts to jets {events.Jet}")
+
+        charged_sel = events.Jet.constituents.pf.charge != 0            
+        dxy  = ak.flatten(ak.drop_none(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)
+
+        for v in var:
+            id_dict['Jets'][v] = hda.hist.Hist(hist.axis.Regular(*var_bins[v][0], name = "Jets_" + v, label = v + " " + var_bins[v][1])) 
+            if v == "dxy":
+                id_dict['Jets'][v].fill(dak.flatten(dxy, axis = None))
+            else:
+                id_dict['Jets'][v].fill(dak.flatten(events["Jet"][v], axis = None))
+        print(f"Added hists to id_dict for basic jet denominator")
+
+        # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
+        noId_jets = events.Jet[ delta_r_mask(events.Jet, events.Photon, 0.4)    ]
+        noId_jets = noId_jets[  delta_r_mask(noId_jets, events.Electron, 0.4)  ]
+        noId_jets = noId_jets[  delta_r_mask(noId_jets, events.Muon, 0.4)      ]
+        noId_jets = noId_jets[  delta_r_mask(noId_jets, events.DisMuon, 0.4)   ]
+        print(f"Added lepton veto without any cuts")
+
+        noId_charged_sel = noId_jets.constituents.pf.charge != 0
+        noId_jets_dxy = ak.flatten(ak.drop_none(noId_jets.constituents.pf[ak.argmax(noId_jets.constituents.pf[noId_charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)
+
+        for v in var:
+            id_dict['noId'][v] = hda.hist.Hist(hist.axis.Regular(*var_bins[v][0], name = "noId_" + v, label = v + " " + var_bins[v][1]))
+            if v == "dxy":
+                id_dict['noId'][v].fill(dak.flatten(noId_jets_dxy, axis = None))
+            else: 
+                id_dict['noId'][v].fill(dak.flatten(noId_jets[v], axis = None))
+        print(f"Filled hists to id_dict with no cut jets")
+
+        events['Photon']   = events.Photon[   (events.Photon.pt   > 20) & (abs(events.Photon.eta)   < 2.4) & (events.Photon.electronVeto)  ]
+        events['Electron'] = events.Electron[ (events.Electron.pt > 20) & (abs(events.Electron.eta) < 2.4) & (events.Electron.convVeto)      ]
+        events['Muon']     = events.Muon[     (events.Muon.pt     > 20) & (abs(events.Muon.eta)     < 2.4) & (events.Muon.looseId    == 1)  ]
+        events['DisMuon']  = events.DisMuon[  (events.DisMuon.pt  > 20) & (abs(events.DisMuon.eta)  < 2.4) & (events.DisMuon.looseId == 1)  ]
+        print(f"Added lepton cuts")
+
+        # Perform the overlap removal with respect to muons, electrons and photons, dR=0.4
+        Id_jets = events.Jet[ delta_r_mask(events.Jet, events.Photon,   0.4)    ]
+        Id_jets = Id_jets[    delta_r_mask(Id_jets, events.Electron, 0.4)  ]
+        Id_jets = Id_jets[    delta_r_mask(Id_jets, events.Muon,     0.4)      ]
+        Id_jets = Id_jets[    delta_r_mask(Id_jets, events.DisMuon,  0.4)   ]
+        print(f"Added lepton veto with cuts")
+
+        Id_charged_sel = Id_jets.constituents.pf.charge != 0
+        Id_jets_dxy = ak.flatten(ak.drop_none(Id_jets.constituents.pf[ak.argmax(Id_jets.constituents.pf[Id_charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)
+
+        for v in var:
+            id_dict['Id'][v] = hda.hist.Hist(hist.axis.Regular(*var_bins[v][0], name = "Id_" + v, label = v + " " + var_bins[v][1]))
+            if v == "dxy":
+                id_dict['Id'][v].fill(dak.flatten(Id_jets_dxy, axis = None))
+            else:
+                id_dict['Id'][v].fill(dak.flatten(Id_jets[v], axis = None))
+        print(f"Filles hists to id dict with  cut jets")
         return id_dict 
 
-    def postprocess(self):
-        pass
+    def postprocess(self, accumulator):
+        return accumulator
 
-
-background_samples = {} 
-background_samples["QCD"] = []
-background_samples["TT"] = []
-#background_samples["W"] = []
-background_samples["DY"] = []
-
-for samples in SAMP:
-    if "QCD" in samples[0]:
-        background_samples["QCD"].extend( glob("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root"))
-    if "TT" in samples[0]:
-        background_samples["TT"].extend(  glob("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root"))
-#    if "W" in samples[0]:
-#        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if "DY" in samples[0]:
-        background_samples["DY"].extend(  glob("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root"))
-#    if "Stau" in samples[0]:
-#        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
-
-for samples in SAMP: 
-    background_samples["QCD"]
-
-background_histograms = {}
-for background, samples in background_samples.items():
-    # Initialize a dictionary to hold ROOT histograms for the current background
-    background_histograms[background] = {}
+if __name__ == "__main__": 
+    cluster = LPCCondorCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
+    cluster.adapt(minimum=1, maximum=10000)
+    client = Client(cluster)
     
-    background_histograms[background]["medium"] = {}
-    background_histograms[background]["tight"] = {}
-    background_histograms[background]["gen"] = {}
+    background_samples = {} 
+    background_samples["QCD"] = []
+    background_samples["TT"] = []
+    #background_samples["W"] = []
+    background_samples["DY"] = []
+    
+    background_histograms = {}
+ 
+    for background, samples in background_samples.items():
+        # Initialize a dictionary to hold ROOT histograms for the current background
+        print(f"Starting {background}")
+        background_histograms[background] = {}
+        
+        for i in ids: 
+            background_histograms[background][i] = {}
+            for v in var:
+                background_histograms[background][i][v] = hda.hist.Hist(hist.axis.Regular(*var_bins[v][0], name = i + "_" + v, label = v + " " + var_bins[v][1])).compute()
 
-    background_histograms[background]["medium"]["pt"]  = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="medium_pt", label = 'pt [GeV]'))
-    background_histograms[background]["medium"]["eta"] = hda.hist.Hist(hist.axis.Regular(16, -3.2, 3.2, name="medium_eta", label = r'$\eta$'))
+    with open("preprocessed_fileset.pkl", "rb") as  f:
+        dataset_runnable = pickle.load(f)    
 
-    background_histograms[background]["tight"]["pt"]   = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="tight_pt", label = 'pt [GeV]'))
-    background_histograms[background]["tight"]["eta"]  = hda.hist.Hist(hist.axis.Regular(16, -3.2, 3.2, name="tight_eta", label = r'$\eta$'))
+    for samp in dataset_runnable.keys(): 
+        if "Stau" in samp: continue
+        samp_runnable = {}
+        samp_runnable[samp] = dataset_runnable[samp]
+        print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
+        to_compute = apply_to_fileset(
+                 IDProcessor(),
+                 max_chunks(samp_runnable, 100000),
+                 schemaclass=PFNanoAODSchema,
+                 uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024),
+                                 }
+        )
+        print(to_compute)
+        output = dask.compute(to_compute)
+    
+        for i in ids:
+            for v in var:
+                if "QCD" in samp: 
+                    background_histograms["QCD"][i][v] += output[0][samp][i][v]            
+                if "TT"  in samp:    
+                    background_histograms["TT" ][i][v] += output[0][samp][i][v]
+                if "DY"  in samp:
+                    background_histograms["DY" ][i][v] += output[0][samp][i][v]
+        print(f"Successfully finished {samp}")
+    
+    for background in background_histograms.keys():
+        print(f"Starting on {background}")
+        for variable in var:
+            print(f"Starting on {variable}")
+            fig, ax = plt.subplots(2, 1, figsize=(10, 15))
+            for cut in ids:
+                if cut == "Jets": continue
+                print(f"Starting on {cut} ID")
+                background_histograms[background][cut][variable].plot_ratio(
+                                background_histograms[background]["Jets"][variable],
+                                rp_num_label        = cut + " " + variable,
+                                rp_denom_label      = "Jets " + variable,
+                                rp_uncert_draw_type = "line",
+                                rp_uncertainty_type = "efficiency",
+                                ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
+                                )
+                print(f"Finished plotting {cut}")
+            ax[0].remove()
+            cut_counter = 0
+            for artist in ax[1].containers:
+                artist[0].set_color(colors[background])
+                artist[0].set_label(ids[cut_counter])
+                artist[0].set_marker(markers[ids[cut_counter]])
+                artist[0].set_markeredgecolor("black")
+                cut_counter += 1
+            ax[1].set_title(background)
+            ax[1].legend()
+            fig.savefig(f"LepVeto_{background}_{variable}.pdf")
+            print(f"LepVeto_{background}_{variable}.pdf saved!")
 
-    background_histograms[background]["gen"]["pt"]     = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="gen_pt", label = 'pt [GeV]'))
-    background_histograms[background]["gen"]["eta"]    = hda.hist.Hist(hist.axis.Regular(16, -3.2, 3.2, name="gen_eta", label = r'$\eta$'))
+    
+    elapsed = time.time() - tic
+    print(f"Finished in {elapsed:.1f}s")
 
-    print(f"For {background} here are samples {samples}") 
-    for sample_file in samples:
-        try:
-            # Step 1: Load events for the sample using dask-awkward
-            events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= NanoAODSchema).events()
-            #events = uproot.dask(sample_file)
-            print(f'Starting {sample_file} histogram')         
-
-            processor_instance = IDProcessor()
-            output = processor_instance.process(events)
-            print(f'{sample_file} finished successfully')
-
-            background_histograms[background]["medium"]["pt"].fill(dak.flatten(output["medium"]["pt"], axis=None)) 
-            background_histograms[background]["medium"]["eta"].fill(dak.flatten(output["medium"]["eta"], axis=None))
-                                                              
-            background_histograms[background]["tight"]["pt"].fill(dak.flatten(output["tight"]["pt"], axis=None))  
-            background_histograms[background]["tight"]["eta"].fill(dak.flatten(output["tight"]["eta"], axis=None)) 
-
-            background_histograms[background]["gen"]["pt"].fill(dak.flatten(output["gen"]["pt"], axis=None))  
-            background_histograms[background]["gen"]["eta"].fill(dak.flatten(output["gen"]["eta"], axis=None)) 
-
-        except Exception as e:
-            print(f"Error processing {sample_file}: {e}")
-
-for background in background_histograms.keys():
-    print(f"Starting on {background}")
-    for variable in var:
-        print(f"Starting on {variable}")
-        fig, ax = plt.subplots(2, 1, figsize=(10, 15))
-        for cut in ids:
-            print(f"Starting on {cut} ID")
-            background_histograms[background][cut][variable].compute().show()
-            background_histograms[background]["gen"][variable].compute().show()
-            background_histograms[background][cut][variable].compute().plot_ratio(
-                            background_histograms[background]["gen"][variable].compute(),
-                            rp_num_label        = cut + " " + variable,
-                            rp_denom_label      = "gen " + variable,
-                            rp_uncert_draw_type = "line",
-                            rp_uncertainty_type = "efficiency",
-                            ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
-                            )
-            print(f"Finished plotting {cut}")
-        ax[0].remove()
-        cut_counter = 0
-        for artist in ax[1].containers:
-            artist[0].set_color(colors[background])
-            artist[0].set_label(ids[cut_counter])
-            artist[0].set_marker(markers[ids[cut_counter]])
-            artist[0].set_markeredgecolor("black")
-            cut_counter += 1
-        ax[1].set_title(background)
-        ax[1].legend()
-        fig.savefig(f"MuonID_{background}_{variable}.pdf")
-        print(f"MuonID_{background}_{variable}.pdf saved!")
+    client.shutdown()
+    cluster.close()
+    

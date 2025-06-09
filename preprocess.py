@@ -35,11 +35,13 @@ import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
 
-from fileset import *
-from skimmed_fileset import *
-from lower_lifetime_fileset import *
-from W_fileset import *
-from data_fileset import *
+from fileset import fileset
+from skimmed_fileset import skimmed_fileset
+from lower_lifetime_fileset import lower_lifetime_fileset
+from DY_fileset import DY_fileset
+from W_fileset import W_fileset
+from TT_fileset import TT_fileset
+from data_fileset import data_fileset
 
 
 if __name__ == "__main__":
@@ -54,10 +56,37 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=1000)
     client = Client(cluster)
 
-    #dataset_runnable, dataset_updated = preprocess(
-    #    fileset,
+#    dataset_runnable, dataset_updated = preprocess(
+#        fileset,
+#        align_clusters=False,
+#        step_size=10_000,
+#        files_per_batch=100,
+#        skip_bad_files=True,
+#        save_form=False,
+#        file_exceptions=(OSError, KeyInFileError),
+#        allow_empty_datasets=False,
+#    )
+#
+#    with open("preprocessed_fileset.pkl", "wb") as f:
+#        pickle.dump(dataset_runnable, f)
+#
+#    TT_dataset_runnable, TT_dataset_updated = preprocess(
+#        TT_fileset,
+#        align_clusters=False,
+#        step_size=20_000,
+#        files_per_batch=1000,
+#        skip_bad_files=True,
+#        save_form=False,
+#        file_exceptions=(OSError, KeyInFileError),
+#        allow_empty_datasets=False,
+#    )
+#
+#    with open("TT_preprocessed_fileset.pkl", "wb") as f:
+#        pickle.dump(TT_dataset_runnable, f)
+    #DY_dataset_runnable, DY_dataset_updated = preprocess(
+    #    DY_fileset,
     #    align_clusters=False,
-    #    step_size=100_000,
+    #    step_size=20_000,
     #    files_per_batch=1000,
     #    skip_bad_files=True,
     #    save_form=False,
@@ -65,8 +94,8 @@ if __name__ == "__main__":
     #    allow_empty_datasets=False,
     #)
 
-    #with open("preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(dataset_runnable, f)
+    #with open("DY_preprocessed_fileset.pkl", "wb") as f:
+    #    pickle.dump(DY_dataset_runnable, f)
 
     #skimmed_dataset_runnable, skimmed_dataset_updated = preprocess(
     #    skimmed_fileset,
@@ -96,33 +125,33 @@ if __name__ == "__main__":
     #with open("lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
     #    pickle.dump(lower_lifetime_dataset_runnable, f)
 
-    #W_dataset_runnable, W_dataset_updated = preprocess(
-    #    W_fileset,
-    #    align_clusters=False,
-    #    step_size=10_000,
-    #    files_per_batch=100,
-    #    skip_bad_files=True,
-    #    save_form=False,
-    #    file_exceptions=(OSError, KeyInFileError),
-    #    allow_empty_datasets=False,
-    #)
-
-    #with open("W_preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(W_dataset_runnable, f)
-
-    data_dataset_runnable, data_dataset_updated = preprocess(
-        data_fileset,
+    W_dataset_runnable, W_dataset_updated = preprocess(
+        W_fileset,
         align_clusters=False,
-        step_size=10_000,
+        step_size=20_000,
         files_per_batch=100,
         skip_bad_files=True,
         save_form=False,
         file_exceptions=(OSError, KeyInFileError),
         allow_empty_datasets=False,
     )
-    
-    with open("data_preprocessed_fileset.pkl", "wb") as f:
-        pickle.dump(data_dataset_runnable, f)
+
+    with open("W_preprocessed_fileset.pkl", "wb") as f:
+        pickle.dump(W_dataset_runnable, f)
+
+    #data_dataset_runnable, data_dataset_updated = preprocess(
+    #    data_fileset,
+    #    align_clusters=False,
+    #    step_size=20_000,
+    #    files_per_batch=100,
+    #    skip_bad_files=True,
+    #    save_form=False,
+    #    file_exceptions=(OSError, KeyInFileError),
+    #    allow_empty_datasets=False,
+    #)
+    # 
+    #with open("data_preprocessed_fileset.pkl", "wb") as f:
+    #    pickle.dump(data_dataset_runnable, f)
 
     elapsed = time.time() - tic 
     print(f"Preproccessing datasets finished in {elapsed:.1f}s") 

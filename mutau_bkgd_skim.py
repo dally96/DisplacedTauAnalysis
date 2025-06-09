@@ -224,8 +224,12 @@ if __name__ == "__main__":
     client = Client(cluster)
 
     with open("preprocessed_fileset.pkl", "rb") as  f:
-        dataset_runnable = pickle.load(f)    
-
+        Stau_QCD_DY_dataset_runnable = pickle.load(f)    
+    with open("TT_preprocessed_fileset.pkl", "rb") as  f:
+        TT_dataset_runnable = pickle.load(f)    
+    with open("W_preprocessed_fileset.pkl", "rb") as  f:
+        W_dataset_runnable = pickle.load(f)    
+    dataset_runnable = TT_dataset_runnable | Stau_QCD_DY_dataset_runnable
 #    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
 #        lower_lifetime_dataset_runnable = pickle.load(f)    
 #    with open("W_preprocessed_fileset.pkl", "rb") as  f:
@@ -242,11 +246,11 @@ if __name__ == "__main__":
 #                 schemaclass=PFNanoAODSchema
 #    )
 
-    for samp in dataset_runnable.keys(): 
+    for samp in W_dataset_runnable.keys(): 
         #if ("2022" not in samp) and ("100_" not in samp) and ("200_" not in samp) and ("500_" not in samp):
-        if  ("4Q" in samp) and ("TT" in samp):
+        if  ("W" in samp):
             samp_runnable = {}
-            samp_runnable[samp] = dataset_runnable[samp]
+            samp_runnable[samp] = W_dataset_runnable[samp]
             print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
