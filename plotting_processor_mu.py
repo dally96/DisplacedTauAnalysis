@@ -21,30 +21,36 @@ import os
 
 start_time = time.time()
 
+from argparse import ArgumentParser
+parser = ArgumentParser()
+parser.add_argument("-d", "--data", dest = "data", help = "Are we plotting data", default = False)
+parser.add_argument("-f", "--folder", dest = "folder", help = "Where to put plot. Directory located inside of ../www/", default = "test_dir")   
+
+is_data = parser.parse_args()
 
 SAMP = [
-      ['Stau_100_1000mm', 'SIG'],
-      ['Stau_100_100mm', 'SIG'],
-      ['Stau_100_10mm', 'SIG'],
-      ['Stau_100_1mm', 'SIG'],
+      #['Stau_100_1000mm', 'SIG'],
+      #['Stau_100_100mm', 'SIG'],
+      #['Stau_100_10mm', 'SIG'],
+      #['Stau_100_1mm', 'SIG'],
       #['Stau_100_0p1mm', 'SIG'],
       #['Stau_100_0p01mm', 'SIG'],
-      ['Stau_200_1000mm', 'SIG'],
-      ['Stau_200_100mm', 'SIG'],
-      ['Stau_200_10mm', 'SIG'],
-      ['Stau_200_1mm', 'SIG'],
+      #['Stau_200_1000mm', 'SIG'],
+      #['Stau_200_100mm', 'SIG'],
+      #['Stau_200_10mm', 'SIG'],
+      #['Stau_200_1mm', 'SIG'],
       #['Stau_200_0p1mm', 'SIG'],
       #['Stau_200_0p01mm', 'SIG'],
-      ['Stau_300_1000mm', 'SIG'],
-      ['Stau_300_100mm', 'SIG'],
-      ['Stau_300_10mm', 'SIG'],
-      ['Stau_300_1mm', 'SIG'],
+      #['Stau_300_1000mm', 'SIG'],
+      #['Stau_300_100mm', 'SIG'],
+      #['Stau_300_10mm', 'SIG'],
+      #['Stau_300_1mm', 'SIG'],
       #['Stau_300_0p1mm', 'SIG'],
       #['Stau_300_0p01mm', 'SIG'],
-      ['Stau_500_1000mm', 'SIG'],
-      ['Stau_500_100mm', 'SIG'],
-      ['Stau_500_10mm', 'SIG'],
-      ['Stau_500_1mm', 'SIG'],
+      #['Stau_500_1000mm', 'SIG'],
+      #['Stau_500_100mm', 'SIG'],
+      #['Stau_500_10mm', 'SIG'],
+      #['Stau_500_1mm', 'SIG'],
       #['Stau_500_0p1mm', 'SIG'],
       #['Stau_500_0p01mm', 'SIG'],
       ['QCD50_80', 'QCD'],
@@ -61,10 +67,13 @@ SAMP = [
       ['QCD2400_3200','QCD'],
       ['QCD3200','QCD'],
       ["DYJetsToLL", 'EWK'],  
-      #["WtoLNu2Jets", 'EWK'],
+      ##["WtoLNu2Jets", 'EWK'],
       ["TTtoLNu2Q",  'TT'],
       ["TTto4Q", 'TT'],
       ["TTto2L2Nu", 'TT'],
+      ["JetMET_Run2022E", 'JetMET'],
+      ["JetMET_Run2022F", 'JetMET'],
+      ["JetMET_Run2022G", 'JetMET'],
       ]
 
 lumi = 38.01 ##fb-1
@@ -160,18 +169,31 @@ background_samples["QCD"] = []
 background_samples["TT"] = []
 background_samples["W"] = []
 background_samples["DY"] = []
+background_samples["JetMET"] = []
+
+stau_dict = {}
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append( ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(      ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if "Stau" in samples[0]:
-        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_jet_dxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+        background_samples["DY"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if is_data.data:
+        if "JetMET" in samples[0]: 
+            background_samples["JetMET"].append( ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", 1                                                         ))
+    else:
+        if "Stau" in samples[0]:
+            lifetime = samples[0].split("_")[2]
+            mass =     samples[0].split("_")[1]
+            if lifetime in stau_dict.keys(): 
+                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+            else:
+                stau_dict[lifetime] = {}
+                stau_dict[lifetime][mass] = [        ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -201,7 +223,31 @@ for background, samples in background_samples.items():
 
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
-            
+
+# Process each stau sample
+if not is_data.data:
+    stau_histograms = {}
+               
+    for lifetime in stau_dict.keys():
+        stau_histograms[lifetime] = {}
+        for mass in stau_dict[lifetime].keys():
+            stau_histograms[lifetime][mass] = {}
+    
+            for var in variables_with_bins:
+                stau_histograms[lifetime][mass][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
+            for sample_file, sample_weight in stau_dict[lifetime][mass]:
+                try:
+                    events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+                    print(f'Starting {sample_file} histogram')
+                    
+                    processor_instance = ExampleProcessor(variables_with_bins)
+                    output = processor_instance.process(events, sample_weight)
+                    print(f'{sample_file} finished successfully')
+    
+                    for var, dask_histo in output["histograms"].items():
+                        stau_histograms[lifetime][mass][var] = stau_histograms[lifetime][mass][var] + dask_histo.compute()
+                except Exception as e:
+                    print(f"Error processing {sample_file}: {e}")
 
 for var in variables_with_bins:
     QCD_event_num = background_histograms["QCD"][var].sum()
@@ -222,171 +268,39 @@ for var in variables_with_bins:
         QCD_frac = QCD_event_num/total_event_number
         TT_frac  = TT_event_num/total_event_number
         DY_frac  = DY_event_num/total_event_number
+    for lifetime in stau_dict.keys():
+        s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
+                                  #"2L2Nu" : background_histograms["2L2Nu"][var],
+                                  #"LNu2Q" : background_histograms["LNu2Q"][var],
+                                  #"4Q" : background_histograms["4Q"][var],
+                                  f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
+                                  #"W": background_histograms["W"][var],
+                                  "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
+                                    })
+        s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
+        if is_data.data:
+            background_histograms["JetMET"][var].plot(color = 'black', label = 'data')
 
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                              #"2L2Nu" : background_histograms["2L2Nu"][var],
-                              #"LNu2Q" : background_histograms["LNu2Q"][var],
-                              #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                              #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                })
-    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-    stau_counter = 0
-    for sample in background_samples:
-        if "Stau" in sample and "1000mm" in sample: 
-            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
-            stau_counter += 1
+        else:
+            stau_counter = 0
+            for mass in stau_dict[lifetime].keys():
+                stau_histograms[lifetime][mass][var].plot(color = Stau_colors[stau_counter], label = r"$\tilde{\tau}$ " + mass + "_" + lifetime)
+                stau_counter += 1
 
-    box = plt.subplot().get_position()
-    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
+        box = plt.subplot().get_position()
+        plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
 
-    plt.xlabel(var + ' ' + variables_with_bins[var][1])
-    plt.ylabel("A.U.")
-    plt.yscale('log')
-    plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www//mu_stacked_histogram_{var}_1000mm.png")
+        plt.xlabel(var + ' ' + variables_with_bins[var][1])
+        plt.ylabel("A.U.")
+        plt.yscale('log')
+        plt.ylim(top=get_stack_maximum(s)*10)
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+        if is_data.folder not in os.listdir("../www/"):
+            os.mkdir(f"../www/{is_data.folder}")
+        plt.savefig(f"../www/{is_data.folder}/data_histogram_{var}_{lifetime}.png")
 
-    plt.cla()
-    plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                              #"2L2Nu" : background_histograms["2L2Nu"][var],
-                              #"LNu2Q" : background_histograms["LNu2Q"][var],
-                              #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                              #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                })
-    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-    stau_counter = 0
-    for sample in background_samples:
-        if "Stau" in sample and "100mm" in sample: 
-            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
-            stau_counter += 1
-
-    box = plt.subplot().get_position()
-    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
-
-    plt.xlabel(var + ' ' + variables_with_bins[var][1])
-    plt.ylabel("A.U.")
-    plt.yscale('log')
-    plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_100mm.png")
-
-    plt.cla()
-    plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                              #"2L2Nu" : background_histograms["2L2Nu"][var],
-                              #"LNu2Q" : background_histograms["LNu2Q"][var],
-                              #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                              #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                })
-    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-    stau_counter = 0
-    for sample in background_samples:
-        if "Stau" in sample and "10mm" in sample: 
-            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
-            stau_counter += 1
-
-    box = plt.subplot().get_position()
-    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
-
-    plt.xlabel(var + ' ' + variables_with_bins[var][1])
-    plt.ylabel("A.U.")
-    plt.yscale('log')
-    plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_10mm.png")
-
-    plt.cla()
-    plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                              #"2L2Nu" : background_histograms["2L2Nu"][var],
-                              #"LNu2Q" : background_histograms["LNu2Q"][var],
-                              #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                              #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                })
-    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-    stau_counter = 0
-    for sample in background_samples:
-        if "Stau" in sample and "_1mm" in sample: 
-            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
-            stau_counter += 1
-
-    box = plt.subplot().get_position()
-    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
-
-    plt.xlabel(var + ' ' + variables_with_bins[var][1])
-    plt.ylabel("A.U.")
-    plt.yscale('log')
-    plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_1mm.png")
-
-    plt.cla()
-    plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                              #"2L2Nu" : background_histograms["2L2Nu"][var],
-                              #"LNu2Q" : background_histograms["LNu2Q"][var],
-                              #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                              #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                })
-    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-    stau_counter = 0
-    for sample in background_samples:
-        if "Stau" in sample and "0p1mm" in sample: 
-            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
-            stau_counter += 1
-
-    box = plt.subplot().get_position()
-    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
-
-    plt.xlabel(var + ' ' + variables_with_bins[var][1])
-    plt.ylabel("A.U.")
-    plt.yscale('log')
-    plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_0p1mm.png")
-
-    plt.cla()
-    plt.clf()
-    s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                              #"2L2Nu" : background_histograms["2L2Nu"][var],
-                              #"LNu2Q" : background_histograms["LNu2Q"][var],
-                              #"4Q" : background_histograms["4Q"][var],
-                              f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                              #"W": background_histograms["W"][var],
-                              "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                })
-    s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-    stau_counter = 0
-    for sample in background_samples:
-        if "Stau" in sample and "0p01mm" in sample: 
-            background_histograms[sample][var].plot(color = Stau_colors[stau_counter], label = sample)
-            stau_counter += 1
-
-    box = plt.subplot().get_position()
-    plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
-
-    plt.xlabel(var + ' ' + variables_with_bins[var][1])
-    plt.ylabel("A.U.")
-    plt.yscale('log')
-    plt.ylim(top=get_stack_maximum(s)*10)
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
-    plt.savefig(f"../www/SR_jetDxy/mu_stacked_histogram_{var}_0p01mm.png")
-
-
-#with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:
-#    pickle.dump(background_histograms["QCD"], f)
-#print(f"pkl file written")
+        plt.cla()
+        plt.clf()
 
 
 
