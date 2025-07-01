@@ -42,6 +42,8 @@ from DY_fileset import DY_fileset
 from W_fileset import W_fileset
 from TT_fileset import TT_fileset
 from data_fileset import data_fileset
+from merged_fileset import merged_fileset
+from jet_dxy_fileset import jet_dxy_fileset
 
 
 if __name__ == "__main__":
@@ -56,37 +58,38 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=1000)
     client = Client(cluster)
 
-#    dataset_runnable, dataset_updated = preprocess(
-#        fileset,
-#        align_clusters=False,
-#        step_size=10_000,
-#        files_per_batch=100,
-#        skip_bad_files=True,
-#        save_form=False,
-#        file_exceptions=(OSError, KeyInFileError),
-#        allow_empty_datasets=False,
-#    )
+    #dataset_runnable, dataset_updated = preprocess(
+    #    fileset,
+    #    align_clusters=False,
+    #    step_size=10_000,
+    #    files_per_batch=100,
+    #    skip_bad_files=True,
+    #    save_form=False,
+    #    file_exceptions=(OSError, KeyInFileError),
+    #    allow_empty_datasets=False,
+    #)
+
+    #with open("QCD_test_preprocessed_fileset.pkl", "wb") as f:
+    #    pickle.dump(dataset_runnable, f)
 #
-#    with open("preprocessed_fileset.pkl", "wb") as f:
-#        pickle.dump(dataset_runnable, f)
-#
-#    TT_dataset_runnable, TT_dataset_updated = preprocess(
-#        TT_fileset,
-#        align_clusters=False,
-#        step_size=20_000,
-#        files_per_batch=1000,
-#        skip_bad_files=True,
-#        save_form=False,
-#        file_exceptions=(OSError, KeyInFileError),
-#        allow_empty_datasets=False,
-#    )
-#
-#    with open("TT_preprocessed_fileset.pkl", "wb") as f:
-#        pickle.dump(TT_dataset_runnable, f)
+    #TT_dataset_runnable, TT_dataset_updated = preprocess(
+    #    TT_fileset,
+    #    align_clusters=False,
+    #    step_size=20_000,
+    #    files_per_batch=1000,
+    #    skip_bad_files=True,
+    #    save_form=False,
+    #    file_exceptions=(OSError, KeyInFileError),
+    #    allow_empty_datasets=False,
+    #)
+
+    #with open("TT_preprocessed_fileset.pkl", "wb") as f:
+    #    pickle.dump(TT_dataset_runnable, f)
+
     #DY_dataset_runnable, DY_dataset_updated = preprocess(
     #    DY_fileset,
     #    align_clusters=False,
-    #    step_size=20_000,
+    #    step_size=10_000,
     #    files_per_batch=1000,
     #    skip_bad_files=True,
     #    save_form=False,
@@ -125,33 +128,47 @@ if __name__ == "__main__":
     #with open("lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
     #    pickle.dump(lower_lifetime_dataset_runnable, f)
 
-    W_dataset_runnable, W_dataset_updated = preprocess(
-        W_fileset,
+#    W_dataset_runnable, W_dataset_updated = preprocess(
+#        W_fileset,
+#        align_clusters=False,
+#        step_size=20_000,
+#        files_per_batch=100,
+#        skip_bad_files=True,
+#        save_form=False,
+#        file_exceptions=(OSError, KeyInFileError),
+#        allow_empty_datasets=False,
+#    )
+#
+#    with open("W_preprocessed_fileset.pkl", "wb") as f:
+#        pickle.dump(W_dataset_runnable, f)
+#
+#    data_dataset_runnable, data_dataset_updated = preprocess(
+#        data_fileset,
+#        align_clusters=False,
+#        step_size=20_000,
+#        files_per_batch=100,
+#        skip_bad_files=True,
+#        save_form=False,
+#        file_exceptions=(OSError, KeyInFileError),
+#        allow_empty_datasets=False,
+#    )
+#     
+#    with open("data_preprocessed_fileset.pkl", "wb") as f:
+#        pickle.dump(data_dataset_runnable, f)
+
+    merged_dataset_runnable, merged_dataset_updated = preprocess(
+        merged_fileset,
         align_clusters=False,
-        step_size=20_000,
+        step_size=10_000,
         files_per_batch=100,
         skip_bad_files=True,
         save_form=False,
         file_exceptions=(OSError, KeyInFileError),
         allow_empty_datasets=False,
     )
-
-    with open("W_preprocessed_fileset.pkl", "wb") as f:
-        pickle.dump(W_dataset_runnable, f)
-
-    #data_dataset_runnable, data_dataset_updated = preprocess(
-    #    data_fileset,
-    #    align_clusters=False,
-    #    step_size=20_000,
-    #    files_per_batch=100,
-    #    skip_bad_files=True,
-    #    save_form=False,
-    #    file_exceptions=(OSError, KeyInFileError),
-    #    allow_empty_datasets=False,
-    #)
-    # 
-    #with open("data_preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(data_dataset_runnable, f)
+     
+    with open("merged_preprocessed_fileset.pkl", "wb") as f:
+        pickle.dump(merged_dataset_runnable, f)
 
     elapsed = time.time() - tic 
     print(f"Preproccessing datasets finished in {elapsed:.1f}s") 

@@ -66,9 +66,6 @@ class MyProcessor(processor.ProcessorABC):
 
         logger.info("Starting process")
 
-        charged_sel = events.Jet.constituents.pf.charge != 0            
-
-        events["Jet_dxy"] = ak.flatten(ak.drop_none(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0), axis=-1)
 
         # Define the "good muon" condition for each muon per event
         good_muon_mask = (
@@ -97,7 +94,8 @@ class MyProcessor(processor.ProcessorABC):
 
         good_jet_mask = (
             (events.Jet.pt > 20)
-            & (abs(events.Jet.eta) < 2.4) 
+            & (abs(events.Jet.eta) < 2.4)
+            & ~(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1)) 
         )
         logger.info("Defined good jets")
         
@@ -146,6 +144,13 @@ class MyProcessor(processor.ProcessorABC):
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
 
+        n_jets = ak.num(events.Jet.pt)
+
+        charged_sel = events.Jet.constituents.pf.charge != 0
+        dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
+
+        events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
+
         out_dict = {}
 
         muon_vars  = events.DisMuon.fields 
@@ -187,7 +192,6 @@ class MyProcessor(processor.ProcessorABC):
         out_dict["event"]           = dak.drop_none(events.event)
         out_dict["run"]             = dak.drop_none(events.run)
         out_dict["luminosityBlock"] = dak.drop_none(events.luminosityBlock)
-        out_dict["Jet_dxy"]         = dak.drop_none(events["Jet_dxy"])
         out_dict["nDisMuon"]        = dak.num(dak.drop_none(events.DisMuon))
         out_dict["nTau"]            = dak.num(dak.drop_none(events.Tau))
         out_dict["nJet"]            = dak.num(dak.drop_none(events.Jet))
@@ -202,7 +206,7 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_pileup_genvtx/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/jet_dxy_test/"+events.metadata['dataset'], compute=False, tree_name='Events')
         return out_file
 
     def postprocess(self, accumulator):
@@ -220,16 +224,19 @@ if __name__ == "__main__":
     tic = time.time()
     cluster = LPCCondorCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
-    cluster.adapt(minimum=1, maximum=10000)
+    cluster.adapt(minimum=1, maximum=5000)
     client = Client(cluster)
 
     with open("preprocessed_fileset.pkl", "rb") as  f:
         Stau_QCD_DY_dataset_runnable = pickle.load(f)    
+    del Stau_QCD_DY_dataset_runnable["TTtoLNu2Q"]
     with open("TT_preprocessed_fileset.pkl", "rb") as  f:
         TT_dataset_runnable = pickle.load(f)    
+    with open("data_preprocessed_fileset.pkl", "rb") as  f:
+        data_dataset_runnable = pickle.load(f)    
     with open("W_preprocessed_fileset.pkl", "rb") as  f:
         W_dataset_runnable = pickle.load(f)    
-    dataset_runnable = TT_dataset_runnable | Stau_QCD_DY_dataset_runnable
+    dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable  
 #    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
 #        lower_lifetime_dataset_runnable = pickle.load(f)    
 #    with open("W_preprocessed_fileset.pkl", "rb") as  f:
@@ -246,11 +253,11 @@ if __name__ == "__main__":
 #                 schemaclass=PFNanoAODSchema
 #    )
 
-    for samp in W_dataset_runnable.keys(): 
-        #if ("2022" not in samp) and ("100_" not in samp) and ("200_" not in samp) and ("500_" not in samp):
-        if  ("W" in samp):
+    for samp in dataset_runnable.keys(): 
+        if  samp not in os.listdir("/eos/uscms/store/user/dally/jet_dxy_test/"):
+            if "Stau" in samp or "MET" in samp or "TT" in samp or "DY" in samp: continue
             samp_runnable = {}
-            samp_runnable[samp] = W_dataset_runnable[samp]
+            samp_runnable[samp] = dataset_runnable[samp]
             print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
@@ -264,9 +271,10 @@ if __name__ == "__main__":
             #outfile = uproot.dask_write(to_compute[0][samp], "root://cmseos.fnal.gov//store/user/dally/first_skim_muon_root_test/"+samp, compute=False, tree_name='Events')
             dask.compute(to_compute)
     
-    client.shutdown()
-    cluster.close()
+            elapsed = time.time() - tic
+            print(f"Finished in {elapsed:.1f}s")
+
+            client.shutdown()
+            cluster.close()
     
-    elapsed = time.time() - tic
-    print(f"Finished in {elapsed:.1f}s")
     

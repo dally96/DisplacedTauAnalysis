@@ -51,11 +51,11 @@ SAMP = [
       #['QCD1800_2400','QCD'],
       #['QCD2400_3200','QCD'],
       #['QCD3200','QCD'],
-      #["DYJetsToLL", 'EWK'],  
+      ["DYJetsToLL", 'EWK'],  
       #["WtoLNu2Jets", 'EWK'],
-      ["TTtoLNu2Q",  'TT'],
-      ["TTto4Q", 'TT'],
-      ["TTto2L2Nu", 'TT'],
+      #["TTtoLNu2Q",  'TT'],
+      #["TTto4Q", 'TT'],
+      #["TTto2L2Nu", 'TT'],
       ]
 
 class MyProcessor(processor.ProcessorABC):
@@ -63,6 +63,9 @@ class MyProcessor(processor.ProcessorABC):
         pass
 
     def process(self, events, weights):
+        events["Tau"] = events.Tau[(events.Tau.pt > 20) & (abs(events.Tau.eta) < 2.4)]
+        print(events.Tau.decayMode.compute())
+    
         taus = ak.zip(
             {
                 "pt": events.Tau.pt,
@@ -87,7 +90,7 @@ class MyProcessor(processor.ProcessorABC):
         h_mass.fill(mass=ditau.mass, weight = weights)
 
         return {
-            "TT": {
+            "DY": {
                 "entries": ak.num(events, axis=0),
                 "mass": h_mass,
             }
@@ -98,11 +101,11 @@ class MyProcessor(processor.ProcessorABC):
 
 
 background_samples = {} 
-background_samples["TT"] = []
+background_samples["DY"] = []
 
 for samples in SAMP:
-    if "TT" in samples[0]:
-        background_samples["TT"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root/prompt_score_muon_tau_only" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if "DY" in samples[0]:
+        background_samples["DY"].append(  ("/eos/uscms/store/user/dally/second_skim_muon_root_pileup_genvtx/Z_peak_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
 
 
 hist_mass =  hda.hist.Hist(
@@ -120,8 +123,9 @@ for background, samples in background_samples.items():
 
         (computed,) = dask.compute(output)
         print(computed)
-        print(computed["TT"]["mass"].show())
-        hist_mass += computed["TT"]["mass"]
+        print(computed["DY"]["mass"].show())
+        hist_mass += computed["DY"]["mass"]
+
 hist_mass.plot1d()
-plt.savefig("ditau_mass.pdf")
+plt.savefig("ditau_mass.png")
 

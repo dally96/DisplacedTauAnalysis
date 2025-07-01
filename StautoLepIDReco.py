@@ -114,12 +114,11 @@ class IDProcessor(processor.ProcessorABC):
         #gen_mu = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 13) & (staus_taus.distinctChildren.hasFlags("isLastCopy"))]  
         gen_mu = events.GenPart[(abs(events.GenPart.pdgId) == 13) & (events.GenPart.hasFlags("isLastCopy"))]
         ### Make sure that the reco muons can be traced back to a gen particle 
-        #dis_mu = events.DisMuon[(events.DisMuon.genPartIdx > 0)]
+        dis_mu = events.DisMuon[(events.DisMuon.genPartIdx > 0)]
         
         ### Make sure the sample of reco muons we're looking at have a gen particle that is the grandchild of a stau
-        #reco_mu = dis_mu[(abs(events.GenPart[dis_mu.genPartIdx].distinctParent.distinctParent.pdgId) == 1000015)]
-        reco_mu = gen_mu.nearest(events.DisMuon)
-        print("Checking to see if nearest function works")
+        reco_mu = dis_mu[(abs(events.GenPart.pdgId[dis_mu.genPartIdx]) == 13)]
+        #reco_mu = gen_mu.nearest(events.DisMuon)
 
         ### Separate the reco muons into different IDs
         loosereco_mu  = reco_mu[reco_mu.looseId == 1]
@@ -127,17 +126,17 @@ class IDProcessor(processor.ProcessorABC):
         tightreco_mu  = reco_mu[reco_mu.tightId == 1]
         
         ### Now choose the gen particles those reco muons trace back to
-        #rfg_mu       = events.GenPart[reco_mu.genPartIdx]
-        rfg_mu       = reco_mu.nearest(gen_mu)        
+        rfg_mu       = events.GenPart[reco_mu.genPartIdx]
+        #rfg_mu       = reco_mu.nearest(gen_mu)        
 
         ### Choose the gen muons based on the reco muon ID
-        #looserfg_mu  = events.GenPart[loosereco_mu.genPartIdx] 
-        #mediumrfg_mu = events.GenPart[mediumreco_mu.genPartIdx] 
-        #tightrfg_mu  = events.GenPart[tightreco_mu.genPartIdx] 
+        looserfg_mu  = events.GenPart[loosereco_mu.genPartIdx] 
+        mediumrfg_mu = events.GenPart[mediumreco_mu.genPartIdx] 
+        tightrfg_mu  = events.GenPart[tightreco_mu.genPartIdx] 
         
-        looserfg_mu  = loosereco_mu.nearest(gen_mu) 
-        mediumrfg_mu = mediumreco_mu.nearest(gen_mu) 
-        tightrfg_mu  = tightreco_mu.nearest(gen_mu) 
+        #looserfg_mu  = loosereco_mu.nearest(gen_mu) 
+        #mediumrfg_mu = mediumreco_mu.nearest(gen_mu) 
+        #tightrfg_mu  = tightreco_mu.nearest(gen_mu) 
         
         ### Apply fiducial cuts
         rfg_mu = rfg_mu[(rfg_mu.pt > GenPtMin) & (abs(rfg_mu.eta) < GenEtaMax)]
@@ -186,18 +185,18 @@ background_samples["DY"] = []
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].extend( glob("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root"))
+        background_samples["QCD"].extend( glob("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_noIso_" + samples[0] + "/*.root"))
     if "TT" in samples[0]:
-        background_samples["TT"].extend(  glob("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root"))
+        background_samples["TT"].extend(  glob("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_noIso_" + samples[0] + "/*.root"))
 #    if "W" in samples[0]:
-#        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+#        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_SRcuts_noIso_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].extend(  glob("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root"))
+        background_samples["DY"].extend(  glob("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_noIso_" + samples[0] + "/*.root"))
 #    if "Stau" in samples[0]:
-#        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+#        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noIso_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
-for samples in SAMP: 
-    background_samples["QCD"]
+#for samples in SAMP: 
+   # background_samples["QCD"]
 
 background_histograms = {}
 for background, samples in background_samples.items():
@@ -259,7 +258,6 @@ for background in background_histograms.keys():
                             ax_dict = {'main_ax': ax[0], f"ratio_ax": ax[1]}
                             )
             print(f"Finished plotting {cut}")
-        ax[0].remove()
         cut_counter = 0
         for artist in ax[1].containers:
             artist[0].set_color(colors[background])
@@ -268,6 +266,7 @@ for background in background_histograms.keys():
             artist[0].set_markeredgecolor("black")
             cut_counter += 1
         ax[1].set_title(background)
+        ax[0].legend()
         ax[1].legend()
         fig.savefig(f"MuonID_{background}_{variable}.pdf")
         print(f"MuonID_{background}_{variable}.pdf saved!")

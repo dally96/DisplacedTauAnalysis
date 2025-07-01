@@ -23,34 +23,34 @@ start_time = time.time()
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
-parser.add_argument("-d", "--data", dest = "data", help = "Are we plotting data", default = False)
+parser.add_argument("-d", "--data", dest = "data", help = "Are we plotting data", default = True)
 parser.add_argument("-f", "--folder", dest = "folder", help = "Where to put plot. Directory located inside of ../www/", default = "test_dir")   
 
 is_data = parser.parse_args()
 
 SAMP = [
-      #['Stau_100_1000mm', 'SIG'],
-      #['Stau_100_100mm', 'SIG'],
-      #['Stau_100_10mm', 'SIG'],
-      #['Stau_100_1mm', 'SIG'],
+      ['Stau_100_1000mm', 'SIG'],
+      ['Stau_100_100mm', 'SIG'],
+      ['Stau_100_10mm', 'SIG'],
+      ['Stau_100_1mm', 'SIG'],
       #['Stau_100_0p1mm', 'SIG'],
       #['Stau_100_0p01mm', 'SIG'],
-      #['Stau_200_1000mm', 'SIG'],
-      #['Stau_200_100mm', 'SIG'],
-      #['Stau_200_10mm', 'SIG'],
-      #['Stau_200_1mm', 'SIG'],
+      ['Stau_200_1000mm', 'SIG'],
+      ['Stau_200_100mm', 'SIG'],
+      ['Stau_200_10mm', 'SIG'],
+      ['Stau_200_1mm', 'SIG'],
       #['Stau_200_0p1mm', 'SIG'],
       #['Stau_200_0p01mm', 'SIG'],
-      #['Stau_300_1000mm', 'SIG'],
-      #['Stau_300_100mm', 'SIG'],
-      #['Stau_300_10mm', 'SIG'],
-      #['Stau_300_1mm', 'SIG'],
+      ['Stau_300_1000mm', 'SIG'],
+      ['Stau_300_100mm', 'SIG'],
+      ['Stau_300_10mm', 'SIG'],
+      ['Stau_300_1mm', 'SIG'],
       #['Stau_300_0p1mm', 'SIG'],
       #['Stau_300_0p01mm', 'SIG'],
-      #['Stau_500_1000mm', 'SIG'],
-      #['Stau_500_100mm', 'SIG'],
-      #['Stau_500_10mm', 'SIG'],
-      #['Stau_500_1mm', 'SIG'],
+      ['Stau_500_1000mm', 'SIG'],
+      ['Stau_500_100mm', 'SIG'],
+      ['Stau_500_10mm', 'SIG'],
+      ['Stau_500_1mm', 'SIG'],
       #['Stau_500_0p1mm', 'SIG'],
       #['Stau_500_0p01mm', 'SIG'],
       ['QCD50_80', 'QCD'],
@@ -71,12 +71,12 @@ SAMP = [
       ["TTtoLNu2Q",  'TT'],
       ["TTto4Q", 'TT'],
       ["TTto2L2Nu", 'TT'],
-      ["JetMET_Run2022E", 'JetMET'],
-      ["JetMET_Run2022F", 'JetMET'],
-      ["JetMET_Run2022G", 'JetMET'],
+      #["JetMET_Run2022E", 'JetMET'],
+      #["JetMET_Run2022F", 'JetMET'],
+      #["JetMET_Run2022G", 'JetMET'],
       ]
 
-lumi = 38.01 ##fb-1
+lumi = 26.7 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 Stau_colors = ['#EA7AF4', '#B43E8F', '#6200B3', '#218380']
 variables_with_bins = {
@@ -127,7 +127,7 @@ def get_stack_maximum(stack):
     return max_value 
 
 
-class ExampleProcessor(processor.ProcessorABC):
+class MCProcessor(processor.ProcessorABC):
     def __init__(self, vars_with_bins):
         self.vars_with_bins = vars_with_bins
         print("Initializing ExampleProcessor")
@@ -143,16 +143,15 @@ class ExampleProcessor(processor.ProcessorABC):
             print(f"Successfully created histogram for {var}")
         return histograms
 
-    def process(self, events, weights):
+    def process(self, events):
                     
         histograms = self.initialize_histograms()
         # Loop over variables and fill histograms
         for var in histograms:
             var_name = '_'.join(var.split('_')[1:])
-
             histograms[var].fill(
                 **{var: dak.flatten(events[var.split('_')[0]][var_name], axis = None)},
-                weight = weights
+                weight = events.weight * lumi * 1000
             )
             
             
@@ -164,36 +163,71 @@ class ExampleProcessor(processor.ProcessorABC):
         pass
         
 
+class DataProcessor(processor.ProcessorABC):
+    def __init__(self, vars_with_bins):
+        self.vars_with_bins = vars_with_bins
+        print("Initializing ExampleProcessor")
+
+    def initialize_histograms(self):
+        histograms = {}
+        # Initialize histograms for each variable based on provided binning
+        for var, bin_info in self.vars_with_bins.items():
+            print(f"Creating histogram for {var} with bin_info {bin_info}")
+
+            histograms[var] = hda.hist.Hist(hist.axis.Regular(*bin_info[0], name=var, label = var + ' ' + bin_info[1]))
+
+            print(f"Successfully created histogram for {var}")
+        return histograms
+
+    def process(self, events):
+                    
+        histograms = self.initialize_histograms()
+        # Loop over variables and fill histograms
+        for var in histograms:
+            var_name = '_'.join(var.split('_')[1:])
+            histograms[var].fill(
+                **{var: dak.flatten(events[var.split('_')[0]][var_name], axis = None)},
+                weight = events.weight
+            )
+            
+            
+        output = {"histograms": histograms}
+        print(output)
+        return output
+
+    def postprocess(self):
+        pass
 background_samples = {} 
+data_samples = {}
 background_samples["QCD"] = []
 background_samples["TT"] = []
 background_samples["W"] = []
 background_samples["DY"] = []
-background_samples["JetMET"] = []
+data_samples["JetMET"] = []
 
 stau_dict = {}
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "TT" in samples[0]:
-        background_samples["TT"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "W" in samples[0]:
-        background_samples["W"].append(      ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(      ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if is_data.data:
+        background_samples["DY"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+    if is_data.data == True:
         if "JetMET" in samples[0]: 
-            background_samples["JetMET"].append( ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", 1                                                         ))
+            data_samples["JetMET"].append( ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", 1                                                         ))
     else:
         if "Stau" in samples[0]:
             lifetime = samples[0].split("_")[2]
             mass =     samples[0].split("_")[1]
             if lifetime in stau_dict.keys(): 
-                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
             else:
                 stau_dict[lifetime] = {}
-                stau_dict[lifetime][mass] = [        ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+                stau_dict[lifetime][mass] = [        ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -205,27 +239,54 @@ for background, samples in background_samples.items():
     for var in variables_with_bins:
         background_histograms[background][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
 
-    print(f"For {background} here are samples {samples}") 
-    for sample_file, sample_weight in samples:
-        try:
-            # Step 1: Load events for the sample using dask-awkward
-            events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
-            #events = uproot.dask(sample_file)
-            print(f'Starting {sample_file} histogram')         
+    else:    
+        for sample_file, sample_weight in samples:
+            try:
+                # Step 1: Load events for the sample using dask-awkward
+                events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+                #events = uproot.dask(sample_file)
+                print(f'Starting {sample_file} histogram')         
 
-            processor_instance = ExampleProcessor(variables_with_bins)
-            output = processor_instance.process(events, sample_weight)
-            print(f'{sample_file} finished successfully')
+                processor_instance = MCProcessor(variables_with_bins)
+                output = processor_instance.process(events)
+                print(f'{sample_file} finished successfully')
 
-            # Loop through each variable's histogram in the output
-            for var, dask_histo in output["histograms"].items():
-                background_histograms[background][var]  = background_histograms[background][var] + dask_histo.compute()
+                # Loop through each variable's histogram in the output
+                for var, dask_histo in output["histograms"].items():
+                    background_histograms[background][var]  = background_histograms[background][var] + dask_histo.compute()
 
-        except Exception as e:
-            print(f"Error processing {sample_file}: {e}")
+            except Exception as e:
+                print(f"Error processing {sample_file}: {e}")
+if is_data.data == True:
+    print("Should only be going through this loop if fata flag true")
+    data_histograms = {}
+
+    for data, samples in data_samples.items():
+        data_histograms[data] = {}
+        for var in variables_with_bins:
+            data_histograms[data][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
+
+        for sample_file, sample_weight in samples:
+            try:
+                # Step 1: Load events for the sample using dask-awkward
+                events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+                #events = uproot.dask(sample_file)
+                print(f'Starting {sample_file} histogram')         
+
+                processor_instance = DataProcessor(variables_with_bins)
+                output = processor_instance.process(events)
+                print(f'{sample_file} finished successfully')
+
+                # Loop through each variable's histogram in the output
+                for var, dask_histo in output["histograms"].items():
+                    data_histograms[data][var]  = data_histograms[data][var] + dask_histo.compute()
+
+            except Exception as e:
+                print(f"Error processing {sample_file}: {e}")
+
 
 # Process each stau sample
-if not is_data.data:
+else:
     stau_histograms = {}
                
     for lifetime in stau_dict.keys():
@@ -240,8 +301,8 @@ if not is_data.data:
                     events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
                     print(f'Starting {sample_file} histogram')
                     
-                    processor_instance = ExampleProcessor(variables_with_bins)
-                    output = processor_instance.process(events, sample_weight)
+                    processor_instance = MCProcessor(variables_with_bins)
+                    output = processor_instance.process(events)
                     print(f'{sample_file} finished successfully')
     
                     for var, dask_histo in output["histograms"].items():
@@ -268,39 +329,64 @@ for var in variables_with_bins:
         QCD_frac = QCD_event_num/total_event_number
         TT_frac  = TT_event_num/total_event_number
         DY_frac  = DY_event_num/total_event_number
-    for lifetime in stau_dict.keys():
+    if is_data.data == True:
         s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                                  #"2L2Nu" : background_histograms["2L2Nu"][var],
-                                  #"LNu2Q" : background_histograms["LNu2Q"][var],
-                                  #"4Q" : background_histograms["4Q"][var],
-                                  f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                                  #"W": background_histograms["W"][var],
-                                  "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                    })
+                                #"2L2Nu" : background_histograms["2L2Nu"][var],
+                                #"LNu2Q" : background_histograms["LNu2Q"][var],
+                                #"4Q" : background_histograms["4Q"][var],
+                                f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
+                                #"W": background_histograms["W"][var],
+                                "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
+                                  })
         s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
-        if is_data.data:
-            background_histograms["JetMET"][var].plot(color = 'black', label = 'data')
-
-        else:
-            stau_counter = 0
-            for mass in stau_dict[lifetime].keys():
-                stau_histograms[lifetime][mass][var].plot(color = Stau_colors[stau_counter], label = r"$\tilde{\tau}$ " + mass + "_" + lifetime)
-                stau_counter += 1
-
+        data_histograms["JetMET"][var].plot(color = 'black', label = 'data')
         box = plt.subplot().get_position()
         plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
 
         plt.xlabel(var + ' ' + variables_with_bins[var][1])
         plt.ylabel("A.U.")
         plt.yscale('log')
+        plt.title(r"$\mathcal{L}_{int}$ = 26.7 fb$^{-1}$")
         plt.ylim(top=get_stack_maximum(s)*10)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
         if is_data.folder not in os.listdir("../www/"):
             os.mkdir(f"../www/{is_data.folder}")
-        plt.savefig(f"../www/{is_data.folder}/data_histogram_{var}_{lifetime}.png")
+        plt.savefig(f"../www/{is_data.folder}/data_histogram_{var}.png")
 
         plt.cla()
         plt.clf()
+
+    else:
+        for lifetime in stau_dict.keys():
+            s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
+                                    #"2L2Nu" : background_histograms["2L2Nu"][var],
+                                    #"LNu2Q" : background_histograms["LNu2Q"][var],
+                                    #"4Q" : background_histograms["4Q"][var],
+                                    f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
+                                    #"W": background_histograms["W"][var],
+                                    "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
+                                      })
+            s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
+            stau_counter = 0
+            for mass in stau_dict[lifetime].keys():
+                stau_histograms[lifetime][mass][var].plot(color = Stau_colors[stau_counter], label = r"$\tilde{\tau}$ " + mass + "_" + lifetime)
+                stau_counter += 1
+
+            box = plt.subplot().get_position()
+            plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
+
+            plt.xlabel(var + ' ' + variables_with_bins[var][1])
+            plt.ylabel("A.U.")
+            plt.yscale('log')
+            plt.ylim(top=get_stack_maximum(s)*10)
+            plt.title(r"L$_{int}$ = 26.7 fb$^{-1}$")
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+            if is_data.folder not in os.listdir("../www/"):
+                os.mkdir(f"../www/{is_data.folder}")
+            plt.savefig(f"../www/{is_data.folder}/muon_histogram_{var}_{lifetime}.png")
+
+            plt.cla()
+            plt.clf()
 
 
 

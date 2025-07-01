@@ -13,24 +13,24 @@
 
 
 // Function to list files matching a wildcard pattern
-std::vector<std::string> getFilesFromWildcard(const std::string& wildcard) {
-  std::vector<std::string> files;
-  
-  // Use the TSystem to list files matching the wildcard
-  TSystemDirectory dir(".", wildcard.c_str());
-  TList *filesList = dir.GetListOfFiles();
-  if (filesList) {
-    TSystemFile *file;
-    TIter next(filesList);
-    while ((file = (TSystemFile*)next())) {
-      const char *fileName = file->GetName();
-      if (!file->IsDirectory()) {
-        files.push_back((wildcard + fileName).c_str());
-      }
-    }
-  }
-  return files;
-}
+//std::vector<std::string> getFilesFromWildcard(const std::string& wildcard) {
+//  std::vector<std::string> files;
+//  
+//  // Use the TSystem to list files matching the wildcard
+//  TSystemDirectory dir(".", wildcard.c_str());
+//  TList *filesList = dir.GetListOfFiles();
+//  if (filesList) {
+//    TSystemFile *file;
+//    TIter next(filesList);
+//    while ((file = (TSystemFile*)next())) {
+//      const char *fileName = file->GetName();
+//      if (!file->IsDirectory()) {
+//        files.push_back((wildcard + fileName).c_str());
+//      }
+//    }
+//  }
+//  return files;
+//}
 
 std::vector<std::string> expandWildcard(const std::string& pattern) {
   glob_t glob_result;
@@ -43,7 +43,7 @@ std::vector<std::string> expandWildcard(const std::string& pattern) {
   return fileNames;
 }
 
-void ZLeptonEtaPlot() {
+void LepVeto() {
   gStyle->SetOptStat(0);
 
 
@@ -119,11 +119,10 @@ void ZLeptonEtaPlot() {
     }      
 
 
-    ROOT::RDataFrame df("Events", fileName[f]);
+    ROOT::RDataFrame df("Events", infiles);
 
     auto pt_cut       = [](float pt) { return pt > 20; };
     auto eta_cut      = [](float eta) { return std::abs(eta) < 2.4; };
-    auto id_cut       = [](int 
     auto convVeto     = [](bool convVeto) { return convVeto == true; };
     auto leptonVeto   = [](const ROOT::RVec<float> &jet_eta,
                                  const ROOT::RVec<float> &jet_phi,
@@ -147,9 +146,9 @@ void ZLeptonEtaPlot() {
     auto getJetDxy    = [](const ROOT::RVec<float> &jet_pt,
                            const ROOT::RVec<float> &pfcands_pt,
                            const ROOT::RVec<float> &pfcands_dxy,
-                           const ROOT::RVec<short> &pfcands_charge,
-                           const ROOT::RVec<short> &jetpfcands_jetidx,
-                           const ROOT::RVec<short> &jetpfcands_pfcandsidx) {
+                           const ROOT::RVec<int> &pfcands_charge,
+                           const ROOT::RVec<int> &jetpfcands_jetidx,
+                           const ROOT::RVec<int> &jetpfcands_pfcandsidx) {
       ROOT::RVec<float> dxy;
       dxy.reserve(jet_pt.size());
       
@@ -168,21 +167,22 @@ void ZLeptonEtaPlot() {
         }
         dxy.emplace_back(max_pf_dxy);
       }
+      return dxy;
     };
 
-    df = df.Define("Jet_dxy", getJetDxy, {"Jet_pt", "PFCands_pt", "PFCands_dxy", "PFCands_charge", "JetPFCands_jetIdx", "JetPFCands_pFCandsIdx"});
+    auto new_df = df.Define("Jet_dxy", getJetDxy, {"Jet_pt", "PFCands_pt", "PFCands_d0", "PFCands_charge", "JetPFCands_jetIdx", "JetPFCands_pFCandsIdx"});
 
-    auto filtered_Jet = df.Define("jet_mask", "Jet_pt > 20 && abs(Jet_eta) < 2.4")
+    auto filtered_Jet = new_df.Define("jet_mask", "Jet_pt > 20 && abs(Jet_eta) < 2.4")
                         .Define("jet_filtered_pt"   , "Jet_pt[jet_mask]")
                         .Define("jet_filtered_score", "Jet_disTauTag_score1[jet_mask]")
                         .Define("jet_filtered_dxy",   "Jet_dxy[jet_mask]")
                         .Define("jet_filtered_eta",   "Jet_eta[jet_mask]")
                         .Define("jet_filtered_phi",   "Jet_phi[jet_mask]");
 
-    auto noId_Jet     = filtered_Jet.Define("photon_veto",   lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Photon_eta", "Photon_phi"})
-                                    .Define("electron_veto", lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Electron_eta", "Electron_phi"}) 
-                                    .Define("muon_veto",     lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Muon_eta", "Muon_phi"})
-                                    .Define("dismuon_veto",  lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "DisMuon_eta", "DisMuon_phi"})
+    auto noId_Jet     = filtered_Jet.Define("photon_veto",   leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "Photon_eta", "Photon_phi"})
+                                    .Define("electron_veto", leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "Electron_eta", "Electron_phi"}) 
+                                    .Define("muon_veto",     leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "Muon_eta", "Muon_phi"})
+                                    .Define("dismuon_veto",  leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "DisMuon_eta", "DisMuon_phi"})
                                     .Define("all_lepton_veto", "photon_veto && electron_veto && muon_veto && dismuon_veto")
                                     .Define("noId_jet_pt", "jet_filtered_pt[all_lepton_veto]")
                                     .Define("noId_jet_score", "jet_filtered_score[all_lepton_veto]")
@@ -190,12 +190,20 @@ void ZLeptonEtaPlot() {
 
     auto Id_Jet       = filtered_Jet.Define("photon_cuts",   "Photon_pt   > 20 && abs(Photon_eta)   < 2.4 && Photon_electronVeto")
                                     .Define("electron_cuts", "Electron_pt > 20 && abs(Electron_eta) < 2.4 && Electron_convVeto  ")
-                                    .Define("muon_cuts",     "Muon_pt     > 20 && abs(Muon_eta)     < 2.4 && Muon_looseid       ")
-                                    .Define("dismuon_cuts",  "DisMuon_pt  > 20 && abs(DisMuon_eta)  < 2.4 && DisMuon_looseid    ")
-                                    .Define("photon_veto",   lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Photon_eta[photon_cuts]", "Photon_phi[photon_cuts"})
-                                    .Define("electron_veto", lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Electron_eta[electron_cuts]", "Electron_phi[electron_cuts]"}) 
-                                    .Define("muon_veto",     lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "Muon_eta[muon_cuts]", "Muon_phi[muon_cuts]"})
-                                    .Define("dismuon_veto",  lepton_veto, {"jet_filtered_eta", "jet_filtered_phi", "DisMuon_eta[dismuon_cuts]", "DisMuon_phi[dismuon_cuts]"})
+                                    .Define("muon_cuts",     "Muon_pt     > 20 && abs(Muon_eta)     < 2.4 && Muon_looseId       ")
+                                    .Define("dismuon_cuts",  "DisMuon_pt  > 20 && abs(DisMuon_eta)  < 2.4 && DisMuon_looseId    ")
+                                    .Define("photon_filtered_eta", "Photon_eta[photon_cuts]")
+                                    .Define("photon_filtered_phi", "Photon_phi[photon_cuts]")
+                                    .Define("electron_filtered_eta", "Electron_eta[electron_cuts]")
+                                    .Define("electron_filtered_phi", "Electron_phi[electron_cuts]")
+                                    .Define("muon_filtered_eta", "Muon_eta[muon_cuts]")
+                                    .Define("muon_filtered_phi", "Muon_phi[muon_cuts]")
+                                    .Define("dismuon_filtered_eta", "DisMuon_eta[dismuon_cuts]")
+                                    .Define("dismuon_filtered_phi", "DisMuon_phi[dismuon_cuts]")
+                                    .Define("photon_veto",   leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "photon_filtered_eta", "photon_filtered_phi"})
+                                    .Define("electron_veto", leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "electron_filtered_eta", "electron_filtered_phi"}) 
+                                    .Define("muon_veto",     leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "muon_filtered_eta", "muon_filtered_phi"})
+                                    .Define("dismuon_veto",  leptonVeto, {"jet_filtered_eta", "jet_filtered_phi", "dismuon_filtered_eta", "dismuon_filtered_phi"})
                                     .Define("all_lepton_veto", "photon_veto && electron_veto && muon_veto && dismuon_veto")
                                     .Define("Id_jet_pt", "jet_filtered_pt[all_lepton_veto]")
                                     .Define("Id_jet_score", "jet_filtered_score[all_lepton_veto]")
@@ -217,39 +225,39 @@ void ZLeptonEtaPlot() {
 
     auto c1 = new TCanvas();
     jet_pt_hist->Draw();
-    c1->SaveAs((sampleName[f] + "jet_pt.pdf").c_str());
+    c1->SaveAs((sampleName[f] + "_jet_pt.pdf").c_str());
 
     auto c2 = new TCanvas();
     jet_score_hist->Draw();
-    c2->SaveAs((sampleName[f] + "jet_score.pdf").c_str());
+    c2->SaveAs((sampleName[f] + "_jet_score.pdf").c_str());
 
     auto c3 = new TCanvas();
     jet_dxy_hist->Draw();
-    c3->SaveAs((sampleName[f] + "jet_dxy.pdf").c_str());
+    c3->SaveAs((sampleName[f] + "_jet_dxy.pdf").c_str());
 
     auto c4 = new TCanvas();
     noId_jet_pt_hist->Draw();
-    c4->SaveAs((sampleName[f] + "noId_jet_pt.pdf").c_str());
+    c4->SaveAs((sampleName[f] + "_noId_jet_pt.pdf").c_str());
 
     auto c5 = new TCanvas();
     noId_jet_score_hist->Draw();
-    c5->SaveAs((sampleName[f] + "noId_jet_score.pdf").c_str());
+    c5->SaveAs((sampleName[f] + "_noId_jet_score.pdf").c_str());
 
     auto c6 = new TCanvas();
     noId_jet_dxy_hist->Draw();
-    c6->SaveAs((sampleName[f] + "noId_jet_dxy.pdf").c_str());
+    c6->SaveAs((sampleName[f] + "_noId_jet_dxy.pdf").c_str());
 
     auto c7 = new TCanvas();
     Id_jet_pt_hist->Draw();
-    c7->SaveAs((sampleName[f] + "Id_jet_pt.pdf").c_str());
+    c7->SaveAs((sampleName[f] + "_Id_jet_pt.pdf").c_str());
 
     auto c8 = new TCanvas();
     Id_jet_score_hist->Draw();
-    c8->SaveAs((sampleName[f] + "Id_jet_score.pdf").c_str());
+    c8->SaveAs((sampleName[f] + "_Id_jet_score.pdf").c_str());
 
     auto c9 = new TCanvas();
     Id_jet_dxy_hist->Draw();
-    c9->SaveAs((sampleName[f] + "Id_jet_dxy.pdf").c_str());
+    c9->SaveAs((sampleName[f] + "_Id_jet_dxy.pdf").c_str());
     TFile outfile(("output_" + sampleName[f] + ".root").c_str(), "RECREATE");
 
     jet_pt_hist->Write();

@@ -34,6 +34,7 @@ warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecati
 import logging
 
 from skimmed_fileset import *
+from xsec import *
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -47,13 +48,13 @@ selections = {
               "muon_ID":                    "muon_tightId",
               "muon_dxy_prompt_max":        50E-4, ##cm
               "muon_dxy_prompt_min":        0E-4, ##cm
-              "muon_dxy_displaced_min":     0.1, ##cm
+              "muon_dxy_displaced_min":     50E-4, ##cm
               "muon_dxy_displaced_max":     10.,  ##cm
-              "muon_iso_max":               0.19,
+              "muon_iso_max":               0.36,
 
-              "jet_score":                  0.9, 
+              "jet_score":                  0.7, 
               "jet_pt":                     32.,  ##GeV
-              "jet_dxy_displaced_min":      0.00, ##cm
+              "jet_dxy_displaced_min":      0.02, ##cm
 
               "MET_pt":                     105., ##GeV
              }
@@ -67,54 +68,54 @@ class skimProcessor(processor.ProcessorABC):
         for samp in skimmed_fileset:
             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
-#        # Load pileup weights evaluators 
-#        jsonpog = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration"
-#        pileup_file = jsonpog + "/POG/LUM/2022_Summer22EE/puWeights.json.gz"
-#
-#        with gzip.open(pileup_file, 'rt') as f:
-#            self.pileup_set = correctionlib.CorrectionSet.from_string(f.read().strip())
-#
-#    def get_pileup_weights(self, events, also_syst=False):
-#        # Apply pileup weights
-#        evaluator = self.pileup_set["Collisions2022_359022_362760_eraEFG_GoldenJson"]
-#        sf = evaluator.evaluate(events.Pileup.nTrueInt, "nominal")
-##         if also_syst:
-##             sf_up = evaluator.evaluate(events.Pileup.nTrueInt, "up")
-##             sf_down = evaluator.evaluate(events.Pileup.nTrueInt, "down")
-##         return {'nominal': sf, 'up': sf_up, 'down': sf_down}
-#        return {'nominal': sf}
-#
-#
-#    def process_weight_corrs_and_systs(self, events, weights):
-#        pileup_weights = self.get_pileup_weights(events)
-#        # Compute nominal weight and systematic variations by multiplying relevant factors
-#        # For pileup, do not multiply nominal correction factor, as it is already included in the up/down variations
-#        # To see this, one can reproduce the ratio in
-#        # https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/misc/LUM/2018_UL/puWeights.png?ref_type=heads
-#        # from the plain correctionset
-#        weight_dict = {
-#            'weight': weights * pileup_weights['nominal'] #* muon_weights['muon_trigger_SF'],
-##             'weight_pileup_up': weights * pileup_weights['up'] * muon_weights['muon_trigger_SF'],
-##             'weight_pileup_down': weights * pileup_weights['down'] * muon_weights['muon_trigger_SF'],
-##             'weight_muon_trigger_up': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] + muon_weights['muon_trigger_SF_syst']),
-##             'weight_muon_trigger_down': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] - muon_weights['muon_trigger_SF_syst']),
-#        }
-#
-#        return weight_dict
+        # Load pileup weights evaluators 
+        jsonpog = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration"
+        pileup_file = jsonpog + "/POG/LUM/2022_Summer22EE/puWeights.json.gz"
+
+        with gzip.open(pileup_file, 'rt') as f:
+            self.pileup_set = correctionlib.CorrectionSet.from_string(f.read().strip())
+
+    def get_pileup_weights(self, events, also_syst=False):
+        # Apply pileup weights
+        evaluator = self.pileup_set["Collisions2022_359022_362760_eraEFG_GoldenJson"]
+        sf = evaluator.evaluate(events.Pileup.nTrueInt, "nominal")
+#         if also_syst:
+#             sf_up = evaluator.evaluate(events.Pileup.nTrueInt, "up")
+#             sf_down = evaluator.evaluate(events.Pileup.nTrueInt, "down")
+#         return {'nominal': sf, 'up': sf_up, 'down': sf_down}
+        return {'nominal': sf}
+
+
+    def process_weight_corrs_and_systs(self, events, weights):
+        pileup_weights = self.get_pileup_weights(events)
+        # Compute nominal weight and systematic variations by multiplying relevant factors
+        # For pileup, do not multiply nominal correction factor, as it is already included in the up/down variations
+        # To see this, one can reproduce the ratio in
+        # https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/misc/LUM/2018_UL/puWeights.png?ref_type=heads
+        # from the plain correctionset
+        weight_dict = {
+            'weight': weights * pileup_weights['nominal'] #* muon_weights['muon_trigger_SF'],
+#             'weight_pileup_up': weights * pileup_weights['up'] * muon_weights['muon_trigger_SF'],
+#             'weight_pileup_down': weights * pileup_weights['down'] * muon_weights['muon_trigger_SF'],
+#             'weight_muon_trigger_up': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] + muon_weights['muon_trigger_SF_syst']),
+#             'weight_muon_trigger_down': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] - muon_weights['muon_trigger_SF_syst']),
+        }
+
+        return weight_dict
 
     def process(self, events):
         logger.info(f"Start process for {events.metadata['dataset']}")
 
         leading_muon_var = self.leading_muon_var
         leading_jet_var = self.leading_jet_var
+        out_dict = {}
+
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
         if is_MC: 
-            weights = ak.ones_like(events.event) 
-            sumWeights = ak.sum(weights)
+            sumWeights = num_events[events.metadata["dataset"]]
         
-            out_dict = {}
 
             events["Stau"] = events.GenPart[(abs(events.GenPart.pdgId) == 1000015) &\
                                             (events.GenPart.hasFlags("isLastCopy"))]
@@ -137,7 +138,6 @@ class skimProcessor(processor.ProcessorABC):
         logger.info(f"Chose leading muon and jet")
 
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       (abs(events.DisMuon.eta) < 2.4)                                  &\
                        #(events.DisMuon.tightId == 1)                                    &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
@@ -185,25 +185,7 @@ class skimProcessor(processor.ProcessorABC):
 
         logger.info(f"Filtered events")        
 
-        muon_vars =  [   
-                     "pt",
-                     "eta",
-                     "phi",
-                     "charge",
-                     "mass",
-                     "dxy",
-                     "dxyErr",
-                     "dz",
-                     "dzErr",
-                     "looseId",
-                     "mediumId",
-                     "tightId",
-                     "pfRelIso03_all",
-                     "pfRelIso03_chg",
-                     "pfRelIso04_all",
-                     "tkRelIso",
-                     "genPartIdx",
-                     ]
+        muon_vars = events.DisMuon.fields
 
         jet_vars =   [   
                      "pt",
@@ -213,31 +195,6 @@ class skimProcessor(processor.ProcessorABC):
                      "dxy",
                      ]   
 
-        gpart_vars = [ 
-                     "genPartIdxMother", 
-                     "statusFlags", 
-                     "pdgId",
-                     "status", 
-                     "eta", 
-                     "mass", 
-                     "phi", 
-                     "pt", 
-                     #"vertexR", 
-                     #"vertexRho", 
-                     #"vx", 
-                     #"vy", 
-                     #"vz",
-                     ]
-
-        gvist_vars = [ 
-                     "genPartIdxMother", 
-                     "charge",
-                     "status", 
-                     "eta", 
-                     "mass", 
-                     "phi", 
-                     "pt", 
-                     ]   
 
         tau_vars   = events.Tau.fields                        
         #tau_vars    = [
@@ -262,20 +219,23 @@ class skimProcessor(processor.ProcessorABC):
 
         MET_vars   = events.PFMET.fields
 
-#        if is_MC: 
-#            weights = weights / sumWeights 
-#        else: 
-#            weights = ak.ones_like(events.event) # create a 1d-array of ones, the appropriate weight for data
-#
-#        logger.info("mc weights")
-#
-#        # scale factor correction
-#        # Handle systematics and weights
-#        if is_MC:
-#            weight_branches = self.process_weight_corrs_and_systs(events, weights)
-#        else:
-#            weight_branches = {'weight': weights}
-#        logger.info("all weights")
+        if is_MC: 
+            weights = events.event/events.event
+            weights = weights / sumWeights 
+        else: 
+            weights = events.event/events.event
+
+        logger.info("mc weights")
+
+        # scale factor correction
+        # Handle systematics and weights
+        if is_MC:
+            weight_branches = self.process_weight_corrs_and_systs(events, weights)
+        else:
+            weight_branches = {'weight': weights}
+        logger.info("all weights")
+        
+        events = ak.with_field(events, weight_branches["weight"], "weight")
 
         for branch in muon_vars:
             out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
@@ -286,6 +246,23 @@ class skimProcessor(processor.ProcessorABC):
         for branch in MET_vars: 
             out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
         if is_MC:
+            gpart_vars =   ['eta', 
+                            'genPartIdxMother', 
+                            'mass', 
+                            'pdgId', 
+                            'phi', 
+                            'pt', 
+                            'status', 
+                            'statusFlags', 
+                            'vertexR', 
+                            'vertexRho', 
+                            'vx', 
+                            'vy', 
+                            'vz',]
+
+            gvist_vars = events.GenVisTau.fields   
+            gvtx_vars = events.GenVtx.fields
+
             for branch in gpart_vars:
                 out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
             for branch in gpart_vars:
@@ -294,9 +271,11 @@ class skimProcessor(processor.ProcessorABC):
                 out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
             for branch in gvist_vars:
                 out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
+            for branch in gvtx_vars:
+                out_dict["GenVtx_" + branch]     = ak.drop_none(events["GenVtx"][branch])
 
         out_dict["event"]           = ak.drop_none(events.event)
-#        out_dict["weight"]          = dak.drop_none(weight_branches["weight"])
+        out_dict["weight"]          = dak.drop_none(events.weight)
         out_dict["run"]             = ak.drop_none(events.run)
         out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
         out_dict["nDisMuon"]        = dak.num(ak.drop_none(events.DisMuon))
@@ -309,8 +288,10 @@ class skimProcessor(processor.ProcessorABC):
             
         try:
             out_dict = dak.zip(out_dict, depth_limit = 1)
+            logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
+            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/second_jet_dxy/loosened_cuts_noIso_" + samp, compute=False, tree_name='Events')
 
-            return out_dict
+            return outfile
 
         except Exception as e:
             logger.info(f"Error processing {events.metadata['dataset']}: {e}")        
@@ -332,7 +313,7 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("skimmed_preprocessed_fileset.pkl", "rb") as  f:
+    with open("merged_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
     #to_compute = apply_to_fileset(
@@ -343,24 +324,24 @@ if __name__ == "__main__":
 
     #for samp in skimmed_fileset: 
     for samp in dataset_runnable.keys():
-        if "p" not in samp:
-            print(samp)
-            samp_runnable = {}
-            samp_runnable[samp] = dataset_runnable[samp]
-            to_compute = apply_to_fileset(
-                         skimProcessor(leading_var.muon, leading_var.jet),
-                         max_chunks(samp_runnable, 10000),
-                         schemaclass=PFNanoAODSchema
-            )
+        print(samp)
+        if "DY" in samp or "MET" in samp or "TT" in samp or "Stau" in samp: continue
+        samp_runnable = {}
+        samp_runnable[samp] = dataset_runnable[samp]
+        to_compute = apply_to_fileset(
+                     skimProcessor(leading_var.muon, leading_var.jet),
+                     max_chunks(samp_runnable, 1000000),
+                     schemaclass=PFNanoAODSchema,
+                     uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024)}
+        )
 
-            try:
-                outfile = uproot.dask_write(to_compute[samp], "root://cmseos.fnal.gov//store/user/dally/second_skim_muon_root/SRcuts_noID_noJetDxy_" + samp, compute=False, tree_name='Events')
-                dask.compute(outfile)
-            
-            except Exception as e:
-                logger.info(f"Error writing out files: {e}")
+        try:
+            dask.compute(to_compute)
+        
+        except Exception as e:
+            logger.info(f"Error writing out files: {e}")
 
-    elapsed = time.time() - tic 
-    print(f"Finished in {elapsed:.1f}s")
-    client.shutdown()
-    cluster.close()
+        elapsed = time.time() - tic 
+        print(f"Finished in {elapsed:.1f}s")
+        client.shutdown()
+        cluster.close()
