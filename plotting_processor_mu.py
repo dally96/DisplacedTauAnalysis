@@ -23,7 +23,7 @@ start_time = time.time()
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
-parser.add_argument("-d", "--data", dest = "data", help = "Are we plotting data", default = True)
+parser.add_argument("-d", "--data", dest = "data", help = "Are we plotting data", default = "MC")
 parser.add_argument("-f", "--folder", dest = "folder", help = "Where to put plot. Directory located inside of ../www/", default = "test_dir")   
 
 is_data = parser.parse_args()
@@ -67,13 +67,27 @@ SAMP = [
       ['QCD2400_3200','QCD'],
       ['QCD3200','QCD'],
       ["DYJetsToLL", 'EWK'],  
-      ##["WtoLNu2Jets", 'EWK'],
+      ['WtoLNu_2Jets_0J', 'EWK'],          
+      ['WtoLNu_2Jets_1J', 'EWK'],       
+      ['WtoLNu_2Jets_2J', 'EWK'],       
+      #['WtoLNu_4Jets_1J', 'EWK'],       
+      ['WtoLNu_4Jets_2J', 'EWK'],       
+      ['WtoLNu_4Jets_3J', 'EWK'],       
+      ['WtoLNu_4Jets_4J', 'EWK'],       
+      ['Wto2Q_2Jets_2J_100to200', 'EWK'],
+      ['Wto2Q_2Jets_2J_200to400', 'EWK'],
+      ['Wto2Q_2Jets_2J_400to600', 'EWK'],
+      ['Wto2Q_2Jets_2J_600', 'EWK'],    
+      ['Wto2Q_2Jets_1J_100to200', 'EWK'],
+      ['Wto2Q_2Jets_1J_200to400', 'EWK'],
+      ['Wto2Q_2Jets_1J_400to600', 'EWK'],
+      ['Wto2Q_2Jets_1J_600', 'EWK'],    
       ["TTtoLNu2Q",  'TT'],
       ["TTto4Q", 'TT'],
       ["TTto2L2Nu", 'TT'],
-      #["JetMET_Run2022E", 'JetMET'],
-      #["JetMET_Run2022F", 'JetMET'],
-      #["JetMET_Run2022G", 'JetMET'],
+      ["JetMET_Run2022E", 'JetMET'],
+      ["JetMET_Run2022F", 'JetMET'],
+      ["JetMET_Run2022G", 'JetMET'],
       ]
 
 lumi = 26.7 ##fb-1
@@ -128,8 +142,9 @@ def get_stack_maximum(stack):
 
 
 class MCProcessor(processor.ProcessorABC):
-    def __init__(self, vars_with_bins):
+    def __init__(self, vars_with_bins, sample):
         self.vars_with_bins = vars_with_bins
+        self.sample = sample
         print("Initializing ExampleProcessor")
 
     def initialize_histograms(self):
@@ -151,7 +166,7 @@ class MCProcessor(processor.ProcessorABC):
             var_name = '_'.join(var.split('_')[1:])
             histograms[var].fill(
                 **{var: dak.flatten(events[var.split('_')[0]][var_name], axis = None)},
-                weight = events.weight * lumi * 1000
+                weight = events.weight * lumi * 1000 * self.sample
             )
             
             
@@ -187,7 +202,7 @@ class DataProcessor(processor.ProcessorABC):
             var_name = '_'.join(var.split('_')[1:])
             histograms[var].fill(
                 **{var: dak.flatten(events[var.split('_')[0]][var_name], axis = None)},
-                weight = events.weight
+                weight = events.weight / events.weight
             )
             
             
@@ -209,25 +224,25 @@ stau_dict = {}
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
     if "TT" in samples[0]:
-        background_samples["TT"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].append(     ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
     if "W" in samples[0]:
-        background_samples["W"].append(      ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["W"].append(      ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
     if "DY" in samples[0]:
-        background_samples["DY"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
-    if is_data.data == True:
+        background_samples["DY"].append(     ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
+    if is_data.data == "data":
         if "JetMET" in samples[0]: 
-            data_samples["JetMET"].append( ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", 1                                                         ))
+            data_samples["JetMET"].append(   ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", 1                 ))
     else:
         if "Stau" in samples[0]:
             lifetime = samples[0].split("_")[2]
             mass =     samples[0].split("_")[1]
             if lifetime in stau_dict.keys(): 
-                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] )]
             else:
                 stau_dict[lifetime] = {}
-                stau_dict[lifetime][mass] = [        ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
+                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] )]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -239,25 +254,24 @@ for background, samples in background_samples.items():
     for var in variables_with_bins:
         background_histograms[background][var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
 
-    else:    
-        for sample_file, sample_weight in samples:
-            try:
-                # Step 1: Load events for the sample using dask-awkward
-                events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
-                #events = uproot.dask(sample_file)
-                print(f'Starting {sample_file} histogram')         
+    for sample_file, sample_weight in samples:
+        try:
+            # Step 1: Load events for the sample using dask-awkward
+            events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+            #events = uproot.dask(sample_file)
+            print(f'Starting {sample_file} histogram')         
 
-                processor_instance = MCProcessor(variables_with_bins)
-                output = processor_instance.process(events)
-                print(f'{sample_file} finished successfully')
+            processor_instance = MCProcessor(variables_with_bins, sample_weight)
+            output = processor_instance.process(events)
+            print(f'{sample_file} finished successfully')
 
-                # Loop through each variable's histogram in the output
-                for var, dask_histo in output["histograms"].items():
-                    background_histograms[background][var]  = background_histograms[background][var] + dask_histo.compute()
+            # Loop through each variable's histogram in the output
+            for var, dask_histo in output["histograms"].items():
+                background_histograms[background][var]  = background_histograms[background][var] + dask_histo.compute()
 
-            except Exception as e:
-                print(f"Error processing {sample_file}: {e}")
-if is_data.data == True:
+        except Exception as e:
+            print(f"Error processing {sample_file}: {e}")
+if is_data.data == "data":
     print("Should only be going through this loop if fata flag true")
     data_histograms = {}
 
@@ -301,7 +315,7 @@ else:
                     events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
                     print(f'Starting {sample_file} histogram')
                     
-                    processor_instance = MCProcessor(variables_with_bins)
+                    processor_instance = MCProcessor(variables_with_bins, sample_weight)
                     output = processor_instance.process(events)
                     print(f'{sample_file} finished successfully')
     
@@ -314,31 +328,32 @@ for var in variables_with_bins:
     QCD_event_num = background_histograms["QCD"][var].sum()
     TT_event_num = background_histograms["TT"][var].sum()
     DY_event_num = background_histograms["DY"][var].sum()
+    W_event_num = background_histograms["W"][var].sum()
 
     total_event_number = QCD_event_num + \
                          TT_event_num  + \
-                         DY_event_num
+                         DY_event_num  + \
+                         W_event_num
     plt.cla()
     plt.clf()
 
     QCD_frac = 0
     TT_frac  = 0
     DY_frac  = 0
+    W_frac   = 0
 
     if total_event_number > 0:
         QCD_frac = QCD_event_num/total_event_number
         TT_frac  = TT_event_num/total_event_number
         DY_frac  = DY_event_num/total_event_number
-    if is_data.data == True:
+        W_frac  = W_event_num/total_event_number
+    if is_data.data == "data":
         s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                                #"2L2Nu" : background_histograms["2L2Nu"][var],
-                                #"LNu2Q" : background_histograms["LNu2Q"][var],
-                                #"4Q" : background_histograms["4Q"][var],
                                 f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                                #"W": background_histograms["W"][var],
                                 "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
+                                "W" + "%.2f"%(W_frac): background_histograms["W"][var],
                                   })
-        s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
+        s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3], colors[2]])
         data_histograms["JetMET"][var].plot(color = 'black', label = 'data')
         box = plt.subplot().get_position()
         plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
@@ -347,7 +362,7 @@ for var in variables_with_bins:
         plt.ylabel("A.U.")
         plt.yscale('log')
         plt.title(r"$\mathcal{L}_{int}$ = 26.7 fb$^{-1}$")
-        plt.ylim(top=get_stack_maximum(s)*10)
+        plt.ylim(top=data_histograms["JetMET"][var].view().max()*10)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
         if is_data.folder not in os.listdir("../www/"):
             os.mkdir(f"../www/{is_data.folder}")
@@ -359,12 +374,9 @@ for var in variables_with_bins:
     else:
         for lifetime in stau_dict.keys():
             s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
-                                    #"2L2Nu" : background_histograms["2L2Nu"][var],
-                                    #"LNu2Q" : background_histograms["LNu2Q"][var],
-                                    #"4Q" : background_histograms["4Q"][var],
                                     f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
-                                    #"W": background_histograms["W"][var],
                                     "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
+                                    "W " + "%.2f"%(W_frac): background_histograms["W"][var],
                                       })
             s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
             stau_counter = 0
