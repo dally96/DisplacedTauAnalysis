@@ -324,6 +324,10 @@ else:
                 except Exception as e:
                     print(f"Error processing {sample_file}: {e}")
 
+with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:
+    pickle.dump(background_histograms["QCD"], f)
+print(f"pkl file written")
+
 for var in variables_with_bins:
     QCD_event_num = background_histograms["QCD"][var].sum()
     TT_event_num = background_histograms["TT"][var].sum()
