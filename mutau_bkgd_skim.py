@@ -128,17 +128,17 @@ class MyProcessor(processor.ProcessorABC):
                         events.HLT.PFMETNoMu130_PFMHTNoMu130_IDTight                            |\
                         events.HLT.PFMETNoMu140_PFMHTNoMu140_IDTight                            |\
                         events.HLT.PFMET120_PFMHT120_IDTight_PFHT60                             |\
-                        #events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
+                        events.HLT.PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF                   |\
                         events.HLT.PFMETTypeOne140_PFMHT140_IDTight                             |\
                         events.HLT.MET105_IsoTrk50                                              |\
-                        events.HLT.PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF                   |\
-                        events.HLT.MET120_IsoTrk50                                              |\
-                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
-                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1   |\
-                        events.HLT.Ele30_WPTight_Gsf                                            |\
-                        events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
-                        events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
-                        events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 
+                        events.HLT.MET120_IsoTrk50                                              #|\
+                        #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
+                        #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1   |\
+                        #events.HLT.Ele30_WPTight_Gsf                                            |\
+                        #events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
+                        #events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
+                        #events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 #|\
+                        #events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
         )
         
         events = events[trigger_mask]
@@ -157,6 +157,28 @@ class MyProcessor(processor.ProcessorABC):
         jet_vars   = events.Jet.fields 
         tau_vars   = events.Tau.fields                        
         MET_vars   = events.PFMET.fields  
+        SV_vars    = events.SV.fields
+        PV_vars    = events.PV.fields
+        HLT_vars   = [
+                        "PFMET120_PFMHT120_IDTight",                  
+                        "PFMET130_PFMHT130_IDTight",
+                        "PFMET140_PFMHT140_IDTight",
+                        "PFMETNoMu120_PFMHTNoMu120_IDTight",
+                        "PFMETNoMu130_PFMHTNoMu130_IDTight",
+                        "PFMETNoMu140_PFMHTNoMu140_IDTight",
+                        "PFMET120_PFMHT120_IDTight_PFHT60",
+                        "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
+                        "PFMETTypeOne140_PFMHT140_IDTight",
+                        "MET105_IsoTrk50",
+                        "MET120_IsoTrk50",
+                        "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
+                        "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
+                        "Ele30_WPTight_Gsf",                                         
+                        "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
+                        "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
+                        "DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"              
+                        #"MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight",      
+                    ]
 
         if is_MC:
             gpart_vars  = events.GenPart.fields 
@@ -176,6 +198,18 @@ class MyProcessor(processor.ProcessorABC):
         for branch in MET_vars: 
             if branch[-1] == "G": continue
             out_dict["PFMET_"     + branch]  = dak.drop_none(events["PFMET"][branch])    
+        for branch in SV_vars:
+            if branch[-1] == "G": continue
+            out_dict["SV_"        + branch]  = dak.drop_none(events["SV"][branch])    
+        for branch in PV_vars:
+            if branch[-1] == "G": continue
+            out_dict["PV_"        + branch]  = dak.drop_none(events["PV"][branch])    
+        for branch in HLT_vars:
+            if branch[-1] == "G": continue
+            if "EphemeralPhysics_TestMasking" in branch:
+                out_dict["HLT_"       + branch] = dak.from_awkward(ak.Array([]), npartitions = 1)
+            out_dict["HLT_"       + branch]  = dak.drop_none(events["HLT"][branch])    
+            
         if is_MC:
             for branch in gpart_vars:          
                 if branch[-1] == "G": continue
@@ -206,7 +240,7 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/jet_dxy_test/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim/"+events.metadata['dataset'], compute=False, tree_name='Events')
         return out_file
 
     def postprocess(self, accumulator):
@@ -230,13 +264,18 @@ if __name__ == "__main__":
     with open("preprocessed_fileset.pkl", "rb") as  f:
         Stau_QCD_DY_dataset_runnable = pickle.load(f)    
     del Stau_QCD_DY_dataset_runnable["TTtoLNu2Q"]
+    del Stau_QCD_DY_dataset_runnable["TTto2L2Nu"]
+    del Stau_QCD_DY_dataset_runnable["TTto4Q"]
+    del Stau_QCD_DY_dataset_runnable["DYJetsToLL"]
     with open("TT_preprocessed_fileset.pkl", "rb") as  f:
         TT_dataset_runnable = pickle.load(f)    
+    with open("DY_preprocessed_fileset.pkl", "rb") as  f:
+        DY_dataset_runnable = pickle.load(f)    
     with open("data_preprocessed_fileset.pkl", "rb") as  f:
         data_dataset_runnable = pickle.load(f)    
     with open("W_preprocessed_fileset.pkl", "rb") as  f:
         W_dataset_runnable = pickle.load(f)    
-    dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable  
+    dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable | DY_dataset_runnable 
 #    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
 #        lower_lifetime_dataset_runnable = pickle.load(f)    
 #    with open("W_preprocessed_fileset.pkl", "rb") as  f:
@@ -253,11 +292,12 @@ if __name__ == "__main__":
 #                 schemaclass=PFNanoAODSchema
 #    )
 
-    for samp in dataset_runnable.keys(): 
-        if  samp not in os.listdir("/eos/uscms/store/user/dally/jet_dxy_test/"):
-            if "Stau" in samp or "MET" in samp or "TT" in samp or "DY" in samp: continue
+    for samp in W_dataset_runnable.keys(): 
+        if  samp not in os.listdir("/eos/uscms/store/user/dally/first_skim/"):
+            if "TT" in samp or "DY" in samp or "Stau" in samp or "QCD" in samp or "MET" in samp: continue
+            
             samp_runnable = {}
-            samp_runnable[samp] = dataset_runnable[samp]
+            samp_runnable[samp] = W_dataset_runnable[samp]
             print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
@@ -274,7 +314,7 @@ if __name__ == "__main__":
             elapsed = time.time() - tic
             print(f"Finished in {elapsed:.1f}s")
 
-            client.shutdown()
-            cluster.close()
+    client.shutdown()
+    cluster.close()
     
     
