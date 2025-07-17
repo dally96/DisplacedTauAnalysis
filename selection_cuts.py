@@ -35,6 +35,7 @@ import logging
 
 from skimmed_fileset import *
 from xsec import *
+from selection_function import SR_selections, loose_SR_selections, loose_noIso_SR_selections, event_selection, Zpeak_selection
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -48,7 +49,7 @@ selections = {
               "muon_ID":                    "muon_tightId",
               "muon_dxy_prompt_max":        50E-4, ##cm
               "muon_dxy_prompt_min":        0E-4, ##cm
-              "muon_dxy_displaced_min":     50E-4, ##cm
+              "muon_dxy_displaced_min":     0.1, ##cm
               "muon_dxy_displaced_max":     10.,  ##cm
               "muon_iso_max":               0.36,
 
@@ -137,22 +138,23 @@ class skimProcessor(processor.ProcessorABC):
 
         logger.info(f"Chose leading muon and jet")
 
-        good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       #(events.DisMuon.tightId == 1)                                    &\
-                       (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
-                       (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
-                       (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
-                      )
+        #good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
+        #               #(events.DisMuon.mediumId == 1)                                    &\
+        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_max"]) &\
+        #               (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
+        #               (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
+        #              )
 
-        good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
-                       (events.Jet.pt > selections["jet_pt"])                               &\
-                       (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
-                       #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
-                      )
+        #good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
+        #               (events.Jet.pt > selections["jet_pt"])                               &\
+        #               (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
+        #               #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
+        #              )
 
-        good_events = (events.PFMET.pt > selections["MET_pt"])
+        #good_events = (events.PFMET.pt > selections["MET_pt"])
             
-        events = events[good_muons & good_jets & good_events]
+        #events = events[good_muons & good_jets & good_events]
+        events = event_selection(events, SR_selections, "SR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####
@@ -254,11 +256,12 @@ class skimProcessor(processor.ProcessorABC):
                             'pt', 
                             'status', 
                             'statusFlags', 
-                            'vertexR', 
-                            'vertexRho', 
-                            'vx', 
-                            'vy', 
-                            'vz',]
+                            #'vertexR', 
+                            #'vertexRho', 
+                            #'vx', 
+                            #'vy', 
+                            #'vz',
+                            ]
 
             gvist_vars = events.GenVisTau.fields   
             gvtx_vars = events.GenVtx.fields
@@ -289,7 +292,7 @@ class skimProcessor(processor.ProcessorABC):
         try:
             out_dict = dak.zip(out_dict, depth_limit = 1)
             logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/second_jet_dxy/loosened_cuts_noIso_" + samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/second_skim/test_loosened_SR_" + samp, compute=False, tree_name='Events')
 
             return outfile
 
@@ -316,6 +319,7 @@ if __name__ == "__main__":
     with open("merged_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
+    del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
     #to_compute = apply_to_fileset(
     #             skimProcessor(leading_var.muon, leading_var.jet),
     #             max_chunks(dataset_runnable, 10000),
@@ -325,7 +329,7 @@ if __name__ == "__main__":
     #for samp in skimmed_fileset: 
     for samp in dataset_runnable.keys():
         print(samp)
-        if "DY" in samp or "MET" in samp or "TT" in samp or "Stau" in samp: continue
+        if "DY" in samp or "MET" in samp or "TT" in samp or "W" in samp or "Stau" in samp: continue
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
         to_compute = apply_to_fileset(

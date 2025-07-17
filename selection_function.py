@@ -1,6 +1,9 @@
+import dask_awkward as dak
+
+
 SR_selections = {
               "muon_pt":                    30., ##GeV
-              "muon_ID":                    events.DisMuon.tightId,
+              "muon_ID":                    "DisMuon_mediumId",
               "muon_dxy_prompt_max":        50E-4, ##cm
               "muon_dxy_prompt_min":        0E-4, ##cm
               "muon_dxy_displaced_min":     0.1, ##cm
@@ -16,7 +19,7 @@ SR_selections = {
 
 loose_SR_selections = {
               "muon_pt":                    30., ##GeV
-              "muon_ID":                    events.DisMuon.tightId,
+              "muon_ID":                    "DisMuon_mediumId",
               "muon_dxy_prompt_max":        50E-4, ##cm
               "muon_dxy_prompt_min":        0E-4, ##cm
               "muon_dxy_displaced_min":     50E-4, ##cm
@@ -32,7 +35,7 @@ loose_SR_selections = {
 
 loose_noIso_SR_selections = {
               "muon_pt":                    30., ##GeV
-              "muon_ID":                    events.DisMuon.tightId,
+              "muon_ID":                    "DisMuon_mediumId",
               "muon_dxy_prompt_max":        50E-4, ##cm
               "muon_dxy_prompt_min":        0E-4, ##cm
               "muon_dxy_displaced_min":     50E-4, ##cm
@@ -50,7 +53,7 @@ def event_selection(events, selections, region):
 
     if region == "SR":
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       (selections["muon_ID"] == 1)                                    &\
+                       (events.DisMuon.mediumId == 1)                                     &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
@@ -68,7 +71,27 @@ def event_selection(events, selections, region):
     ###############################################################
     if region == "TT_CR":
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       (selections["muon_ID"] == 1)                                    &\
+                       (events.DisMuon.mediumId == 1)                                    &\
+                       (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
+                       (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
+                       (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
+                      )
+        
+        good_jets   = dak.flatten((events.Jet.disTauTag_score1 < selections["jet_score"])   &\
+                       (events.Jet.pt > selections["jet_pt"])                               &\
+                       (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
+                       #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
+                      )
+        
+        good_events = (events.PFMET.pt > selections["MET_pt"])
+        
+
+            
+        events = events[good_muons & good_jets & good_events]
+    ###############################################################
+    if region == "tight_TT_CR":
+        good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
+                       (events.DisMuon.tightId == 1)                                    &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
@@ -88,7 +111,7 @@ def event_selection(events, selections, region):
     ###############################################################
     if region == "QCD_CR":
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       (selections["muon_ID"] == 1)                                    &\
+                       (events[selections["muon_ID"]] == 1)                                    &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
                        (events.DisMuon.pfRelIso03_all > selections["muon_iso_max"])
@@ -107,9 +130,6 @@ def event_selection(events, selections, region):
         events = events[good_muons & good_jets & good_events]
     ###############################################################
     
-    events = events[trigger_mask]
-    
-
     return events
 
 def Zpeak_selection(events, selections): 
@@ -121,8 +141,8 @@ def Zpeak_selection(events, selections):
                   
 
     good_jets   = (events.Jet.disTauTag_score1 > selections["jet_score"])   &\
-                   (events.Jet.pt > selections["jet_pt"])                               #&\
-                   (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])            &\
+                   (events.Jet.pt > selections["jet_pt"])                               &\
+                   (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])            #&\
                    #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
                   
     events['DisMuon'] = ak.drop_none(events.DisMuon[good_muons])
