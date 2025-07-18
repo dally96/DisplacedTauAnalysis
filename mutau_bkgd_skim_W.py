@@ -168,7 +168,7 @@ class MyProcessor(processor.ProcessorABC):
                         "Ele30_WPTight_Gsf",                                         
                         "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
                         "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
-                        "DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1",              
+                        "DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"              
                         #"MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight",      
                     ]
 
@@ -284,12 +284,12 @@ if __name__ == "__main__":
 #                 schemaclass=PFNanoAODSchema
 #    )
 
-    for samp in Stau_QCD_DY_dataset_runnable.keys(): 
+    for samp in W_dataset_runnable.keys(): 
         if  samp not in os.listdir("/eos/uscms/store/user/dally/first_skim/noLepVeto"):
             if "TT" in samp or "DY" in samp or "Stau" in samp or "QCD" in samp or "MET" in samp: continue
             
             samp_runnable = {}
-            samp_runnable[samp] = Stau_QCD_DY_dataset_runnable[samp]
+            samp_runnable[samp] = W_dataset_runnable[samp]
             print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
