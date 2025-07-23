@@ -41,13 +41,29 @@ class BGProcessor(processor.ProcessorABC):
     def process(self,events):
         if len(events) == 0:
             return {}
+
         dataset        = events.metadata['dataset']
+
+        # Determine if dataset is MC or Data
+        is_MC = True if "Stau" in dataset else False
+
+        if is_MC:
+            vx = events.GenVisTau.parent.vx - events.GenVisTau.parent.parent.vx
+            vy = events.GenVisTau.parent.vy - events.GenVisTau.parent.parent.vy
+            Lxy = np.sqrt(vx**2 + vy**2)
+            events["GenVisTau"] = ak.with_field(events.GenVisTau, Lxy, where="lxy")            
+
+        events["GenVisTau"] = events.GenVisTau[(events.GenVisTau.pt > 20) & (abs(events.GenVisTau.eta) < 2.4) & (events.GenVisTau.parent.distinctParent.hasFlags("isLastCopy"))  & (events.GenVisTau.parent.hasFlags("fromHardProcess"))]
+
+        if is_MC: 
+             events["GenVisTau"] = events.GenVisTau[(abs(events.GenVisTau.lxy) < 100)]
+
         total_jets     = ak.sum( ak.num(events.Jet) )
-        tau_jets       = events.StauTau.nearest(events.Jet, threshold = max_dr)
+        tau_jets       = events.GenVisTau.nearest(events.Jet, threshold = max_dr)
         match_mask     = ak.num(tau_jets) > 0 
         matched_jets   = ak.zip({
-                        "jets": events.Jet[match_mask],
-                        "score": events.Jet[match_mask].disTauTag_score1
+                        "jets": tau_jets,
+                        "score": tau_jets.disTauTag_score1
                         })
         unmatched_jets = ak.zip({
                         "jets": events.Jet[~match_mask],
