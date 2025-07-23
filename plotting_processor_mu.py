@@ -28,67 +28,72 @@ parser.add_argument("-f", "--folder", dest = "folder", help = "Where to put plot
 
 is_data = parser.parse_args()
 
-SAMP = [
-      ['Stau_100_1000mm', 'SIG'],
-      ['Stau_100_100mm', 'SIG'],
-      ['Stau_100_10mm', 'SIG'],
-      ['Stau_100_1mm', 'SIG'],
-      #['Stau_100_0p1mm', 'SIG'],
-      #['Stau_100_0p01mm', 'SIG'],
-      ['Stau_200_1000mm', 'SIG'],
-      ['Stau_200_100mm', 'SIG'],
-      ['Stau_200_10mm', 'SIG'],
-      ['Stau_200_1mm', 'SIG'],
-      #['Stau_200_0p1mm', 'SIG'],
-      #['Stau_200_0p01mm', 'SIG'],
-      ['Stau_300_1000mm', 'SIG'],
-      ['Stau_300_100mm', 'SIG'],
-      ['Stau_300_10mm', 'SIG'],
-      ['Stau_300_1mm', 'SIG'],
-      #['Stau_300_0p1mm', 'SIG'],
-      #['Stau_300_0p01mm', 'SIG'],
-      ['Stau_500_1000mm', 'SIG'],
-      ['Stau_500_100mm', 'SIG'],
-      ['Stau_500_10mm', 'SIG'],
-      ['Stau_500_1mm', 'SIG'],
-      #['Stau_500_0p1mm', 'SIG'],
-      #['Stau_500_0p01mm', 'SIG'],
-      ['QCD50_80', 'QCD'],
-      ['QCD80_120','QCD'],
-      ['QCD120_170','QCD'],
-      ['QCD170_300','QCD'],
-      ['QCD300_470','QCD'],
-      ['QCD470_600','QCD'],
-      ['QCD600_800','QCD'],
-      ['QCD800_1000','QCD'],
-      ['QCD1000_1400','QCD'],
-      ['QCD1400_1800','QCD'],
-      ['QCD1800_2400','QCD'],
-      ['QCD2400_3200','QCD'],
-      ['QCD3200','QCD'],
-      ["DYJetsToLL", 'EWK'],  
-      ['WtoLNu_2Jets_0J', 'EWK'],          
-      ['WtoLNu_2Jets_1J', 'EWK'],       
-      ['WtoLNu_2Jets_2J', 'EWK'],       
-      #['WtoLNu_4Jets_1J', 'EWK'],       
-      ['WtoLNu_4Jets_2J', 'EWK'],       
-      ['WtoLNu_4Jets_3J', 'EWK'],       
-      ['WtoLNu_4Jets_4J', 'EWK'],       
-      ['Wto2Q_2Jets_2J_100to200', 'EWK'],
-      ['Wto2Q_2Jets_2J_200to400', 'EWK'],
-      ['Wto2Q_2Jets_2J_400to600', 'EWK'],
-      ['Wto2Q_2Jets_2J_600', 'EWK'],    
-      ['Wto2Q_2Jets_1J_100to200', 'EWK'],
-      ['Wto2Q_2Jets_1J_200to400', 'EWK'],
-      ['Wto2Q_2Jets_1J_400to600', 'EWK'],
-      ['Wto2Q_2Jets_1J_600', 'EWK'],    
-      ["TTtoLNu2Q",  'TT'],
-      ["TTto4Q", 'TT'],
-      ["TTto2L2Nu", 'TT'],
-      ["JetMET_Run2022E", 'JetMET'],
-      ["JetMET_Run2022F", 'JetMET'],
-      ["JetMET_Run2022G", 'JetMET'],
-      ]
+#SAMP = [
+#      ['Stau_100_1000mm', 'SIG'],
+#      ['Stau_100_100mm', 'SIG'],
+#      ['Stau_100_10mm', 'SIG'],
+#      ['Stau_100_1mm', 'SIG'],
+#      #['Stau_100_0p1mm', 'SIG'],
+#      #['Stau_100_0p01mm', 'SIG'],
+#      ['Stau_200_1000mm', 'SIG'],
+#      ['Stau_200_100mm', 'SIG'],
+#      ['Stau_200_10mm', 'SIG'],
+#      ['Stau_200_1mm', 'SIG'],
+#      #['Stau_200_0p1mm', 'SIG'],
+#      #['Stau_200_0p01mm', 'SIG'],
+#      ['Stau_300_1000mm', 'SIG'],
+#      ['Stau_300_100mm', 'SIG'],
+#      ['Stau_300_10mm', 'SIG'],
+#      ['Stau_300_1mm', 'SIG'],
+#      #['Stau_300_0p1mm', 'SIG'],
+#      #['Stau_300_0p01mm', 'SIG'],
+#      ['Stau_500_1000mm', 'SIG'],
+#      ['Stau_500_100mm', 'SIG'],
+#      ['Stau_500_10mm', 'SIG'],
+#      ['Stau_500_1mm', 'SIG'],
+#      #['Stau_500_0p1mm', 'SIG'],
+#      #['Stau_500_0p01mm', 'SIG'],
+#      ['QCD50_80', 'QCD'],
+#      ['QCD80_120','QCD'],
+#      ['QCD120_170','QCD'],
+#      ['QCD170_300','QCD'],
+#      ['QCD300_470','QCD'],
+#      ['QCD470_600','QCD'],
+#      ['QCD600_800','QCD'],
+#      ['QCD800_1000','QCD'],
+#      ['QCD1000_1400','QCD'],
+#      ['QCD1400_1800','QCD'],
+#      ['QCD1800_2400','QCD'],
+#      ['QCD2400_3200','QCD'],
+#      ['QCD3200','QCD'],
+#      ["DYJetsToLL", 'EWK'],  
+#      ['WtoLNu_2Jets_0J', 'EWK'],          
+#      ['WtoLNu_2Jets_1J', 'EWK'],       
+#      ['WtoLNu_2Jets_2J', 'EWK'],       
+#      #['WtoLNu_4Jets_1J', 'EWK'],       
+#      ['WtoLNu_4Jets_2J', 'EWK'],       
+#      ['WtoLNu_4Jets_3J', 'EWK'],       
+#      ['WtoLNu_4Jets_4J', 'EWK'],       
+#      ['Wto2Q_2Jets_2J_100to200', 'EWK'],
+#      ['Wto2Q_2Jets_2J_200to400', 'EWK'],
+#      ['Wto2Q_2Jets_2J_400to600', 'EWK'],
+#      ['Wto2Q_2Jets_2J_600', 'EWK'],    
+#      ['Wto2Q_2Jets_1J_100to200', 'EWK'],
+#      ['Wto2Q_2Jets_1J_200to400', 'EWK'],
+#      ['Wto2Q_2Jets_1J_400to600', 'EWK'],
+#      ['Wto2Q_2Jets_1J_600', 'EWK'],    
+#      ["TTtoLNu2Q",  'TT'],
+#      ["TTto4Q", 'TT'],
+#      ["TTto2L2Nu", 'TT'],
+#      ["JetMET_Run2022E", 'JetMET'],
+#      ["JetMET_Run2022F", 'JetMET'],
+#      ["JetMET_Run2022G", 'JetMET'],
+#      ]
+
+with open("merged_preprocessed_fileset.pkl", "rb") as f:
+    samples = pickle.load(f)
+SAMP = list(samples.keys())
+print(SAMP)
 
 lumi = 26.7 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
@@ -221,28 +226,35 @@ background_samples["DY"] = []
 data_samples["JetMET"] = []
 
 stau_dict = {}
+TT_dict = {}
 
 for samples in SAMP:
-    if "QCD" in samples[0]:
-        background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    if "TT" in samples[0]:
-        background_samples["TT"].append(     ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    if "W" in samples[0]:
-        background_samples["W"].append(      ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    if "DY" in samples[0]:
-        background_samples["DY"].append(     ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    if is_data.data == "data":
-        if "JetMET" in samples[0]: 
-            data_samples["JetMET"].append(   ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", 1                 ))
-    else:
-        if "Stau" in samples[0]:
-            lifetime = samples[0].split("_")[2]
-            mass =     samples[0].split("_")[1]
-            if lifetime in stau_dict.keys(): 
-                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] )]
-            else:
-                stau_dict[lifetime] = {}
-                stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] )]
+    #if "QCD" in samples[0]:
+    #    background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
+    #if "TT" in samples[0]:
+    if "TT" in samples:
+        if "ext" in samples:
+            background_samples["TT"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/first_skim_MET_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])]))
+            TT_dict[samples] = (     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])]))
+        else:
+            background_samples["TT"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/first_skim_MET_trig_" + samples + "/*.root", xsecs[samples] ))
+            TT_dict[samples] = (     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/first_skim_all_trig_" + samples + "/*.root", xsecs[samples] ))
+    #if "W" in samples[0]:
+    #    background_samples["W"].append(      ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
+    #if "DY" in samples[0]:
+    #    background_samples["DY"].append(     ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
+    #if is_data.data == "data":
+    #    if "JetMET" in samples[0]: 
+    #        data_samples["JetMET"].append(   ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", 1                 ))
+    #else:
+    #    if "Stau" in samples[0]:
+    #        lifetime = samples[0].split("_")[2]
+    #        mass =     samples[0].split("_")[1]
+    #        if lifetime in stau_dict.keys(): 
+    #            stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] )]
+    #        else:
+    #            stau_dict[lifetime] = {}
+    #            stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] )]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -271,6 +283,33 @@ for background, samples in background_samples.items():
 
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
+
+TT_histograms = {}
+
+# Process each background
+for background, samples in TT_dict.items():
+    # Initialize a dictionary to hold ROOT histograms for the current background
+    for var in variables_with_bins:
+        TT_histograms[var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
+
+    for sample_file, sample_weight in samples:
+        try:
+            # Step 1: Load events for the sample using dask-awkward
+            events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+            #events = uproot.dask(sample_file)
+            print(f'Starting {sample_file} histogram')         
+
+            processor_instance = MCProcessor(variables_with_bins, sample_weight)
+            output = processor_instance.process(events)
+            print(f'{sample_file} finished successfully')
+
+            # Loop through each variable's histogram in the output
+            for var, dask_histo in output["histograms"].items():
+                TT_histograms[var]  = TT_histograms[var] + dask_histo.compute()
+
+        except Exception as e:
+            print(f"Error processing {sample_file}: {e}")
+
 if is_data.data == "data":
     print("Should only be going through this loop if fata flag true")
     data_histograms = {}
@@ -329,28 +368,28 @@ with open(f"muon_QCD_hists_Iso_NotDisplaced.pkl", "wb") as f:
 print(f"pkl file written")
 
 for var in variables_with_bins:
-    QCD_event_num = background_histograms["QCD"][var].sum()
-    TT_event_num = background_histograms["TT"][var].sum()
-    DY_event_num = background_histograms["DY"][var].sum()
-    W_event_num = background_histograms["W"][var].sum()
+    #QCD_event_num = background_histograms["QCD"][var].sum()
+    #TT_event_num = background_histograms["TT"][var].sum()
+    #DY_event_num = background_histograms["DY"][var].sum()
+    #W_event_num = background_histograms["W"][var].sum()
 
-    total_event_number = QCD_event_num + \
-                         TT_event_num  + \
-                         DY_event_num  + \
-                         W_event_num
+    #total_event_number = QCD_event_num + \
+    #                     TT_event_num  + \
+    #                     DY_event_num  + \
+    #                     W_event_num
     plt.cla()
     plt.clf()
 
-    QCD_frac = 0
-    TT_frac  = 0
-    DY_frac  = 0
-    W_frac   = 0
+    #QCD_frac = 0
+    #TT_frac  = 0
+    #DY_frac  = 0
+    #W_frac   = 0
 
-    if total_event_number > 0:
-        QCD_frac = QCD_event_num/total_event_number
-        TT_frac  = TT_event_num/total_event_number
-        DY_frac  = DY_event_num/total_event_number
-        W_frac  = W_event_num/total_event_number
+    #if total_event_number > 0:
+    #    QCD_frac = QCD_event_num/total_event_number
+    #    TT_frac  = TT_event_num/total_event_number
+    #    DY_frac  = DY_event_num/total_event_number
+    #    W_frac  = W_event_num/total_event_number
     if is_data.data == "data":
         s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                                 f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
@@ -375,7 +414,7 @@ for var in variables_with_bins:
         plt.cla()
         plt.clf()
 
-    else:
+    if is_data.data == "MC":
         for lifetime in stau_dict.keys():
             s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                                     f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
@@ -403,6 +442,25 @@ for var in variables_with_bins:
 
             plt.cla()
             plt.clf()
+    if is_data.data == "trig":
+        background_histograms["TT"][var].plot(histtype= "fill", color = colors[0], label = "MET triggers")
+        TT_histograms[var].plot(histtype= "step", color = colors[1], label = "all triggers")            
+        box = plt.subplot().get_position()
+        plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
+
+        plt.xlabel(var + ' ' + variables_with_bins[var][1])
+        plt.ylabel("A.U.")
+        plt.yscale('log')
+        plt.ylim(top=get_stack_maximum(s)*10)
+        plt.title(r"L$_{int}$ = 26.7 fb$^{-1}$")
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+        if is_data.folder not in os.listdir("../www/"):
+            os.mkdir(f"../www/{is_data.folder}")
+        plt.savefig(f"../www/{is_data.folder}/muon_histogram_{var}_{lifetime}.png")
+
+        plt.cla()
+        plt.clf()
+        
 
 
 

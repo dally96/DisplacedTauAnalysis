@@ -44,6 +44,22 @@ parser.add_argument("-j"    , "--jet"     , dest = "jet"    , help = "Leading je
 
 leading_var = parser.parse_args()
 
+selections = {
+              "muon_pt":                    30., ##GeV
+              "muon_ID":                    "muon_tightId",
+              "muon_dxy_prompt_max":        50E-4, ##cm
+              "muon_dxy_prompt_min":        0E-4, ##cm
+              "muon_dxy_displaced_min":     0.1, ##cm
+              "muon_dxy_displaced_max":     10.,  ##cm
+              "muon_iso_max":               0.18,
+
+              "jet_score":                  0.9, 
+              "jet_pt":                     32.,  ##GeV
+              "jet_dxy_displaced_min":      0.02, ##cm
+
+              "MET_pt":                     105., ##GeV
+             }
+
 class skimProcessor(processor.ProcessorABC):
     def __init__(self, leading_muon_var, leading_jet_var):
         self.leading_muon_var = leading_var.muon
@@ -95,30 +111,6 @@ class skimProcessor(processor.ProcessorABC):
         leading_jet_var = self.leading_jet_var
         out_dict = {}
 
-        #Trigger Selection
-        trigger_mask = (
-                        events.HLT.PFMET120_PFMHT120_IDTight                                    |\
-                        events.HLT.PFMET130_PFMHT130_IDTight                                    |\
-                        events.HLT.PFMET140_PFMHT140_IDTight                                    |\
-                        events.HLT.PFMETNoMu120_PFMHTNoMu120_IDTight                            |\
-                        events.HLT.PFMETNoMu130_PFMHTNoMu130_IDTight                            |\
-                        events.HLT.PFMETNoMu140_PFMHTNoMu140_IDTight                            |\
-                        events.HLT.PFMET120_PFMHT120_IDTight_PFHT60                             |\
-                        events.HLT.PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF                   |\
-                        events.HLT.PFMETTypeOne140_PFMHT140_IDTight                             |\
-                        events.HLT.MET105_IsoTrk50                                              |\
-                        events.HLT.MET120_IsoTrk50                                              |\
-                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
-                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1   |\
-                        events.HLT.Ele30_WPTight_Gsf                                            |\
-                        events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
-                        events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
-                        events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 #|\
-                        #events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
-        )
-        
-        events = events[trigger_mask]
-        logger.info(f"Applied trigger mask")
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
@@ -146,23 +138,23 @@ class skimProcessor(processor.ProcessorABC):
 
         logger.info(f"Chose leading muon and jet")
 
-        #good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-        #               #(events.DisMuon.mediumId == 1)                                    &\
-        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_max"]) &\
-        #               (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
-        #               (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
-        #              )
+        good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
+                       (events.DisMuon.mediumId == 1)                                    &\
+                       (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
+                       (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
+                       (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
+                      )
 
-        #good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
-        #               (events.Jet.pt > selections["jet_pt"])                               &\
-        #               (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
-        #               #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
-        #              )
+        good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
+                       (events.Jet.pt > selections["jet_pt"])                               &\
+                       (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
+                       #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
+                      )
 
-        #good_events = (events.PFMET.pt > selections["MET_pt"])
+        good_events = (events.PFMET.pt > selections["MET_pt"])
             
-        #events = events[good_muons & good_jets & good_events]
-        #events = event_selection(events, SR_selections, "SR")
+        events = events[good_muons & good_jets & good_events]
+        #events = event_selection(events, SR_selections, "tight_TT_CR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####
@@ -300,7 +292,7 @@ class skimProcessor(processor.ProcessorABC):
         try:
             out_dict = dak.zip(out_dict, depth_limit = 1)
             logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/second_skim/first_skim_all_trig_" + samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/second_skim/test_SR_medium_" + samp, compute=False, tree_name='Events')
 
             return outfile
 
@@ -327,7 +319,7 @@ if __name__ == "__main__":
     with open("merged_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
-    #del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
+    del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
     #to_compute = apply_to_fileset(
     #             skimProcessor(leading_var.muon, leading_var.jet),
     #             max_chunks(dataset_runnable, 10000),

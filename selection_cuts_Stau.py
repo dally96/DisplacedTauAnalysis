@@ -147,8 +147,8 @@ class skimProcessor(processor.ProcessorABC):
         logger.info(f"Chose leading muon and jet")
 
         #good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-        #               #(events.DisMuon.mediumId == 1)                                    &\
-        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_max"]) &\
+        #               #(events.DisMuon.tightId == 1)                                    &\
+        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
         #               (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
         #               (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
         #              )
@@ -160,7 +160,7 @@ class skimProcessor(processor.ProcessorABC):
         #              )
 
         #good_events = (events.PFMET.pt > selections["MET_pt"])
-            
+        #    
         #events = events[good_muons & good_jets & good_events]
         #events = event_selection(events, SR_selections, "SR")
 
@@ -264,12 +264,12 @@ class skimProcessor(processor.ProcessorABC):
                             'pt', 
                             'status', 
                             'statusFlags', 
-                            #'vertexR', 
-                            #'vertexRho', 
-                            #'vx', 
-                            #'vy', 
-                            #'vz',
-                            ]
+                            'vertexR', 
+                            'vertexRho', 
+                            'vx', 
+                            'vy', 
+                            'vz',
+                           ]
 
             gvist_vars = events.GenVisTau.fields   
             gvtx_vars = events.GenVtx.fields
@@ -327,7 +327,6 @@ if __name__ == "__main__":
     with open("merged_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
-    #del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
     #to_compute = apply_to_fileset(
     #             skimProcessor(leading_var.muon, leading_var.jet),
     #             max_chunks(dataset_runnable, 10000),
@@ -337,7 +336,7 @@ if __name__ == "__main__":
     #for samp in skimmed_fileset: 
     for samp in dataset_runnable.keys():
         print(samp)
-        if "DY" in samp or "MET" in samp or "TT" in samp or "W" in samp or "Stau" in samp: continue
+        if "QCD" in samp or "MET" in samp or "TT" in samp or "DY" in samp or "W" in samp: continue
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
         to_compute = apply_to_fileset(

@@ -79,7 +79,7 @@ class skimProcessor(processor.ProcessorABC):
         # https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/misc/LUM/2018_UL/puWeights.png?ref_type=heads
         # from the plain correctionset
         weight_dict = {
-            'weight': weights * pileup_weights['nominal'] #* muon_weights['muon_trigger_SF'],
+             'weight': weights * pileup_weights['nominal'] #* muon_weights['muon_trigger_SF'],
 #             'weight_pileup_up': weights * pileup_weights['up'] * muon_weights['muon_trigger_SF'],
 #             'weight_pileup_down': weights * pileup_weights['down'] * muon_weights['muon_trigger_SF'],
 #             'weight_muon_trigger_up': weights * pileup_weights['nominal'] * (muon_weights['muon_trigger_SF'] + muon_weights['muon_trigger_SF_syst']),
@@ -114,11 +114,12 @@ class skimProcessor(processor.ProcessorABC):
                         events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
                         events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
                         events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 #|\
-                        #events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
+                        ##events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
         )
         
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
+
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
@@ -147,8 +148,8 @@ class skimProcessor(processor.ProcessorABC):
         logger.info(f"Chose leading muon and jet")
 
         #good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-        #               #(events.DisMuon.mediumId == 1)                                    &\
-        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_max"]) &\
+        #               #(events.DisMuon.tightId == 1)                                    &\
+        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
         #               (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
         #               (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
         #              )
@@ -160,9 +161,10 @@ class skimProcessor(processor.ProcessorABC):
         #              )
 
         #good_events = (events.PFMET.pt > selections["MET_pt"])
-            
+        #    
         #events = events[good_muons & good_jets & good_events]
-        #events = event_selection(events, SR_selections, "SR")
+
+        #events = event_selection(events, SR_selections, "tight_TT_CR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####
@@ -178,6 +180,8 @@ class skimProcessor(processor.ProcessorABC):
         #               (events.Jet.pt > selections["jet_pt"])                               #&\
         #               #(abs(events.Jet.dxy) > selections["muon_dxy_prompt_min"])            &\
         #               #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
+
+        #good_events = (events.PFMET.pt > selections["MET_pt"])
         #              
         #events['DisMuon'] = ak.drop_none(events.DisMuon[good_muons])
         #logger.info("Applied mask to DisMuon")
@@ -264,15 +268,13 @@ class skimProcessor(processor.ProcessorABC):
                             'pt', 
                             'status', 
                             'statusFlags', 
-                            #'vertexR', 
-                            #'vertexRho', 
-                            #'vx', 
-                            #'vy', 
-                            #'vz',
-                            ]
+                            'vertexR', 
+                            'vertexRho', 
+                            'vx', 
+                            'vy', 
+                            'vz',]
 
             gvist_vars = events.GenVisTau.fields   
-            gvtx_vars = events.GenVtx.fields
 
             for branch in gpart_vars:
                 out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
@@ -282,8 +284,6 @@ class skimProcessor(processor.ProcessorABC):
                 out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
             for branch in gvist_vars:
                 out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
-            for branch in gvtx_vars:
-                out_dict["GenVtx_" + branch]     = ak.drop_none(events["GenVtx"][branch])
 
         out_dict["event"]           = ak.drop_none(events.event)
         out_dict["weight"]          = dak.drop_none(events.weight)
@@ -327,7 +327,6 @@ if __name__ == "__main__":
     with open("merged_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
-    #del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
     #to_compute = apply_to_fileset(
     #             skimProcessor(leading_var.muon, leading_var.jet),
     #             max_chunks(dataset_runnable, 10000),
@@ -337,7 +336,7 @@ if __name__ == "__main__":
     #for samp in skimmed_fileset: 
     for samp in dataset_runnable.keys():
         print(samp)
-        if "DY" in samp or "MET" in samp or "TT" in samp or "W" in samp or "Stau" in samp: continue
+        if "QCD" in samp or "MET" in samp or "TT" in samp or "Stau" in samp or "W" in samp: continue
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
         to_compute = apply_to_fileset(

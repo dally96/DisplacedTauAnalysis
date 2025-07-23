@@ -114,7 +114,7 @@ class skimProcessor(processor.ProcessorABC):
                         events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
                         events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
                         events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 #|\
-                        #events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
+                        ##events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
         )
         
         events = events[trigger_mask]
@@ -123,7 +123,10 @@ class skimProcessor(processor.ProcessorABC):
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
         if is_MC: 
-            sumWeights = num_events[events.metadata["dataset"]]
+            if "ext" in events.metadata['dataset']:
+                sumWeights = num_events['_'.join(events.metadata["dataset"].split('_')[0:-1])]
+            else:
+                sumWeights = num_events[events.metadata["dataset"]]
         
 
             events["Stau"] = events.GenPart[(abs(events.GenPart.pdgId) == 1000015) &\
@@ -147,8 +150,8 @@ class skimProcessor(processor.ProcessorABC):
         logger.info(f"Chose leading muon and jet")
 
         #good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-        #               #(events.DisMuon.mediumId == 1)                                    &\
-        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_max"]) &\
+        #               #(events.DisMuon.tightId == 1)                                    &\
+        #               (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
         #               (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
         #               (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
         #              )
@@ -162,7 +165,7 @@ class skimProcessor(processor.ProcessorABC):
         #good_events = (events.PFMET.pt > selections["MET_pt"])
             
         #events = events[good_muons & good_jets & good_events]
-        #events = event_selection(events, SR_selections, "SR")
+        #events = event_selection(events, SR_selections, "tight_TT_CR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####
@@ -324,20 +327,33 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("merged_preprocessed_fileset.pkl", "rb") as  f:
+    with open("merged_W_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext7/merged_WtoLNu_2Jets_0J_ext7_9.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext5/merged_WtoLNu_2Jets_0J_ext5_20.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext6/merged_WtoLNu_2Jets_0J_ext6_20.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext4/merged_WtoLNu_2Jets_0J_ext4_15.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext4/merged_WtoLNu_2Jets_0J_ext4_20.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext4/merged_WtoLNu_2Jets_0J_ext4_1.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext3/merged_WtoLNu_2Jets_0J_ext3_2.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_20.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_18.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_17.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_15.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_20.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_14.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_7.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_4.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J/merged_WtoLNu_2Jets_0J_20.root"]
+    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J/merged_WtoLNu_2Jets_0J_10.root"]
     #del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
-    #to_compute = apply_to_fileset(
-    #             skimProcessor(leading_var.muon, leading_var.jet),
-    #             max_chunks(dataset_runnable, 10000),
-    #             schemaclass=PFNanoAODSchema
-    #)
 
     #for samp in skimmed_fileset: 
     for samp in dataset_runnable.keys():
         print(samp)
-        if "DY" in samp or "MET" in samp or "TT" in samp or "W" in samp or "Stau" in samp: continue
+        if "first_skim_all_trig_" + samp in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim"): continue
+        if "DY" in samp or "MET" in samp or "TT" in samp or "QCD" in samp or "Stau" in samp: continue
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
         to_compute = apply_to_fileset(

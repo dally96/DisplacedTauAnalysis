@@ -75,10 +75,10 @@ SAMP = [
       ["TTto2L2Nu", 'TT'],
       ]
 
-colors  = {'QCD': '#56CBF9', 'TT': '#FDCA40', 'DY': '#D3C0CD'}
+colors  = {'QCD': '#56CBF9', 'TT': '#FDCA40', 'DY': '#D3C0CD', 'W':'#5DFDCB'}
 markers = {'medium': 'o', 'tight': '^'}
 ids     = ['medium', 'tight']
-var     = ['pt', 'eta']
+var     = ['pt', 'eta', 'dxy']
 #file = "Staus_M_100_100mm_13p6TeV_Run3Summer22_DisMuon_GenPartMatch.root" 
 #file = "SMS-TStauStau_MStau-100_ctau-100mm_mLSP-1_TuneCP5_13p6TeV_NanoAOD.root"
  
@@ -94,6 +94,7 @@ class IDProcessor(processor.ProcessorABC):
             self._accumulator["gen"] = {}
  
     def process(self, events):    
+        NanoAODSchema.mixins["DisMuon"] = "Muon"
         id_dict = {}
         id_dict["tight"] = {}
         id_dict["medium"] = {}
@@ -114,7 +115,13 @@ class IDProcessor(processor.ProcessorABC):
         #gen_mu = staus_taus.distinctChildren[(abs(staus_taus.distinctChildren.pdgId) == 13) & (staus_taus.distinctChildren.hasFlags("isLastCopy"))]  
         gen_mu = events.GenPart[(abs(events.GenPart.pdgId) == 13) & (events.GenPart.hasFlags("isLastCopy"))]
         ### Make sure that the reco muons can be traced back to a gen particle 
-        dis_mu = events.DisMuon[(events.DisMuon.genPartIdx > 0)]
+        dis_mu = events.DisMuon[(events.DisMuon.genPartIdx >= 0)]
+        fake_mu = events.DisMuon[(events.DisMuon.genPartIdx < 0) | (abs(events.GenPart[events.DisMuon.genPartIdx].pdgId) != 13)]
+        fake_mu = fake_mu[(fake_mu.pt > GenPtMin) & (abs(fake_mu.eta) < GenEtaMax)]
+
+        loose_fake_mu   = fake_mu[fake_mu.looseId   == 1]
+        medium_fake_mu  = fake_mu[fake_mu.mediumId  == 1]
+        tight_fake_mu   = fake_mu[fake_mu.tightId   == 1]
         
         ### Make sure the sample of reco muons we're looking at have a gen particle that is the grandchild of a stau
         reco_mu = dis_mu[(abs(events.GenPart.pdgId[dis_mu.genPartIdx]) == 13)]
@@ -146,8 +153,11 @@ class IDProcessor(processor.ProcessorABC):
         gen_mu = gen_mu[(gen_mu.pt > GenPtMin) & (abs(gen_mu.eta) < GenEtaMax)]
         
         
-        id_dict["gen"]["pt"]  = gen_mu.pt
-        id_dict["gen"]["eta"] = gen_mu.eta
+        #id_dict["gen"]["pt"]  = gen_mu.pt
+        #id_dict["gen"]["eta"] = gen_mu.eta
+        id_dict["gen"]["pt"]  = fake_mu.pt
+        id_dict["gen"]["eta"] = fake_mu.eta
+        id_dict["gen"]["dxy"] = fake_mu.dxy
         #GenMu_dxy = gen_mu.dxy
         #GenMu_lxy = gen_mu.lxy
         
@@ -161,13 +171,19 @@ class IDProcessor(processor.ProcessorABC):
         #LooseRecoMuonsFromGen_dxy  = looserfg_mu.dxy
         #LooseRecoMuonsFromGen_lxy  = looserfg_mu.lxy
         
-        id_dict["medium"]["pt"]  = mediumrfg_mu.pt
-        id_dict["medium"]["eta"]  = mediumrfg_mu.eta
+        #id_dict["medium"]["pt"]  = mediumrfg_mu.pt
+        #id_dict["medium"]["eta"]  = mediumrfg_mu.eta
+        id_dict["medium"]["pt"]   = medium_fake_mu.pt
+        id_dict["medium"]["eta"]  = medium_fake_mu.eta
+        id_dict["medium"]["dxy"]  = medium_fake_mu.dxy
         #MediumRecoMuonsFromGen_dxy = mediumrfg_mu.dxy
         #MediumRecoMuonsFromGen_lxy = mediumrfg_mu.lxy
         
-        id_dict["tight"]["pt"]   = tightrfg_mu.pt
-        id_dict["tight"]["eta"]  = tightrfg_mu.eta
+        #id_dict["tight"]["pt"]   = tightrfg_mu.pt
+        #id_dict["tight"]["eta"]  = tightrfg_mu.eta
+        id_dict["tight"]["pt"]   = tight_fake_mu.pt
+        id_dict["tight"]["eta"]  = tight_fake_mu.eta
+        id_dict["tight"]["dxy"]  = tight_fake_mu.dxy
         #TightRecoMuonsFromGen_dxy  = tightrfg_mu.dxy
         #TightRecoMuonsFromGen_lxy  = tightrfg_mu.lxy
         
@@ -180,18 +196,18 @@ class IDProcessor(processor.ProcessorABC):
 background_samples = {} 
 background_samples["QCD"] = []
 background_samples["TT"] = []
-#background_samples["W"] = []
+background_samples["W"] = []
 background_samples["DY"] = []
 
 for samples in SAMP:
     if "QCD" in samples[0]:
-        background_samples["QCD"].extend( glob("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_noIso_" + samples[0] + "/*.root"))
+        background_samples["QCD"].extend( glob("/eos/uscms/store/user/dally/second_skim/merged/merged_loose_SR_" + samples[0] + "/*.root"))
     if "TT" in samples[0]:
-        background_samples["TT"].extend(  glob("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_noIso_" + samples[0] + "/*.root"))
-#    if "W" in samples[0]:
-#        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_SRcuts_noIso_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
+        background_samples["TT"].extend(  glob("/eos/uscms/store/user/dally/second_skim/merged/merged_loose_SR_" + samples[0] + "/*.root"))
+    if "W" in samples[0]:
+        background_samples["W"].append(   ("/eos/uscms/store/user/dally/second_skim/merged/merged_loose_SR_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]]))
     if "DY" in samples[0]:
-        background_samples["DY"].extend(  glob("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_loosened_cuts_noIso_" + samples[0] + "/*.root"))
+        background_samples["DY"].extend(  glob("/eos/uscms/store/user/dally/second_skim/merged/merged_loose_SR_" + samples[0] + "/*.root"))
 #    if "Stau" in samples[0]:
 #        background_samples[samples[0]] = [("/eos/uscms/store/user/dally/second_skim_muon_root/merged/merged_SRcuts_noIso_noID_noJetDxy_" + samples[0] + "/*.root", xsecs[samples[0]] * lumi * 1000 * 1/num_events[samples[0]])]
 
@@ -209,12 +225,15 @@ for background, samples in background_samples.items():
 
     background_histograms[background]["medium"]["pt"]  = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="medium_pt", label = 'pt [GeV]'))
     background_histograms[background]["medium"]["eta"] = hda.hist.Hist(hist.axis.Regular(16, -3.2, 3.2, name="medium_eta", label = r'$\eta$'))
+    background_histograms[background]["medium"]["dxy"] = hda.hist.Hist(hist.axis.Regular(200, -10, 10, name="medium_dxy", label = r'd$_{xy}$'))
 
     background_histograms[background]["tight"]["pt"]   = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="tight_pt", label = 'pt [GeV]'))
     background_histograms[background]["tight"]["eta"]  = hda.hist.Hist(hist.axis.Regular(16, -3.2, 3.2, name="tight_eta", label = r'$\eta$'))
+    background_histograms[background]["tight"]["dxy"]  = hda.hist.Hist(hist.axis.Regular(200, -10, 10, name="tight_dxy", label = r'd$_{xy}$'))
 
     background_histograms[background]["gen"]["pt"]     = hda.hist.Hist(hist.axis.Regular(16, 20, 100, name="gen_pt", label = 'pt [GeV]'))
     background_histograms[background]["gen"]["eta"]    = hda.hist.Hist(hist.axis.Regular(16, -3.2, 3.2, name="gen_eta", label = r'$\eta$'))
+    background_histograms[background]["gen"]["dxy"]    = hda.hist.Hist(hist.axis.Regular(200, -10, 10, name="gen_dxy", label = r'd$_{xy}$'))
 
     print(f"For {background} here are samples {samples}") 
     for sample_file in samples:
@@ -268,8 +287,8 @@ for background in background_histograms.keys():
         ax[1].set_title(background)
         ax[0].legend()
         ax[1].legend()
-        fig.savefig(f"MuonID_{background}_{variable}.pdf")
-        print(f"MuonID_{background}_{variable}.pdf saved!")
+        fig.savefig(f"MuonID_{background}_{variable}_fake_loose.pdf")
+        print(f"MuonID_{background}_{variable}_fake_loose.pdf saved!")
 
 #background_histograms["QCD"]["medium"]["pt"].compute().plot_ratio(
 #                            background_histograms["QCD"]["gen"]["pt"].compute(),

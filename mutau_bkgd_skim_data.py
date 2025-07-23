@@ -238,7 +238,7 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim/noLepVeto"+events.metadata['dataset'], compute=False, tree_name='Events')
+        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim/noLepVeto/"+events.metadata['dataset'], compute=False, tree_name='Events')
         return out_file
 
     def postprocess(self, accumulator):

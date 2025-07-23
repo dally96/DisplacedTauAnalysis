@@ -319,6 +319,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_1281_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_1282_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_1283_0.root": "Events",
+            }
+        },
+
+        'TTto2L2Nu_ext': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_1284_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_1285_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_1286_0.root": "Events",
@@ -739,7 +744,8 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_244_0.root": "Events",
             }
         },
-        'TTto2L2Nu_ext': {
+
+        'TTto2L2Nu_ext2': {
             "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_245_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_246_0.root": "Events",
@@ -1159,6 +1165,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_620_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_62_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_621_0.root": "Events",
+            }
+        },
+
+        'TTto2L2Nu_ext3': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_622_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_623_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto2L2Nu_TuneCP5_13p6TeV_powheg-pythia8/nano_624_0.root": "Events",
@@ -1882,6 +1893,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1269_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_126_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1270_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1271_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1272_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1273_0.root": "Events",
@@ -2182,6 +2198,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1539_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_153_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1540_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext2': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1541_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1542_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1543_0.root": "Events",
@@ -2482,6 +2503,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_180_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1810_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1811_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext3': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1812_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1813_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1814_0.root": "Events",
@@ -2782,6 +2808,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2082_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2083_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2084_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext4': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2085_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2087_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2088_0.root": "Events",
@@ -3082,6 +3113,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2355_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2356_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2357_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext5': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2358_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2359_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_235_0.root": "Events",
@@ -3382,6 +3418,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2626_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2627_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2628_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext6': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2629_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_262_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2630_0.root": "Events",
@@ -3682,6 +3723,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2897_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2898_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2899_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext7': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_289_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_28_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2900_0.root": "Events",
@@ -3725,7 +3771,7 @@ TT_fileset = {
             }
         },
 
-        'TTtoLNu2Q_ext': {
+        'TTtoLNu2Q_ext16': {
             "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2938_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2939_0.root": "Events",
@@ -3982,6 +4028,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3165_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3166_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3167_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext8': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3168_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3169_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_316_0.root": "Events",
@@ -4022,6 +4073,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3200_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3201_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3202_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext9': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3203_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3204_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3205_0.root": "Events",
@@ -4327,6 +4383,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3481_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3482_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3483_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext10': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3484_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3485_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3486_0.root": "Events",
@@ -4627,6 +4688,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3753_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3754_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3755_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext11': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3756_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3758_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_3759_0.root": "Events",
@@ -4927,6 +4993,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_403_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4040_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4041_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext12': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4042_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4043_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4044_0.root": "Events",
@@ -5227,6 +5298,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4310_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4311_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4312_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext13': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4313_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4314_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4315_0.root": "Events",
@@ -5527,6 +5603,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4585_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4586_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4588_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext14': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4589_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_458_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_4590_0.root": "Events",
@@ -5827,6 +5908,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_709_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_70_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_710_0.root": "Events",
+            }
+        },
+
+        'TTtoLNu2Q_ext15': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_711_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_712_0.root": "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTtoLNu2Q_TuneCP5_13p6TeV_powheg-pythia8/nano_713_0.root": "Events",
@@ -6654,6 +6740,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1467_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1468_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1469_0.root" : "Events",
+            }
+        },   
+
+        'TTto4Q_ext': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_146_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1470_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1471_0.root" : "Events",
@@ -7154,6 +7245,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1929_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_192_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1930_0.root" : "Events",
+            }
+        },   
+
+        'TTto4Q_ext2': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1931_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1932_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_1933_0.root" : "Events",
@@ -7607,7 +7703,7 @@ TT_fileset = {
             }
         },
 
-        'TTto4Q_ext': {
+        'TTto4Q_ext3': {
             "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2336_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2337_0.root" : "Events",
@@ -8109,6 +8205,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2784_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2785_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2786_0.root" : "Events",
+            }
+        },
+
+        'TTto4Q_ext4': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2787_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2788_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_2789_0.root" : "Events",
@@ -8609,6 +8710,11 @@ TT_fileset = {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_544_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_546_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_547_0.root" : "Events",
+            }
+        },
+
+        'TTto4Q_ext5': {
+            "files": {
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_548_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_549_0.root" : "Events",
                 "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/TTto4Q_TuneCP5_13p6TeV_powheg-pythia8/nano_54_0.root" : "Events",
