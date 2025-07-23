@@ -34,6 +34,10 @@ def passing_mask(jets, score):
 def get_passing_jets(jets, score):
     return jets[passing_mask(jets, score)]
 
+def delta_r_mask(first: ak.highlevel.Array, second: ak.highlevel.Array, threshold: float) -> ak.highlevel.Array:
+    mval = first.metric_table(second)
+    return ak.all(mval > threshold, axis=-1)
+
 class BGProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
@@ -53,7 +57,12 @@ class BGProcessor(processor.ProcessorABC):
             Lxy = np.sqrt(vx**2 + vy**2)
             events["GenVisTau"] = ak.with_field(events.GenVisTau, Lxy, where="lxy")            
 
-        events["GenVisTau"] = events.GenVisTau[(events.GenVisTau.pt > 20) & (abs(events.GenVisTau.eta) < 2.4) & (events.GenVisTau.parent.distinctParent.hasFlags("isLastCopy"))  & (events.GenVisTau.parent.hasFlags("fromHardProcess"))]
+        events["GenVisTau"] = events.GenVisTau[(abs(events.GenVisTau.parent.distinctParent.pdgId) == 1000015)   &\ 
+                                               (events.GenVisTau.pt > 20)                                       &\
+                                               (abs(events.GenVisTau.eta) < 2.4)                                &\
+                                               (events.GenVisTau.parent.distinctParent.hasFlags("isLastCopy"))  &\
+                                               (events.GenVisTau.parent.hasFlags("fromHardProcess"))
+                                              ]
 
         if is_MC: 
              events["GenVisTau"] = events.GenVisTau[(abs(events.GenVisTau.lxy) < 100)]
@@ -66,8 +75,8 @@ class BGProcessor(processor.ProcessorABC):
                         "score": tau_jets.disTauTag_score1
                         })
         unmatched_jets = ak.zip({
-                        "jets": events.Jet[~match_mask],
-                        "score": events.Jet[~match_mask].disTauTag_score1
+                        "jets": events.Jet[delta_r_mask(events.Jet, events.GenVisTau, 0.3)],
+                        "score": events.Jet[delta_r_mask(events.Jet, events.GenVisTau, 0.3)].disTauTag_score1
                         })
     
 
