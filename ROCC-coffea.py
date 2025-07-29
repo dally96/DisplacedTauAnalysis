@@ -1,4 +1,5 @@
 import coffea
+import pickle
 import uproot
 import scipy
 import dask
@@ -26,7 +27,7 @@ warnings.filterwarnings("ignore", module="coffea.nanoevents.methods")
 
 # --- DEFINITIONS --- #
 max_dr = 0.3
-score_granularity = 500
+score_granularity = 5
 
 def passing_mask(jets, score):
     return jets['score'] >= score
@@ -47,7 +48,7 @@ class BGProcessor(processor.ProcessorABC):
             return {}
 
         dataset        = events.metadata['dataset']
-
+        print(f"Starting {dataset}")
         # Determine if dataset is MC or Data
         is_MC = True if "Stau" in dataset else False
 
@@ -57,7 +58,7 @@ class BGProcessor(processor.ProcessorABC):
             Lxy = np.sqrt(vx**2 + vy**2)
             events["GenVisTau"] = ak.with_field(events.GenVisTau, Lxy, where="lxy")            
 
-        events["GenVisTau"] = events.GenVisTau[(abs(events.GenVisTau.parent.distinctParent.pdgId) == 1000015)   &\ 
+        events["GenVisStauTau"] = events.GenVisTau[(abs(events.GenVisTau.parent.distinctParent.pdgId) == 1000015)   &\
                                                (events.GenVisTau.pt > 20)                                       &\
                                                (abs(events.GenVisTau.eta) < 2.4)                                &\
                                                (events.GenVisTau.parent.distinctParent.hasFlags("isLastCopy"))  &\
@@ -82,11 +83,16 @@ class BGProcessor(processor.ProcessorABC):
 
         results = []
         scores = np.linspace(0, 1, score_granularity)
+        print(f"scores is {scores}")
         for s in scores:
             pmj = get_passing_jets(matched_jets, s) # passing matched jets
+            print(f"pmj is {pmj.compute()}")
             pfj = get_passing_jets(unmatched_jets, s) # passing fake jets
+            print(f"pfj is {pfj.compute()}")
             num_pmj = ak.sum( ak.num(pmj) )
+            print(f"num_pmj is {num_pmj.compute()}")
             num_pfj = ak.sum( ak.num(pfj) )
+            print(f"num_pfj is {num_pfj.compute()}")
             results.append( (dataset, s, num_pmj, num_pfj) )
 
         return {
@@ -100,54 +106,61 @@ class BGProcessor(processor.ProcessorABC):
         pass
 
 # --- IMPORT DATASETS --- #
-with open("root_files.txt") as f:
-    lines = [line.strip() for line in f if line.strip()]
+#with open("root_files.txt") as f:
+#    lines = [line.strip() for line in f if line.strip()]
+#
+#xrootd_prefix    = 'root://cmseos.fnal.gov/'
+#base_prefix_full = '/eos/uscms/store/user/dally/DisplacedTauAnalysis/skimmed_muon_'
+#base_prefix      = '/eos/uscms'
+#base_suffix      = '_root:'
+#
+#paths = []
+#sets  = []
+#
+#i = 0 
+#while i < len(lines):
+#    if '.root' in lines[i]:
+#        i += 1
+#        continue
+#
+#    base_path = lines[i]
+#    dataset_name = base_path.removeprefix(base_prefix_full).removesuffix(base_suffix)
+#    sets.append(dataset_name)
+#    xrootd_path = base_path.removeprefix(base_prefix).removesuffix(':')
+#
+#    # Look ahead for .root file
+#    if i + 1 < len(lines) and '.root' in lines[i + 1]: 
+#        root_file = lines[i + 1]
+#        paths.append(xrootd_prefix + xrootd_path + '/' + root_file)
+#        i += 2  # Move past both lines
+#    else:
+#        i += 1  # Only move past base path
+#
+#fileset = {}
+#
+#for data in sets:
+#    matched_paths = [p for p in paths if data in p]
+#    fileset[data] = {
+#        "files": {p: "Events" for p in matched_paths}
+#    }
+#
+#tstart = time.time()
+#
+#dataset_runnable, dataset_updated = preprocess(
+#    fileset,
+#    align_clusters=False,
+#    step_size=100_000,
+#    files_per_batch=1,
+#    skip_bad_files=False,
+#    save_form=False,
+#)
 
-xrootd_prefix    = 'root://cmseos.fnal.gov/'
-base_prefix_full = '/eos/uscms/store/user/dally/DisplacedTauAnalysis/skimmed_muon_'
-base_prefix      = '/eos/uscms'
-base_suffix      = '_root:'
+with open("second_skim_preprocessed_fileset.pkl", "rb") as f:
+    dataset_runnable = pickle.load(f)
 
-paths = []
-sets  = []
-
-i = 0 
-while i < len(lines):
-    if '.root' in lines[i]:
-        i += 1
-        continue
-
-    base_path = lines[i]
-    dataset_name = base_path.removeprefix(base_prefix_full).removesuffix(base_suffix)
-    sets.append(dataset_name)
-    xrootd_path = base_path.removeprefix(base_prefix).removesuffix(':')
-
-    # Look ahead for .root file
-    if i + 1 < len(lines) and '.root' in lines[i + 1]: 
-        root_file = lines[i + 1]
-        paths.append(xrootd_prefix + xrootd_path + '/' + root_file)
-        i += 2  # Move past both lines
-    else:
-        i += 1  # Only move past base path
-
-fileset = {}
-
-for data in sets:
-    matched_paths = [p for p in paths if data in p]
-    fileset[data] = {
-        "files": {p: "Events" for p in matched_paths}
-    }
-
-tstart = time.time()
-
-dataset_runnable, dataset_updated = preprocess(
-    fileset,
-    align_clusters=False,
-    step_size=100_000,
-    files_per_batch=1,
-    skip_bad_files=False,
-    save_form=False,
-)
+del(dataset_runnable["JetMET_Run2022E"])
+del(dataset_runnable["JetMET_Run2022F"])
+del(dataset_runnable["JetMET_Run2022G"])
 
 to_compute = apply_to_fileset(
     BGProcessor(),
@@ -167,12 +180,13 @@ all_matched = sum(
     for val in out.values()
     if "total_matched_jets" in val
 )
+print(f"all_matched is {all_matched}")
 all_jets = sum(
     val["total_number_jets"]
     for val in out.values()
     if "total_number_jets" in val
 )
-
+print(f"all_jets is {all_jets}"
 print(f"{all_jets} total jets, with {all_matched} matched")
 
 # Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
