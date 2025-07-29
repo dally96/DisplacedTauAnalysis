@@ -186,7 +186,7 @@ all_jets = sum(
     for val in out.values()
     if "total_number_jets" in val
 )
-print(f"all_jets is {all_jets}"
+print(f"all_jets is {all_jets}")
 print(f"{all_jets} total jets, with {all_matched} matched")
 
 # Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
