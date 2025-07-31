@@ -86,14 +86,13 @@ class BGProcessor(processor.ProcessorABC):
         print(f"scores is {scores}")
         for s in scores:
             pmj = get_passing_jets(matched_jets, s) # passing matched jets
-            print(f"pmj is {pmj.compute()}")
             pfj = get_passing_jets(unmatched_jets, s) # passing fake jets
-            print(f"pfj is {pfj.compute()}")
             num_pmj = ak.sum( ak.num(pmj) )
-            print(f"num_pmj is {num_pmj.compute()}")
+            #print(f"num_pmj is {num_pmj.compute()}")
             num_pfj = ak.sum( ak.num(pfj) )
-            print(f"num_pfj is {num_pfj.compute()}")
+            #print(f"num_pfj is {num_pfj.compute()}")
             results.append( (dataset, s, num_pmj, num_pfj) )
+
 
         return {
             'total_number_jets': total_jets,
@@ -144,7 +143,7 @@ class BGProcessor(processor.ProcessorABC):
 #        "files": {p: "Events" for p in matched_paths}
 #    }
 #
-#tstart = time.time()
+tstart = time.time()
 #
 #dataset_runnable, dataset_updated = preprocess(
 #    fileset,
@@ -155,24 +154,50 @@ class BGProcessor(processor.ProcessorABC):
 #    save_form=False,
 #)
 
+all_matched = 0
+
+all_jets = 0
+
+# Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
+
+s_sums = defaultdict(lambda: [0, 0])
+
+dataset_runnable = {}
+stau_dict = {}
+
 with open("second_skim_preprocessed_fileset.pkl", "rb") as f:
-    dataset_runnable = pickle.load(f)
+    sub_dataset_runnable = pickle.load(f)
+    for dataset in sub_dataset_runnable.keys():
+        if "Stau" not in dataset: continue
+        dataset_runnable[dataset] = sub_dataset_runnable[dataset] 
+for samp in dataset_runnable.keys():
+    samp_runnable = {}
+    samp_runnable[samp] = dataset_runnable[samp]
+    
+    to_compute = apply_to_fileset(
+        BGProcessor(),
+        max_chunks(samp_runnable, ), # add 10 to run over 10
+        schemaclass=NanoAODSchema,
+    )
 
-del(dataset_runnable["JetMET_Run2022E"])
-del(dataset_runnable["JetMET_Run2022F"])
-del(dataset_runnable["JetMET_Run2022G"])
+    (out, ) = dask.compute(to_compute)
 
-to_compute = apply_to_fileset(
-    BGProcessor(),
-    max_chunks(dataset_runnable, ), # add 10 to run over 10
-    schemaclass=NanoAODSchema,
-)
+    if "Stau" in samp:
+        
+        stau_all_matched = 0 
+    all_matched += out[samp]["total_matched_jets"]
+    all_jets    += out[samp]["total_number_jets"]
 
-(out,) = dask.compute(to_compute)
-
+    if 'set_s_pmj_pfj' not in out[samp]: continue
+    for score_list in out[samp]['set_s_pmj_pfj']:
+        s_sums[score_list[1]][0] += score_list[2]
+        s_sums[score_list[1]][1] += score_list[3]
+    
+    
 tprocessor = time.time() - tstart
 print(f"{tprocessor} seconds for processor to finish")
 
+'''
 # --- ROC Calculations --- #
 # Totals
 all_matched = sum(
@@ -188,17 +213,7 @@ all_jets = sum(
 )
 print(f"all_jets is {all_jets}")
 print(f"{all_jets} total jets, with {all_matched} matched")
-
-# Aggregation dict: s → [sum of 2nd elements, sum of 3rd elements]
-
-s_sums = defaultdict(lambda: [0, 0])
-
-for entry in out.values():
-    if 'set_s_pmj_pfj' not in entry:
-        continue
-    for s, val2, val3 in entry['set_s_pmj_pfj']:
-        s_sums[s][0] += val2
-        s_sums[s][1] += val3
+'''
 
 thresholds   = []
 fake_rates   = []
@@ -213,8 +228,8 @@ for s, vals in s_sums.items():
 
 tcalc = time.time() - tstart - tprocessor
 
-print("sets")
-print(sets)
+#print("sets")
+#print(sets)
 print("Score thresholds:")
 print(thresholds)
 print("Fake rates:")
@@ -229,7 +244,7 @@ roc = ax.scatter(fake_rates, efficiencies, c=thresholds, cmap='plasma')
 cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
 #ax.set_xscale("log")
-ax.set_xlim(-1e-1, 6e-3)
+#ax.set_xlim(-1e-1, 6e-3)
 #ax.set_ylim(0.85, 1.05)
 
 plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
