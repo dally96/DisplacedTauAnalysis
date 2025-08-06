@@ -265,6 +265,7 @@ for lifetime in lifetimes:
 
     plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
     plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
+    plt.title(f"{lifetime}")
     plt.legend(loc='bottom right')
     
     #plt.grid()
