@@ -3,7 +3,10 @@ import pickle
 import uproot
 import scipy
 import dask
+import hist 
+import hist.dask as hda
 import time
+import dask_awkward as dak
 import warnings
 import numpy as np
 import awkward as ak
@@ -33,7 +36,7 @@ lifetimes = ['1mm', '10mm', '100mm', '1000mm']
 masses    = ['100', '200', '300', '500']
 
 stau_colors = {'100': '#EA7AF4', '200': '#B43E8F', '300': '#6200B3', '500': '#218380'}
-
+stau_lifetime_colors = {'1mm': '#EA7AF4', '10mm': '#B43E8F', '100mm': '#6200B3', '1000mm': '#218380'}
 def passing_mask(jets, score):
     return jets['score'] >= score
 
@@ -85,25 +88,29 @@ class BGProcessor(processor.ProcessorABC):
                         "score": events.Jet[delta_r_mask(events.Jet, events.GenVisTau, 0.3)].disTauTag_score1
                         })
     
+        matched_jet_histo = hda.hist.Hist(hist.axis.Regular(score_granularity , 0, 1, name = 'matched_jet_score', label = 'score', overflow = True))
+        unmatched_jet_histo = hda.hist.Hist(hist.axis.Regular(score_granularity, 0, 1, name = 'unmatched_jet_score', label = 'score', overflow = True))
+
+        matched_jet_histo.fill(dak.flatten(tau_jets.disTauTag_score1, axis = None))
+        unmatched_jet_histo.fill(dak.flatten(events.Jet[delta_r_mask(events.Jet, events.GenVisTau, 0.3)].disTauTag_score1, axis = None))
 
         results = []
         scores = np.linspace(0, 1, score_granularity)
         #print(f"scores is {scores}")
-        for s in scores:
-            pmj = get_passing_jets(matched_jets, s) # passing matched jets
-            pfj = get_passing_jets(unmatched_jets, s) # passing fake jets
-            num_pmj = ak.sum( ak.num(pmj) )
-            #print(f"num_pmj is {num_pmj.compute()}")
-            num_pfj = ak.sum( ak.num(pfj) )
-            #print(f"num_pfj is {num_pfj.compute()}")
-            results.append( (dataset, s, num_pmj, num_pfj) )
+        #for s in scores:
+        #    pmj = get_passing_jets(matched_jets, s) # passing matched jets
+        #    pfj = get_passing_jets(unmatched_jets, s) # passing fake jets
+        #    num_pmj = ak.sum( ak.num(pmj) )
+        #    #print(f"num_pmj is {num_pmj.compute()}")
+        #    num_pfj = ak.sum( ak.num(pfj) )
+        #    #print(f"num_pfj is {num_pfj.compute()}")
+        #    results.append( (dataset, s, num_pmj, num_pfj) )
 
 
         return {
-            'total_number_jets': total_jets,
-            'total_matched_jets': ak.sum( ak.num(matched_jets) ),
-            'total_unmatched_jets': ak.sum( ak.num(unmatched_jets) ),
-            'set_s_pmj_pfj': results,
+            'matched_jet_score': matched_jet_histo,
+            'unmatched_jet_score': unmatched_jet_histo,
+            'total_jets':  total_jets,
             }
 
     def postprocess(self,accumulator):
@@ -169,12 +176,14 @@ s_sums = defaultdict(lambda: [0])
 
 dataset_runnable = {}
 stau_dict = {}
+unmatched_histo =  hda.hist.Hist(hist.axis.Regular(score_granularity, 0, 1, name = 'unmatched_jet_score', label = 'score', overflow = True)).compute()
 
 with open("second_skim_preprocessed_fileset.pkl", "rb") as f:
     sub_dataset_runnable = pickle.load(f)
     for dataset in sub_dataset_runnable.keys():
         if "JetMET" in dataset: continue
         dataset_runnable[dataset] = sub_dataset_runnable[dataset] 
+
 for samp in dataset_runnable.keys():
     samp_runnable = {}
     samp_runnable[samp] = dataset_runnable[samp]
@@ -196,16 +205,28 @@ for samp in dataset_runnable.keys():
             stau_dict[lifetime] = {}
             stau_dict[lifetime][mass] = {}
 
-        passed_matched_jets =  {}
-        for score_list in out[samp]['set_s_pmj_pfj']:
-            passed_matched_jets[score_list[1]] = score_list[2]
-            stau_dict[lifetime][mass][score_list[1]] = passed_matched_jets[score_list[1]]/out[samp]["total_matched_jets"]  
-         
-    all_jets    += out[samp]["total_number_jets"]
+        out[samp]['matched_jet_score'].values(flow = True)[-2] = out[samp]['matched_jet_score'].values(flow = True)[-2] + out[samp]['matched_jet_score'].values(flow = True)[-1]
 
-    if 'set_s_pmj_pfj' not in out[samp]: continue
-    for score_list in out[samp]['set_s_pmj_pfj']:
-        s_sums[score_list[1]][0] += score_list[3]
+        matched_binned_scores = out[samp]['matched_jet_score'].values()
+
+        matched_score_series = []
+
+        for i in range(score_granularity):
+            matched_score_series.append(np.sum(matched_binned_scores[i:]))
+
+        passed_matched_jets =  {}
+        stau_dict[lifetime][mass]['matched'] = matched_score_series/matched_score_series[0]
+        #passed_matched_jets =  {}
+        #for score_list in out[samp]['set_s_pmj_pfj']:
+        #    passed_matched_jets[score_list[1]] = score_list[2]
+        #    stau_dict[lifetime][mass][score_list[1]] = passed_matched_jets[score_list[1]]/out[samp]["total_matched_jets"]  
+         
+    unmatched_histo += out[samp]['unmatched_jet_score']
+    all_jets    += out[samp]["total_jets"]
+
+    #if 'set_s_pmj_pfj' not in out[samp]: continue
+    #for score_list in out[samp]['set_s_pmj_pfj']:
+    #    s_sums[score_list[1]][0] += score_list[3]
     
     
 tprocessor = time.time() - tstart
@@ -230,19 +251,25 @@ print(f"{all_jets} total jets, with {all_matched} matched")
 '''
 
 thresholds   = []
-fake_rates   = []
 
-for lifetime in lifetimes:
-    for mass in masses:
-        stau_dict[lifetime][mass]['eff'] = []
+unmatched_histo.values(flow = True)[-2] = unmatched_histo.values(flow = True)[-2] + unmatched_histo.values(flow = True)[-1]
+unmatched_binned_scores = unmatched_histo.values()
+unmatched_score_series = []
 
-for s, vals in s_sums.items():
-    thresholds.append(s)
-    fake_rate = vals[0] / all_jets
-    fake_rates.append(fake_rate)
-    for lifetime in lifetimes:
-        for mass in masses:
-            stau_dict[lifetime][mass]['eff'].append(stau_dict[lifetime][mass][s])
+for i in range(score_granularity): 
+    unmatched_score_series.append(np.sum(unmatched_binned_scores[i:]))
+fake_rate = unmatched_score_series / all_jets
+#for lifetime in lifetimes:
+#    for mass in masses:
+#        stau_dict[lifetime][mass]['eff'] = []
+#
+#for s, vals in s_sums.items():
+#    thresholds.append(s)
+#    fake_rate = vals[0] / all_jets
+#    fake_rates.append(fake_rate)
+#    for lifetime in lifetimes:
+#        for mass in masses:
+#            stau_dict[lifetime][mass]['eff'].append(stau_dict[lifetime][mass][s])
 
 tcalc = time.time() - tstart - tprocessor
 
@@ -257,25 +284,40 @@ tcalc = time.time() - tstart - tprocessor
 print(f"{tcalc} seconds for calculations to finish")
 
 # Plot stuff
-for lifetime in lifetimes:
-    fig, ax = plt.subplots()
-    roc = {}
-    for mass in masses:
-        roc[mass] = ax.plot(fake_rates, stau_dict[lifetime][mass]['eff'], color = stau_colors[mass], label = mass + ' GeV')
-
-    plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
-    plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
-    plt.title(f"{lifetime}")
-    plt.legend(loc='bottom right')
-    
-    #plt.grid()
-    plt.savefig(f'limited-log-skimmed-bg-tau-tagger-roc-scatter-{lifetime}.pdf')
+#for lifetime in lifetimes:
+#    fig, ax = plt.subplots()
+#    roc = {}
+#    for mass in masses:
+#        roc[mass] = ax.plot(fake_rate, stau_dict[lifetime][mass]['matched'], color = stau_colors[mass], label = mass + ' GeV')
+#
+#    plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
+#    plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
+#    plt.title(f"{lifetime}")
+#    plt.xscale('log')
+#    plt.legend(loc='lower right')
+#    
+#    #plt.grid()
+#    plt.savefig(f'limited-log-skimmed-bg-tau-tagger-roc-scatter-{lifetime}_test.pdf')
     
 #cbar = fig.colorbar(roc, ax=ax, label='Score threshold')
 
 #ax.set_xscale("log")
 #ax.set_xlim(-1e-1, 6e-3)
 #ax.set_ylim(0.85, 1.05)
+
+for mass in masses:
+    fig, ax = plt.subplots()
+    roc = {}
+    for lifetime in lifetimes:
+        roc[lifetime] = ax.plot(fake_rate, stau_dict[lifetime][mass]['matched'], color = stau_lifetime_colors[lifetime], label = lifetime)
+    plt.xlabel(r"Fake rate $\left(\frac{fake\_passing\_jets}{total\_jets}\right)$")
+    plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
+    plt.title(f"{mass}")
+    plt.xscale('log')
+    plt.legend(loc='lower right')
+    
+    #plt.grid()
+    plt.savefig(f'limited-log-skimmed-bg-tau-tagger-roc-scatter-{mass}_log.pdf')
 
 
 tplotting = time.time() - tstart - tprocessor - tcalc
