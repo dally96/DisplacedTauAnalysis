@@ -44,6 +44,11 @@ parser.add_argument("-j"    , "--jet"     , dest = "jet"    , help = "Leading je
 
 leading_var = parser.parse_args()
 
+second_skim_dir = 'potential_W_CR_promptmuons_prompterjets'
+
+if second_skim_dir not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/"):
+    os.mkdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/" + second_skim_dir)
+
 class skimProcessor(processor.ProcessorABC):
     def __init__(self, leading_muon_var, leading_jet_var):
         self.leading_muon_var = leading_var.muon
@@ -107,13 +112,13 @@ class skimProcessor(processor.ProcessorABC):
                         events.HLT.PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF                   |\
                         events.HLT.PFMETTypeOne140_PFMHT140_IDTight                             |\
                         events.HLT.MET105_IsoTrk50                                              |\
-                        events.HLT.MET120_IsoTrk50                                              |\
-                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
-                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1   |\
-                        events.HLT.Ele30_WPTight_Gsf                                            |\
-                        events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
-                        events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
-                        events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 #|\
+                        events.HLT.MET120_IsoTrk50                                              #|\
+                        #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
+                        #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1   |\
+                        #events.HLT.Ele30_WPTight_Gsf                                            |\
+                        #events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1                    |\
+                        #events.HLT.DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1        |\
+                        #events.HLT.DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1                 #|\
                         ##events.HLT.MonoCentralPFJet80_PFMETNoMu120_PFMHTNoMu120_IDTight        |\ #Trigger not included in current Nanos
         )
         
@@ -165,7 +170,7 @@ class skimProcessor(processor.ProcessorABC):
         #good_events = (events.PFMET.pt > selections["MET_pt"])
             
         #events = events[good_muons & good_jets & good_events]
-        #events = event_selection(events, SR_selections, "tight_TT_CR")
+        events = event_selection(events, SR_selections, "W_CR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####
@@ -254,39 +259,39 @@ class skimProcessor(processor.ProcessorABC):
             out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
         for branch in jet_vars:
             out_dict["Jet_"       + branch]  = ak.drop_none(events["Jet"][branch])
-        for branch in tau_vars:
-            out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
+        #for branch in tau_vars:
+        #    out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
         for branch in MET_vars: 
             out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
-        if is_MC:
-            gpart_vars =   ['eta', 
-                            'genPartIdxMother', 
-                            'mass', 
-                            'pdgId', 
-                            'phi', 
-                            'pt', 
-                            'status', 
-                            'statusFlags', 
-                            #'vertexR', 
-                            #'vertexRho', 
-                            #'vx', 
-                            #'vy', 
-                            #'vz',
-                            ]
+        #if is_MC:
+        #    gpart_vars =   ['eta', 
+        #                    'genPartIdxMother', 
+        #                    'mass', 
+        #                    'pdgId', 
+        #                    'phi', 
+        #                    'pt', 
+        #                    'status', 
+        #                    'statusFlags', 
+        #                    #'vertexR', 
+        #                    #'vertexRho', 
+        #                    #'vx', 
+        #                    #'vy', 
+        #                    #'vz',
+        #                    ]
 
-            gvist_vars = events.GenVisTau.fields   
-            gvtx_vars = events.GenVtx.fields
+        #    gvist_vars = events.GenVisTau.fields   
+        #    gvtx_vars = events.GenVtx.fields
 
-            for branch in gpart_vars:
-                out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
-            for branch in gpart_vars:
-                out_dict["Stau_"      + branch]  = ak.drop_none(events["Stau"][branch])
-            for branch in gpart_vars:
-                out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
-            for branch in gvist_vars:
-                out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
-            for branch in gvtx_vars:
-                out_dict["GenVtx_" + branch]     = ak.drop_none(events["GenVtx"][branch])
+        #    for branch in gpart_vars:
+        #        out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
+        #    for branch in gpart_vars:
+        #        out_dict["Stau_"      + branch]  = ak.drop_none(events["Stau"][branch])
+        #    for branch in gpart_vars:
+        #        out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
+        #    for branch in gvist_vars:
+        #        out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
+        #    for branch in gvtx_vars:
+        #        out_dict["GenVtx_" + branch]     = ak.drop_none(events["GenVtx"][branch])
 
         out_dict["event"]           = ak.drop_none(events.event)
         out_dict["weight"]          = dak.drop_none(events.weight)
@@ -294,16 +299,16 @@ class skimProcessor(processor.ProcessorABC):
         out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
         out_dict["nDisMuon"]        = dak.num(ak.drop_none(events.DisMuon))
         out_dict["nJet"]            = dak.num(ak.drop_none(events.Jet))
-        out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
-        if is_MC:
-            out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
-            out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
+        #out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
+        #if is_MC:
+        #    out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
+        #    out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
             
             
         try:
             out_dict = dak.zip(out_dict, depth_limit = 1)
             logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/second_skim/first_skim_all_trig_" + samp, compute=False, tree_name='Events')
+            outfile = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/second_skim/" + second_skim_dir + "/" + samp, compute=False, tree_name='Events')
 
             return outfile
 
@@ -330,35 +335,17 @@ if __name__ == "__main__":
     with open("merged_W_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext7/merged_WtoLNu_2Jets_0J_ext7_9.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext5/merged_WtoLNu_2Jets_0J_ext5_20.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext6/merged_WtoLNu_2Jets_0J_ext6_20.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext4/merged_WtoLNu_2Jets_0J_ext4_15.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext4/merged_WtoLNu_2Jets_0J_ext4_20.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext4/merged_WtoLNu_2Jets_0J_ext4_1.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext3/merged_WtoLNu_2Jets_0J_ext3_2.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_20.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_18.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_17.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext2/merged_WtoLNu_2Jets_0J_ext2_15.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_20.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_14.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_7.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J_ext/merged_WtoLNu_2Jets_0J_ext_4.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J/merged_WtoLNu_2Jets_0J_20.root"]
-    #del dataset_runnable["WtoLNu_2Jets_0J"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_WtoLNu_2Jets_0J/merged_WtoLNu_2Jets_0J_10.root"]
-    #del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]
 
     #for samp in skimmed_fileset: 
     for samp in dataset_runnable.keys():
         print(samp)
-        if "first_skim_all_trig_" + samp in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim"): continue
+        if samp in os.listdir(f"/eos/uscms/store/group/lpcdisptau/dally/second_skim/{second_skim_dir}"): continue
         if "DY" in samp or "MET" in samp or "TT" in samp or "QCD" in samp or "Stau" in samp: continue
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
         to_compute = apply_to_fileset(
                      skimProcessor(leading_var.muon, leading_var.jet),
-                     max_chunks(samp_runnable, 1000000),
+                     max_chunks(samp_runnable),
                      schemaclass=PFNanoAODSchema,
                      uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024)}
         )
@@ -370,6 +357,6 @@ if __name__ == "__main__":
             logger.info(f"Error writing out files: {e}")
 
         elapsed = time.time() - tic 
-        print(f"Finished in {elapsed:.1f}s")
+        print(f"Finished in {elapsed:.1f}s at {time.time()}")
         client.shutdown()
         cluster.close()

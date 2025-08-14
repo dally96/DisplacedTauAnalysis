@@ -71,9 +71,9 @@ def event_selection(events, selections, region):
     ###############################################################
     if region == "TT_CR":
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       (events.DisMuon.mediumId == 1)                                    &\
-                       (abs(events.DisMuon.dxy) > selections["muon_dxy_displaced_min"]) &\
-                       (abs(events.DisMuon.dxy) < selections["muon_dxy_displaced_max"]) &\
+                       (events.DisMuon.tightId == 1)                                    &\
+                       (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_min"]) &\
+                       (abs(events.DisMuon.dxy) < selections["muon_dxy_prompt_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
                       )
         
@@ -121,6 +121,26 @@ def event_selection(events, selections, region):
                        (events.Jet.pt > selections["jet_pt"])                               &\
                        (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])          #&\
                        #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
+                      )
+        
+        good_events = (events.PFMET.pt > selections["MET_pt"])
+        
+
+            
+        events = events[good_muons & good_jets & good_events]
+    ###############################################################
+    if region == "W_CR":
+        good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
+                       (events.DisMuon.mediumId == 1)                                    &\
+                       (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_min"]) &\
+                       (abs(events.DisMuon.dxy) < selections["muon_dxy_prompt_max"]) &\
+                       (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
+                      )
+        
+        good_jets   = dak.flatten((events.Jet.disTauTag_score1 > selections["jet_score"])   &\
+                       (events.Jet.pt > selections["jet_pt"])                               &\
+                       (abs(events.Jet.dxy) > selections["muon_dxy_prompt_min"])            &\
+                       (abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
                       )
         
         good_events = (events.PFMET.pt > selections["MET_pt"])
