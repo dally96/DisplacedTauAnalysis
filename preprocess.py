@@ -35,6 +35,11 @@ parser.add_argument(
 	default='-1',
 	required=False,
 	help='Specify the number of input files to process')
+parser.add_argument(
+	"--skim",
+	default='',
+	required=False,
+	help='Specify if working on the skimmed samples')
 args = parser.parse_args()
 
 
@@ -42,13 +47,20 @@ def take(n, iterable):
     """Return the first n items of the iterable as a list."""
     return list(islice(iterable, n))
 
+
+outdir_p = ''
+outdir_s = ''
+if args.skim != '':
+    outdir_p = args.skim + '.'
+    outdir_s = args.skim + '/'
+  
 samples = {
-    "Wto2Q"  : "samples.fileset_WTo2Q",
-    "WtoLNu" : "samples.fileset_WToLNu",
-    "QCD"    : "samples.fileset_QCD",
-    "DY"     : "samples.fileset_DY",
-    "signal" : "samples.fileset_signal",
-    "TT"     : "samples.fileset_TT",
+    "Wto2Q"  : f"samples.{outdir_p}fileset_WTo2Q",
+    "WtoLNu" : f"samples.{outdir_p}fileset_WToLNu",
+    "QCD"    : f"samples.{outdir_p}fileset_QCD",
+    "DY"     : f"samples.{outdir_p}fileset_DY",
+    "signal" : f"samples.{outdir_p}fileset_signal",
+    "TT"     : f"samples.{outdir_p}fileset_TT",
 }
 
 module = importlib.import_module(samples[args.sample])
@@ -68,7 +80,7 @@ if nfiles != -1:
 
 print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
 
-## first element of value is step_zie, second is files_per_barch
+## first element of value is step_size, second is files_per_barch
 pars_per_sample = {
     "Wto2Q"  : [20_000, 100], 
     "WtoLNu" : [20_000, 100],  
@@ -124,11 +136,11 @@ if __name__ == "__main__":
        file_exceptions=(OSError, KeyInFileError),
        allow_empty_datasets=False,
     )
-    with open(f"{args.sample}_preprocessed.pkl", "wb") as f:
+    with open(f"samples/{outdir_s}{args.sample}_preprocessed.pkl", "wb") as f:
        pickle.dump(dataset_runnable, f)
 
     elapsed = time.time() - tic 
-    print(f"Preproccessing datasets finished in {elapsed:.1f}s") 
+    print(f"Preprocessing datasets finished in {elapsed:.1f}s") 
 
     client.shutdown()
     cluster.close()
