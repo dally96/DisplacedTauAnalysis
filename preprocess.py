@@ -1,188 +1,131 @@
-import sys
-import os
-import uproot
-import uproot.exceptions
-from uproot.exceptions import KeyInFileError
+import os, sys, pdb
+import argparse, importlib
 import pickle
 
-import argparse
-import numpy as np
-from coffea import processor
-from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
 from coffea.dataset_tools import (
     apply_to_fileset,
     max_chunks,
     preprocess,
 )
-from coffea.lumi_tools import LumiData, LumiList, LumiMask
-import awkward as ak
-import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-import dask_awkward as dak
+from uproot.exceptions import KeyInFileError
 
-import time
-from distributed import Client
-from dask_lxplus import CernCluster
+import time, logging
+# from distributed import Client
+from dask.distributed import Client, wait, progress, LocalCluster
 
-import warnings
-warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
-import logging
+# from dask_lxplus import CernCluster
 
-from fileset import fileset
-from skimmed_fileset import skimmed_fileset
-from lower_lifetime_fileset import lower_lifetime_fileset
-from DY_fileset import DY_fileset
-from W_fileset import W_fileset
-from TT_fileset import TT_fileset
-from data_fileset import data_fileset
-# from merged_fileset import merged_fileset
-# from jet_dxy_fileset import jet_dxy_fileset
+
+parser = argparse.ArgumentParser(description="")
+parser.add_argument(
+	"--sample",
+	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT'],
+	required=True,
+	help='Specify the sample you want to process')
+parser.add_argument(
+	"--subsample",
+	nargs='*',
+	default='all',
+	required=False,
+	help='Specify the exact sample you want to process')
+parser.add_argument(
+	"--nfiles",
+	default='-1',
+	required=False,
+	help='Specify the number of input files to process')
+args = parser.parse_args()
+
+
+def take(n, iterable):
+    """Return the first n items of the iterable as a list."""
+    return list(islice(iterable, n))
+
+samples = {
+    "Wto2Q"  : "samples.fileset_WTo2Q",
+    "WtoLNu" : "samples.fileset_WToLNu",
+    "QCD"    : "samples.fileset_QCD",
+    "DY"     : "samples.fileset_DY",
+    "signal" : "samples.fileset_signal",
+    "TT"     : "samples.fileset_TT",
+}
+
+module = importlib.import_module(samples[args.sample])
+all_fileset = module.fileset  #['Stau_100_0p1mm'] 
+
+
+if args.subsample == 'all':
+    fileset = all_fileset
+else:  
+    fileset = {k: all_fileset[k] for k in args.subsample}
+
+nfiles = int(args.nfiles)
+if nfiles != -1:
+    for k in fileset.keys():
+        if nfiles < len(fileset[k]['files']):
+            fileset[k]['files'] = take(nfiles, fileset[k]['files'])
+
+print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
+
+## first element of value is step_zie, second is files_per_barch
+pars_per_sample = {
+    "Wto2Q"  : [20_000, 100], 
+    "WtoLNu" : [20_000, 100],  
+    "QCD"    : [20_000, 1],  
+    "DY"     : [10_000, 1000],  
+    "signal" : [20_000, 1],  
+    "TT"     : [20_000, 1000],  
+    "data"   : [20_000, 100] 
+}
+
 
 
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    
-    #XRootDFileSystem(hostid = "root://cmsxrootd.fnal.gov/", filehandle_cache_size = 250)
+    logger = logging.getLogger(__name__)    
     tic = time.time()
-    n_port = 8786
-    import socket
-    cluster = CernCluster(
-            cores=1,
-            memory='3000MB',
-            disk='1000MB',
-            death_timeout = '60',
-            lcg = True,
-            nanny = False,
-            container_runtime = "none",
-            log_directory = "/eos/user/f/fiorendi/condor/log",
-            scheduler_options={
-                'port': n_port,
-                'host': socket.gethostname(),
-                },
-            job_extra={
-                '+JobFlavour': '"longlunch"',
-                },
-            extra = ['--worker-port 10000:10100']
-            )
-    
-    # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
-    cluster.adapt(minimum=1, maximum=1000)
+
+#     n_port = 8786
+#     import socket
+#     cluster = CernCluster(
+#             cores=1,
+#             memory='3000MB',
+#             disk='1000MB',
+#             death_timeout = '60',
+#             lcg = True,
+#             nanny = False,
+#             container_runtime = "none",
+#             log_directory = "/eos/user/f/fiorendi/condor/log",
+#             scheduler_options={
+#                 'port': n_port,
+#                 'host': socket.gethostname(),
+#                 },
+#             job_extra={
+#                 '+JobFlavour': '"longlunch"',
+#                 },
+#             extra = ['--worker-port 10000:10100']
+#             )
+#     
+#     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
+#     cluster.adapt(minimum=1, maximum=1000)
+ 
+    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
     client = Client(cluster)
 
     dataset_runnable, dataset_updated = preprocess(
        fileset,
        align_clusters=False,
-       step_size=20_000,
-       files_per_batch=1,
+       step_size=pars_per_sample[args.sample][0],
+       files_per_batch=pars_per_sample[args.sample][1],
        skip_bad_files=True,
        save_form=False,
        file_exceptions=(OSError, KeyInFileError),
        allow_empty_datasets=False,
     )
-
-    with open("signal_test_preprocessed_fileset.pkl", "wb") as f:
+    with open(f"{args.sample}_preprocessed.pkl", "wb") as f:
        pickle.dump(dataset_runnable, f)
-#
-    #TT_dataset_runnable, TT_dataset_updated = preprocess(
-    #    TT_fileset,
-    #    align_clusters=False,
-    #    step_size=20_000,
-    #    files_per_batch=1000,
-    #    skip_bad_files=True,
-    #    save_form=False,
-    #    file_exceptions=(OSError, KeyInFileError),
-    #    allow_empty_datasets=False,
-    #)
-
-    #with open("TT_preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(TT_dataset_runnable, f)
-
-    #DY_dataset_runnable, DY_dataset_updated = preprocess(
-    #    DY_fileset,
-    #    align_clusters=False,
-    #    step_size=10_000,
-    #    files_per_batch=1000,
-    #    skip_bad_files=True,
-    #    save_form=False,
-    #    file_exceptions=(OSError, KeyInFileError),
-    #    allow_empty_datasets=False,
-    #)
-
-    #with open("DY_preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(DY_dataset_runnable, f)
-
-    #skimmed_dataset_runnable, skimmed_dataset_updated = preprocess(
-    #    skimmed_fileset,
-    #    align_clusters=False,
-    #    step_size=10_000,
-    #    files_per_batch=100,
-    #    skip_bad_files=True,
-    #    save_form=False,
-    #    file_exceptions=(OSError, KeyInFileError),
-    #    allow_empty_datasets=False,
-    #)
-    #
-    #with open("skimmed_preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(skimmed_dataset_runnable, f)
-
-    #lower_lifetime_dataset_runnable, lower_lifetime_dataset_updated = preprocess(
-    #    lower_lifetime_fileset,
-    #    align_clusters=False,
-    #    step_size=10_000,
-    #    files_per_batch=100,
-    #    skip_bad_files=True,
-    #    save_form=False,
-    #    file_exceptions=(OSError, KeyInFileError),
-    #    allow_empty_datasets=False,
-    #)
-
-    #with open("lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
-    #    pickle.dump(lower_lifetime_dataset_runnable, f)
-
-#    W_dataset_runnable, W_dataset_updated = preprocess(
-#        W_fileset,
-#        align_clusters=False,
-#        step_size=20_000,
-#        files_per_batch=100,
-#        skip_bad_files=True,
-#        save_form=False,
-#        file_exceptions=(OSError, KeyInFileError),
-#        allow_empty_datasets=False,
-#    )
-#
-#    with open("W_preprocessed_fileset.pkl", "wb") as f:
-#        pickle.dump(W_dataset_runnable, f)
-#
-#    data_dataset_runnable, data_dataset_updated = preprocess(
-#        data_fileset,
-#        align_clusters=False,
-#        step_size=20_000,
-#        files_per_batch=100,
-#        skip_bad_files=True,
-#        save_form=False,
-#        file_exceptions=(OSError, KeyInFileError),
-#        allow_empty_datasets=False,
-#    )
-#     
-#    with open("data_preprocessed_fileset.pkl", "wb") as f:
-#        pickle.dump(data_dataset_runnable, f)
-
-#     merged_dataset_runnable, merged_dataset_updated = preprocess(
-#         merged_fileset,
-#         align_clusters=False,
-#         step_size=10_000,
-#         files_per_batch=100,
-#         skip_bad_files=True,
-#         save_form=False,
-#         file_exceptions=(OSError, KeyInFileError),
-#         allow_empty_datasets=False,
-#     )
-     
-#     with open("merged_preprocessed_fileset.pkl", "wb") as f:
-#         pickle.dump(merged_dataset_runnable, f)
 
     elapsed = time.time() - tic 
     print(f"Preproccessing datasets finished in {elapsed:.1f}s") 
