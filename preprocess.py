@@ -14,7 +14,7 @@ from uproot.exceptions import KeyInFileError
 import time, logging
 # from distributed import Client
 from dask.distributed import Client, wait, progress, LocalCluster
-
+from itertools import islice
 # from dask_lxplus import CernCluster
 
 
@@ -39,7 +39,7 @@ parser.add_argument(
 	"--skim",
 	default='',
 	required=False,
-	help='Specify if working on the skimmed samples')
+	help='Specify, if working on the skimmed samples, the skim name (name of the folder inside samples)')
 args = parser.parse_args()
 
 
