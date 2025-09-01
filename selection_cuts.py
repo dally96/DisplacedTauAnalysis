@@ -23,9 +23,8 @@ import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
 
-# from skimmed_fileset import *
 from xsec import *
-from selection_function import SR_selections, loose_SR_selections, loose_noIso_SR_selections, event_selection, Zpeak_selection
+from selection_function import event_selection
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -57,6 +56,8 @@ args = parser.parse_args()
 
 out_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/selected/'
 skim_folder = 'prompt_mutau_skimmed_samples'
+selection_string = 'validation_prompt'
+
 
 ## move to an utils file
 from itertools import islice
@@ -103,11 +104,11 @@ print("Will process {} files from the following samples:".format(nfiles), filese
 
 
 ## prompt skim case
-include_prefixes = ['DisMuon',  'Muon',  'Jet',   'GenPart',   'GenVisTau', 'GenVtx', 'Stau'
+include_prefixes = ['DisMuon',  'Muon',  'Jet',   'GenPart',   'GenVisTau', 'GenVtx', 'Stau',
                    ]
 
 include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass', 'dxy', 'charge', 'dz',
-                     'mediumId', 'tightId', 'nTrackerLayers', 'tkRelIso', 'pfRelIso03_all', 'pfRelIso03_chg'
+                     'mediumId', 'tightId', 'nTrackerLayers', 'tkRelIso', 'pfRelIso03_all', 'pfRelIso03_chg',
                      'disTauTag_score1', 'rawFactor', 'nConstituents',
                      'genPartIdxMother']           
                      
@@ -242,21 +243,27 @@ class SelectionProcessor(processor.ProcessorABC):
 #                 events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 1) 
 #                 logger.info(f"StauTau branch created")
 
-#         events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
-#         events["Jet"] = events.Jet[ak.argsort(events["Jet"][leading_jet_var], ascending=False, axis = 1)]
-# 
-#         events["DisMuon"] = ak.singletons(ak.firsts(events.DisMuon))
-#         events["Jet"] = ak.singletons(ak.firsts(events.Jet))
+        ## do we need to add selections before choosing the leading obj?
+        ## these selections are not there anymore in the previous skimming step
+        ## test to check the function in the SR
+        events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
+        events["DisMuon"] = ak.singletons(ak.firsts(events.DisMuon))
+        events["Jet"] = events.Jet[ak.argsort(events["Jet"][leading_jet_var], ascending=False, axis = 1)]
+        events["Jet"] = ak.singletons(ak.firsts(events.Jet))
 
-        events["Muon"] = events.Muon[ak.argsort(events["Muon"][leading_muon_var], ascending=False, axis = 1)]
-        events["Muon"] = ak.singletons(ak.firsts(events.Muon))
-        events["Tau"] = events.Tau[ak.argsort(events["Tau"][leading_jet_var], ascending=False, axis = 1)]
-        events["Tau"] = ak.singletons(ak.firsts(events.Tau))
+#         events["Muon"] = events.Muon[ak.argsort(events["Muon"][leading_muon_var], ascending=False, axis = 1)]
+#         events["Muon"] = ak.singletons(ak.firsts(events.Muon))
+#         events["Tau"] = events.Tau[ak.argsort(events["Tau"][leading_jet_var], ascending=False, axis = 1)]
+#         events["Tau"] = ak.singletons(ak.firsts(events.Tau))
         logger.info(f"Chose leading muon and jet")
+#         good_jets_mask = (
+#              (events.Jet.pt > 0)
+#             & (abs(events.Jet.eta) < 100) 
+#         )
+#         num_jets = ak.count_nonzero(good_jets_mask, axis=1)
+#         logger.info('n jets:', num_jets)
 
-        events = event_selection(events, SR_selections, 'keep_all')
-#         events = event_selection(events, SR_selections, 'SR')
-        
+        events = event_selection(events, selection_string) ## for sara
         logger.info(f"Filtered events")        
 
 #         muon_vars = events.DisMuon.fields
@@ -285,7 +292,7 @@ class SelectionProcessor(processor.ProcessorABC):
         # Write directly to ROOT
         events_to_write = uproot_writeable(events)
 
-        with uproot.recreate("test_selection_out.root") as fout:
+        with uproot.recreate(f"test_selection_out_{selection_string}.root") as fout:
             fout["Events"] = events_to_write
 
         return {"entries_written": len(events_to_write)}
