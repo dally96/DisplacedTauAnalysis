@@ -100,9 +100,10 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     ]
                     
 
+# include_prefixes = ['Jet']
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
-                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup',
+                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'
                    ]
 
 
@@ -221,6 +222,7 @@ class SkimProcessor(processor.ProcessorABC):
 
         charged_sel = events.Jet.constituents.pf.charge != 0
         dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
+        dxy = ak.fill_none(dxy, -999)
         events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
 
         # Write directly to ROOT
@@ -278,6 +280,7 @@ if __name__ == "__main__":
            )
     cluster.adapt(minimum=1, maximum=2000)
     print(cluster.job_script())
+#     cluster = LocalCluster(n_workers=4, threads_per_worker=1)
     client = Client(cluster)
 
     lxplus_run = processor.Runner(
