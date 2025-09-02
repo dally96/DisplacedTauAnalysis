@@ -1,27 +1,53 @@
 import os
 import subprocess
-import pdb
+import pdb, json, argparse
+
+
+parser = argparse.ArgumentParser(description="")
+parser.add_argument(
+	"--skim",
+	default=False,
+	required=False,
+	help='True if running on the skimmed files')
+args = parser.parse_args()
 
 # directory on EOS with input files
 ## to replace with v8 once available
 BASE_DIRS = [
   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
-  "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
+  "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
 ]
 
 XROOTD_PREFIX = "root://cmsxrootd.fnal.gov/"
-# outdir = 'samples/'
-outdir = ''
+EOS_LOC = 'root://cmseos.fnal.gov'
+outdir = 'samples/'
+# outdir = ''
+
+
+if args.skim:
+### FIXME should be made configurable
+    BASE_DIRS = [
+#       "/store/user/fiorendi/displacedTaus/skim/prompt_mutau/v0/",
+      "/store/user/fiorendi/displacedTaus/skim/mutau/v6/"
+    ]
+    
+    XROOTD_PREFIX = "root://eoscms.cern.ch/"
+    EOS_LOC = 'root://eoscms.cern.ch/'
+#     outdir = 'samples/prompt_mutau_skimmed_samples/'
+    outdir = 'samples/mutau_skimmed_samples/'
+    
 
 # patterns for grouping different processes
 GROUPS = {
     "SMS-TStauStau": f"{outdir}fileset_signal.py",
+    "Stau"         : f"{outdir}fileset_signal.py",
     "Wto2Q"        : f"{outdir}fileset_WTo2Q.py",
     "WtoLNu"       : f"{outdir}fileset_WToLNu.py",
     "QCD_PT"       : f"{outdir}fileset_QCD.py",
     "DYJetsToLL"   : f"{outdir}fileset_DY.py",
     "TTto"         : f"{outdir}fileset_TT.py",
 }
+
 
 def run_cmd(cmd):
     result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -31,11 +57,11 @@ def run_cmd(cmd):
     return result.stdout.strip().split("\n")
 
 def list_dirs(base):
-    cmd = f"xrdfs root://cmseos.fnal.gov ls {base}"
+    cmd = f"xrdfs {EOS_LOC} ls {base}"
     return run_cmd(cmd)
 
 def list_root_files(path):
-    cmd = f"xrdfs root://cmseos.fnal.gov ls {path}"
+    cmd = f"xrdfs {EOS_LOC} ls {path}"
     files = run_cmd(cmd)
     return [f for f in files if f.endswith(".root")]
 
@@ -46,16 +72,29 @@ def make_key(dirname):
     elif "SMS-TStauStau" in dirname:
         part = 'Stau_'+dirname.split('_')[1].split('-')[1]+'_'+dirname.split('_')[2].split('-')[1]
         return part
+    elif "Stau_" in dirname:
+        return dirname
     elif "Wto" in dirname or "TTto" in dirname:
         return dirname.split("Tune")[0][:-1]
     else:
         return dirname
 
 
+import importlib
+def count_events(outfile, total_events):
+    
+    module = importlib.import_module(outfile.replace('/', '.').replace('.py',''))
+    all_fileset = module.fileset      
 
-def main():
+    for isample in all_fileset.keys():
+        total_events[isample] = 0
+        for ifile in all_fileset[isample]['files'].keys():
+            n_ev_this_file = int(ifile.split('/nano_')[1].replace('.root','').split('_')[-1]) - int(ifile.split('/nano_')[1].replace('.root','').split('_')[-2])
+            total_events[isample] += n_ev_this_file
+    return total_events
 
-    grouped = {g: {} for g in GROUPS}
+
+def write_filesets(grouped):
 
     for base in BASE_DIRS:
         dirs = list_dirs(base)
@@ -87,6 +126,23 @@ def main():
                 f.write("    },\n")
             f.write("}\n")
         print(f"Wrote {outfile}")
+
+
+
+def main():
+
+    grouped = {g: {} for g in GROUPS}
+    write_filesets(grouped)
+
+    ## write out number of events processed by the previous step
+    if args.skim:
+        total_events = {}
+        for key, outfile in GROUPS.items():
+            if grouped[key]:
+                count_events(outfile, total_events)
+        with open(f'{outdir}/event_counts.json', "w") as file: 
+            json.dump(total_events, file)
+        
 
 if __name__ == "__main__":
     main()
