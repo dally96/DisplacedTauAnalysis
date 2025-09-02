@@ -6,9 +6,15 @@ import pdb, json, argparse
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--skim",
-	default=False,
+	default='',
 	required=False,
-	help='True if running on the skimmed files')
+	choices=['', 'prompt_mutau','mutau'],
+	help='If providing list of the skimmed files, select which of the possible skims')
+parser.add_argument(
+	"--skimversion",
+	default='v0',
+	required=False,
+	help='If listing skimmed files, select which version of the inputs')
 args = parser.parse_args()
 
 # directory on EOS with input files
@@ -21,20 +27,18 @@ BASE_DIRS = [
 XROOTD_PREFIX = "root://cmsxrootd.fnal.gov/"
 EOS_LOC = 'root://cmseos.fnal.gov'
 outdir = 'samples/'
-# outdir = ''
 
 
-if args.skim:
-### FIXME should be made configurable
+if args.skim != '':
+    skim_folder = args.skim
+    skim_version = args.skimversion
     BASE_DIRS = [
-#       "/store/user/fiorendi/displacedTaus/skim/prompt_mutau/v0/",
-      "/store/user/fiorendi/displacedTaus/skim/mutau/v6/"
+      f"/store/user/fiorendi/displacedTaus/skim/{skim_folder}/{skim_version}/"
     ]
     
     XROOTD_PREFIX = "root://eoscms.cern.ch/"
     EOS_LOC = 'root://eoscms.cern.ch/'
-#     outdir = 'samples/prompt_mutau_skimmed_samples/'
-    outdir = 'samples/mutau_skimmed_samples/'
+    outdir = f'samples/{skim_folder}/'
     
 
 # patterns for grouping different processes
