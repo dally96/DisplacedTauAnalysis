@@ -24,7 +24,7 @@ warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecati
 import logging
 
 from xsec import *
-from selection_function import event_selection
+from selection_function import event_selection, event_selection_hpstau_mu
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -51,15 +51,31 @@ parser.add_argument(
 	default=True,
 	required=False,
 	help='Turn it to false to use the non-preprocessed samples')
+parser.add_argument(
+	"--skim",
+	default='prompt_mutau',
+	required=False,
+	choices=['prompt_mutau','mutau'],
+	help='Specify input skim, which objects, and selections (Muon and HPSTau, or DisMuon and Jet)')
 
 args = parser.parse_args()
 
-# out_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/selected/'
-
 ## define the folder where the input .pkl files are defined, as well as the output folder on eos for the final events (not implemented yet)
-skim_folder = 'mutau'
+skim_folder = args.skim
+
+## will change once "region" will become a flag
+if skim_folder == 'prompt_mutau':
+    mode_string = 'hpstau_mu' 
+    selection_string = 'HPSTauMu'
+elif skim_folder == 'mutau':
+    mode_string = 'jet_dmu' 
+    selection_string = 'validation_prompt'  ## FIXME
+else:
+    print ('make sure using the correct folder/selections')
+    exit(0)
+    
+
 out_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{skim_folder}/selected/'
-selection_string = 'validation_prompt'
 
 
 ## move to an utils file
@@ -168,11 +184,13 @@ def uproot_writeable(events):
 
 
 class SelectionProcessor(processor.ProcessorABC):
-    def __init__(self, leading_muon_var, leading_jet_var):
+    def __init__(self, leading_muon_var, leading_jet_var, mode="jet_dmu"):
         self.leading_muon_var = args.leading_muon_type
         self.leading_jet_var  = args.leading_jet_type
         ## sara: to be better understood
-        pass
+        assert mode in ["hpstau_mu", "jet_dmu"]
+        self._mode = mode
+
 #         self._accumulator = {}
 #         for samp in skimmed_fileset:
 #             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
@@ -214,51 +232,50 @@ class SelectionProcessor(processor.ProcessorABC):
 
 
     def process(self, events):
+
         logger.info(f"Start process for {events.metadata['dataset']}")
+        dataset = events.metadata["dataset"]    
 
         leading_muon_var = self.leading_muon_var
         leading_jet_var = self.leading_jet_var
-        out_dict = {}
-
-        logger.info(f"inside process")
-        dataset = events.metadata["dataset"]    
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
-        print ('metadata dataset: ', events.metadata['dataset'])
         if is_MC: 
 #             sumWeights = num_events[events.metadata["dataset"]]
 
             events["Stau"] = events.GenPart[(abs(events.GenPart.pdgId) == 1000015) &\
                                             (events.GenPart.hasFlags("isLastCopy"))]
-
-            logger.info(f"Stau branch created")        
-
-            ## this needs to be fixed
-#             if 'Stau' in dataset:  
-#                 events["StauTau"] = events.GenVisTau[(abs(events.GenVisTau.eta) < 2.4) & (events.GenVisTau.pt > 20)]
-#                 ## original Daniel
+            ## this needs some thoughts
+#           events["StauTau"] = events.GenVisTau[(abs(events.GenVisTau.eta) < 2.4) & (events.GenVisTau.pt > 20)]
+#           ## original Daniel
             events["StauTau"] = events.Stau.distinctChildren[(abs(events.Stau.distinctChildren.pdgId) == 15) &\
                                                    (events.Stau.distinctChildren.hasFlags("isLastCopy"))]
             events["StauTau"] = ak.flatten(ak.drop_none(events["StauTau"]), axis=2)
             ## QUESTION: do we need to take only the highest pT Tau? ##
 ##             events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
 #              events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 1) 
-            logger.info(f"StauTau branch created")
 
+
+
+        ## IMPORTANT
         ## do we need to add selections before choosing the leading obj?
         ## these selections are not there anymore in the previous skimming step
         ## test to check the function in the SR
-        events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
-        events["DisMuon"] = ak.singletons(ak.firsts(events.DisMuon))
-        events["Jet"] = events.Jet[ak.argsort(events["Jet"][leading_jet_var], ascending=False, axis = 1)]
-        events["Jet"] = ak.singletons(ak.firsts(events.Jet))
+        if self._mode == "hpstau_mu":
+            events["Muon"] = events.Muon[ak.argsort(events["Muon"][leading_muon_var], ascending=False, axis = 1)]
+            events["Muon"] = ak.singletons(ak.firsts(events.Muon))
+            events["Tau"] = events.Tau[ak.argsort(events["Tau"][leading_jet_var], ascending=False, axis = 1)]
+            events["Tau"] = ak.singletons(ak.firsts(events.Tau))
+            events = event_selection_hpstau_mu(events, selection_string)
+        else:
+            events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
+            events["DisMuon"] = ak.singletons(ak.firsts(events.DisMuon))
+            events["Jet"] = events.Jet[ak.argsort(events["Jet"][leading_jet_var], ascending=False, axis = 1)]
+            events["Jet"] = ak.singletons(ak.firsts(events.Jet))
+            events = event_selection(events, selection_string) 
 
-#         events["Muon"] = events.Muon[ak.argsort(events["Muon"][leading_muon_var], ascending=False, axis = 1)]
-#         events["Muon"] = ak.singletons(ak.firsts(events.Muon))
-#         events["Tau"] = events.Tau[ak.argsort(events["Tau"][leading_jet_var], ascending=False, axis = 1)]
-#         events["Tau"] = ak.singletons(ak.firsts(events.Tau))
-        logger.info(f"Chose leading muon and jet")
+        logger.info(f"Chose leading objects")
 #         good_jets_mask = (
 #              (events.Jet.pt > 0)
 #             & (abs(events.Jet.eta) < 100) 
@@ -266,33 +283,30 @@ class SelectionProcessor(processor.ProcessorABC):
 #         num_jets = ak.count_nonzero(good_jets_mask, axis=1)
 #         logger.info('n jets:', num_jets)
 
-        events = event_selection(events, selection_string) ## for sara
         logger.info(f"Filtered events")        
 
-#         muon_vars = events.DisMuon.fields
-# 
         if is_MC: 
             weights = events.event/events.event
 #             weights = weights / sumWeights ## to be included back
         else: 
             weights = events.event/events.event
-
         logger.info("mc weights")
 
-#         # scale factor correction
         # Handle systematics and weights
         if is_MC:
             weight_branches = self.process_weight_corrs_and_systs(events, weights)
         else:
             weight_branches = {'weight': weights}
         logger.info("all weights")
-        
         events = ak.with_field(events, weight_branches["weight"], "weight")
 
-        # Write directly to ROOT
+        # Write to ROOT
         events_to_write = uproot_writeable(events)
+        # unique name: dataset name + chunk range
+        fname = os.path.basename(events.metadata["filename"]).replace(".root", "")
+        outname = f"{out_folder}{dataset}/{fname}_{selection_string}.root"
 
-        with uproot.recreate(f"test_selection_out_{selection_string}.root") as fout:
+        with uproot.recreate(outname) as fout:
             fout["Events"] = events_to_write
         return {"entries_written": len(events_to_write)}
 
@@ -331,14 +345,6 @@ if __name__ == "__main__":
 #     cluster = LocalCluster(n_workers=1, threads_per_worker=1)
 #     client = Client(cluster)
 
-    
-#     with open("merged_preprocessed_fileset.pkl", "rb") as  f:
-    ## trial one file sara
-#     with open("samples/prompt_mutau_skimmed_samples/signal_preprocessed.pkl", "rb") as  f:
-#         dataset_runnable = pickle.load(f)    
-#     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
-
-
     lxplus_run = processor.Runner(
         executor=processor.IterativeExecutor(compression=None),
         chunksize=30_000,
@@ -351,7 +357,7 @@ if __name__ == "__main__":
     out, proc_report = lxplus_run(
         fileset,
         treename="Events",
-        processor_instance=SelectionProcessor(args.leading_muon_type, args.leading_jet_type),
+        processor_instance=SelectionProcessor(args.leading_muon_type, args.leading_jet_type, mode_string),
         uproot_options={"allow_read_errors_with_report": (OSError, KeyError)}
     )
     print(out)
