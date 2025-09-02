@@ -1,6 +1,6 @@
 import awkward as ak
 
-SR_selections = {
+SR = {
               "muon_pt_min":                30., ##GeV
               "muon_medium_ID_min":         0, ## > min and < max -> [0,2] to select mediumID, [-1,1] to select not-medium, [-999,999] to select any 
               "muon_medium_ID_max":         2, ## 1 is passing, 0 if not 
@@ -21,47 +21,67 @@ SR_selections = {
              }
 
 ## defined but never used
-loose_SR_selections = {j:k for j,k in SR_selections.items()}
-loose_SR_selections["muon_dxy_min"] =  50E-4 ##cm
-loose_SR_selections["muon_iso_max"] =  0.36
-loose_SR_selections["jet_score_min"] =  0.7
+loose_SR = {j:k for j,k in SR.items()}
+loose_SR["muon_dxy_min"] =  50E-4 ##cm
+loose_SR["muon_iso_max"] =  0.36
+loose_SR["jet_score_min"] =  0.7
 
 ## defined but never used
-loose_noIso_SR_selections = {j:k for j,k in loose_SR_selections.items()}
-loose_noIso_SR_selections["muon_iso_max"] =  999.
+loose_noIso_SR = {j:k for j,k in loose_SR.items()}
+loose_noIso_SR["muon_iso_max"] =  999.
 
-validation_prompt = {j:k for j,k in loose_noIso_SR_selections.items()}
+## loose cuts to validate even with few events and in DY region
+validation_prompt = {j:k for j,k in loose_noIso_SR.items()}
 validation_prompt["jet_dxy_min"] =  -999
 validation_prompt["muon_dxy_min"] = -999 ##cm
 validation_prompt["muon_dxy_max"] = 999 ##cm
 validation_prompt["MET_pt"] = 10 
 
 ## to be fixed, need Daniel
-TT_CR = {j:k for j,k in SR_selections.items()}
+TT_CR = {j:k for j,k in SR.items()}
 TT_CR["jet_score_min"] =  0.
 TT_CR["jet_score_max"] =  0.7
 TT_CR["jet_dxy_min"] =  -999
 
 ## there was a tight_TT_CR where muon had tight ID
 ## to be fixed, need Daniel
-QCD_CR = {j:k for j,k in SR_selections.items()}
+QCD_CR = {j:k for j,k in SR.items()}
 ## muon ID not clear, ask Daniel
 QCD_CR["muon_dxy_min"] = -999 
 QCD_CR["muon_dxy_max"] = 999  
 QCD_CR["muon_iso_min"] =  0.18 ## invert iso cut
 QCD_CR["muon_iso_max"] =  999.
-
 QCD_CR["jet_score_min"] =  0.7
 QCD_CR["jet_dxy_min"] =  -999
 
+HPSTauMu = {
+              "muon_pt_min":                22, ##GeV
+              "muon_eta_max":               2.1, 
+              "muon_medium_ID_min":         -999., ## > min and < max -> [0,2] to select mediumID, [-1,1] to select not-medium, [-999,999] to select any 
+              "muon_medium_ID_max":         999, ## 1 is passing, 0 if not 
+              "muon_tight_ID_min":          0, ## > min and < max -> [0,2] to select tightID, [-1,1] to select not-tight, [-999,999] to select any 
+              "muon_tight_ID_max":          2,  ## 
+              "muon_dxy_min":               -999, ##cm
+              "muon_dxy_max":               100.,  ##cm
+              "muon_isoid_min":             3, 
+
+              "tau_pt_min":                 32.,  ##GeV
+              "tau_eta_max":                2.1, 
+              "tau_dm":                     0, ## > 0 -> pass new DM 
+              "tau_vs_e_wp":                5, ## medium WP
+              "tau_vs_jet_wp":              5, ## medium WP
+              "tau_vs_mu_wp":               3, ## medium WP
+
+             }
 
 selections_dict = {
-  'SR_selections' : SR_selections,
-  'loose_SR_selections' : loose_SR_selections,
-  'loose_noIso_SR_selections' : loose_noIso_SR_selections,
+  'SR_selections' : SR,
+  'loose_SR_selections' : loose_SR,
+  'loose_noIso_SR_selections' : loose_noIso_SR,
   'validation_prompt' : validation_prompt,
   'TT_CR' : TT_CR,
   'QCD_CR' : QCD_CR,
+  'HPSTauMu' : HPSTauMu,
 }
 
 def event_selection(events, selection):
@@ -92,6 +112,35 @@ def event_selection(events, selection):
     good_MET = (events.PFMET.pt > selections["MET_pt"])
     events = events[good_muons & good_jets & good_MET]
 
+    return events
+
+
+def event_selection_hpstau_mu(events, selection):
+
+    selections = selections_dict[selection]
+
+    good_muons  =  ak.flatten(
+                     (events.Muon.pt > selections["muon_pt_min"])  &\
+                     (abs(events.Muon.eta) < selections["muon_eta_max"]) &\
+                     (abs(events.Muon.dxy) > selections["muon_dxy_min"]) &\
+                     (abs(events.Muon.dxy) < selections["muon_dxy_max"]) &\
+                     (events.Muon.pfIsoId > selections["muon_isoid_min"]) &\
+                     (events.Muon.mediumId > selections["muon_medium_ID_min"]) &\
+                     (events.Muon.mediumId < selections["muon_medium_ID_max"]) &\
+                     (events.Muon.tightId > selections["muon_tight_ID_min"]) &\
+                     (events.Muon.tightId < selections["muon_tight_ID_max"])
+                   ) 
+    
+    good_taus   = ak.flatten(
+                    (events.Tau.pt > selections["tau_pt_min"]) &\
+                    (abs(events.Tau.eta) < selections["tau_eta_max"]) &\
+                    (events.Tau.idDecayModeNewDMs > selections["tau_dm"]) &\
+                    (events.Tau.idDeepTau2018v2p5VSe >= selections["tau_vs_e_wp"]) &\
+                    (events.Tau.idDeepTau2018v2p5VSjet >= selections["tau_vs_jet_wp"]) &\
+                    (events.Tau.idDeepTau2018v2p5VSmu >= selections["tau_vs_mu_wp"]) 
+                 )   
+    
+    events = events[good_muons & good_taus ]
     return events
 
 #     if region == "keep_all":
