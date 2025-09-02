@@ -71,7 +71,7 @@ def event_selection(events, selections, region):
     ###############################################################
     if region == "TT_CR":
         good_muons  = dak.flatten((events.DisMuon.pt > selections["muon_pt"])           &\
-                       (events.DisMuon.tightId == 1)                                    &\
+                       (events.DisMuon.mediumId == 1)                                    &\
                        (abs(events.DisMuon.dxy) > selections["muon_dxy_prompt_min"]) &\
                        (abs(events.DisMuon.dxy) < selections["muon_dxy_prompt_max"]) &\
                        (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
