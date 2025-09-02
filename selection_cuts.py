@@ -2,7 +2,7 @@ import awkward as ak
 import uproot
 import sys, argparse, os
 import pickle
-import json, gzip, correctionlib
+import json, gzip, correctionlib, importlib
 
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
@@ -54,8 +54,11 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-out_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/selected/'
-skim_folder = 'prompt_mutau_skimmed_samples'
+# out_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/selected/'
+
+## define the folder where the input .pkl files are defined, as well as the output folder on eos for the final events (not implemented yet)
+skim_folder = 'mutau'
+out_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{skim_folder}/selected/'
 selection_string = 'validation_prompt'
 
 
@@ -67,13 +70,12 @@ def take(n, iterable):
 
 
 all_fileset = {}
-if args.usePkl:
+if args.usePkl==True:
     import pickle 
     ## to be made configurable
     with open(f"samples/{skim_folder}/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
-
-if not args.usePkl:
+else:
     samples = {
         "Wto2Q": f"samples.{skim_folder}.fileset_WTo2Q",
         "WtoLNu": f"samples.{skim_folder}.fileset_WToLNu",
@@ -82,9 +84,9 @@ if not args.usePkl:
         "signal": f"samples.{skim_folder}.fileset_signal",
         "TT": f"samples.{skim_folder}.fileset_TT",
     }
-  
     module = importlib.import_module(samples[args.sample])
     input_dataset = module.fileset  #['Stau_100_0p1mm'] 
+  
 
 ## restrict to specific sub-samples
 if args.subsample == 'all':
@@ -99,12 +101,13 @@ if nfiles != -1:
     for k in fileset.keys():
         if nfiles < len(fileset[k]['files']):
             fileset[k]['files'] = take(nfiles, fileset[k]['files'])
+## add an else statement to prevent empty lists if nfiles > len(fileset)            
 
 print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
 
 
 ## prompt skim case
-include_prefixes = ['DisMuon',  'Muon',  'Jet',   'GenPart',   'GenVisTau', 'GenVtx', 'Stau',
+include_prefixes = ['DisMuon',  'Muon',  'Jet',   'GenPart',   'GenVisTau', 'GenVtx'
                    ]
 
 include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass', 'dxy', 'charge', 'dz',
@@ -117,7 +120,7 @@ include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass
 include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',     #'GenPart',  'GenVisTau', 'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',    #'nGenPart', 'nGenVisTau', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight',
-               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau',
+               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau',
               ]
 
 def is_rootcompat(a):
@@ -133,11 +136,11 @@ def is_rootcompat(a):
 
 ## please double check tomorrow
 def uproot_writeable(events):
-    """
-    Restrict to columns that uproot can write compactly:
-      - Keep all branches starting with any prefix in all_prefixes.
-      - For branches starting with reduced_prefixes, keep only fields in post_list.
-    """
+    '''
+        Check columns that uproot can write out:
+      - keep all branches starting with any prefix in include_all.
+      - for branches starting with include_prefixes, keep only fields in include_postfixes.
+    '''
     out = {}
 
     for bname in events.fields:
@@ -222,9 +225,9 @@ class SelectionProcessor(processor.ProcessorABC):
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
+        print ('metadata dataset: ', events.metadata['dataset'])
         if is_MC: 
 #             sumWeights = num_events[events.metadata["dataset"]]
-        
 
             events["Stau"] = events.GenPart[(abs(events.GenPart.pdgId) == 1000015) &\
                                             (events.GenPart.hasFlags("isLastCopy"))]
@@ -235,13 +238,13 @@ class SelectionProcessor(processor.ProcessorABC):
 #             if 'Stau' in dataset:  
 #                 events["StauTau"] = events.GenVisTau[(abs(events.GenVisTau.eta) < 2.4) & (events.GenVisTau.pt > 20)]
 #                 ## original Daniel
-#     #             StauTau = events.Stau.distinctChildren[(abs(events.Stau.distinctChildren.pdgId) == 15) &\
-#     #                                                    (events.Stau.distinctChildren.hasFlags("isLastCopy"))]
-#     #             events["StauTau"] = StauTau
-#     #             events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
-#                 ## end original Daniel
-#                 events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 1) 
-#                 logger.info(f"StauTau branch created")
+            events["StauTau"] = events.Stau.distinctChildren[(abs(events.Stau.distinctChildren.pdgId) == 15) &\
+                                                   (events.Stau.distinctChildren.hasFlags("isLastCopy"))]
+            events["StauTau"] = ak.flatten(ak.drop_none(events["StauTau"]), axis=2)
+            ## QUESTION: do we need to take only the highest pT Tau? ##
+##             events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
+#              events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 1) 
+            logger.info(f"StauTau branch created")
 
         ## do we need to add selections before choosing the leading obj?
         ## these selections are not there anymore in the previous skimming step
@@ -286,15 +289,11 @@ class SelectionProcessor(processor.ProcessorABC):
         
         events = ak.with_field(events, weight_branches["weight"], "weight")
 
-#             for branch in gpart_vars:
-#                 out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
-
         # Write directly to ROOT
         events_to_write = uproot_writeable(events)
 
         with uproot.recreate(f"test_selection_out_{selection_string}.root") as fout:
             fout["Events"] = events_to_write
-
         return {"entries_written": len(events_to_write)}
 
 
@@ -359,6 +358,5 @@ if __name__ == "__main__":
 
     elapsed = time.time() - tic 
     print(f"Finished in {elapsed:.1f}s")
-    print ("remember to put back the jet dxy cuts!!!!!!!!!!!!!!!!")
 #     client.shutdown()
 #     cluster.close()
