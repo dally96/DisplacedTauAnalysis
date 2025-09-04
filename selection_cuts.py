@@ -1,6 +1,7 @@
 import awkward as ak
 import uproot
 import sys, argparse, os
+import numpy as np
 import pickle
 import json, gzip, correctionlib, importlib
 
@@ -11,8 +12,6 @@ from coffea.lumi_tools import LumiData, LumiList, LumiMask
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
-import os, argparse
-import numpy as np
 import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
@@ -251,10 +250,9 @@ class SelectionProcessor(processor.ProcessorABC):
 #           ## original Daniel
             events["StauTau"] = events.Stau.distinctChildren[(abs(events.Stau.distinctChildren.pdgId) == 15) &\
                                                    (events.Stau.distinctChildren.hasFlags("isLastCopy"))]
-            events["StauTau"] = ak.flatten(ak.drop_none(events["StauTau"]), axis=2)
-            ## QUESTION: do we need to take only the highest pT Tau? ##
-##             events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
-#              events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 1) 
+            ## here we take only the two highest pT taus to reject rare cases where more than two are found 
+            events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
+            events["StauTau"] = ak.flatten(ak.drop_none(events["StauTau"]), axis=0)
 
 
 
@@ -275,21 +273,9 @@ class SelectionProcessor(processor.ProcessorABC):
             events["Jet"] = ak.singletons(ak.firsts(events.Jet))
             events = event_selection(events, selection_string) 
 
-        logger.info(f"Chose leading objects")
-#         good_jets_mask = (
-#              (events.Jet.pt > 0)
-#             & (abs(events.Jet.eta) < 100) 
-#         )
-#         num_jets = ak.count_nonzero(good_jets_mask, axis=1)
-#         logger.info('n jets:', num_jets)
+        logger.info(f"Chose leading objects & filtered events")
 
-        logger.info(f"Filtered events")        
-
-        if is_MC: 
-            weights = events.event/events.event
-#             weights = weights / sumWeights ## to be included back
-        else: 
-            weights = events.event/events.event
+        weights = 1 * ak.ones_like(events.event) if is_MC else events.genWeight
         logger.info("mc weights")
 
         # Handle systematics and weights
