@@ -89,35 +89,35 @@ is_data = parser.parse_args()
 #      ["JetMET_Run2022F", 'JetMET'],
 #      ["JetMET_Run2022G", 'JetMET'],
 #      ]
+samp_folder = "/eos/uscms/store/group/lpcdisptau/dally/second_skim/MET_trig_TT_CR_PROMPTMUONS/merged/"
+SAMP = os.listdir(samp_folder)
 
-with open("merged_preprocessed_fileset.pkl", "rb") as f:
-    samples = pickle.load(f)
-SAMP = list(samples.keys())
-
-lumi = 26.7 ##fb-1
+lumi = 26.3 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 Stau_colors = ['#EA7AF4', '#B43E8F', '#6200B3', '#218380']
 variables_with_bins = {
-    "DisMuon_pt": [(245, 20, 1000), "GeV"],
-    "DisMuon_eta": [(50, -2.5, 2.5), ""],
-    "DisMuon_phi": [(64, -3.2, 3.2), ""],
-    "DisMuon_dxy": [(50, -1, 1), "cm"],
-    "DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
-    "DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
-    "DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
-    "DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
-    "DisMuon_tkRelIso":       [(50, 0, 1), ""],
+    #"DisMuon_pt": [(49, 20, 1000), "GeV"],
+    "DisMuon_pt": [(49, 20, 300), "GeV"],
+    #"DisMuon_eta": [(50, -2.5, 2.5), ""],
+    #"DisMuon_phi": [(64, -3.2, 3.2), ""],
+    #"DisMuon_dxy": [(50, -1, 1), "cm"],
+    "DisMuon_dxy": [(50, -0.1, 0.1), "cm"],
+    #"DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
+    #"DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
+    #"DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
+    #"DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
+    #"DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
-    "Jet_pt" : [(49, 20, 1000), "GeV"],
-    "Jet_eta": [(48, -2.4, 2.4), ""],
-    "Jet_phi": [(64, -3.2, 3.2), ""],
-    "Jet_disTauTag_score1": [(20, 0, 1), ""],
-    "Jet_dxy": [(50, -0.5, 0.5), "cm"],
-
-    #"dR" : [(20, 0, 1), ""],
-    #"deta": [(100, -5, 5), ""],
-    #"dphi": [(64, -3.2, 3.2), ""],
-    "PFMET_pt": [(225, 100, 1000), "GeV"],
+    #"Jet_pt" : [(49, 20, 1000), "GeV"],
+    "Jet_pt" : [(49, 20, 300), "GeV"],
+    #"Jet_eta": [(48, -2.4, 2.4), ""],
+    #"Jet_phi": [(64, -3.2, 3.2), ""],
+    #"Jet_disTauTag_score1": [(20, 0, 1), ""],
+    #"Jet_dxy": [(50, -0.5, 0.5), "cm"],
+    "Jet_dxy": [(50, -0.1, 0.1), "cm"],
+    
+    #"PFMET_pt": [(50, 105, 1000), "GeV"],
+    "PFMET_pt": [(50, 105, 300), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -206,7 +206,6 @@ class DataProcessor(processor.ProcessorABC):
             var_name = '_'.join(var.split('_')[1:])
             histograms[var].fill(
                 **{var: dak.flatten(events[var.split('_')[0]][var_name], axis = None)},
-                #weight = events.weight / events.weight
             )
             
             
@@ -220,48 +219,59 @@ background_samples = {}
 data_samples = {}
 background_samples["QCD"] = []
 background_samples["TT"] = []
-#background_samples["W"] = []
+background_samples["W"] = []
 background_samples["DY"] = []
-#data_samples["JetMET"] = []
+data_samples["JetMET"] = []
 
 stau_dict = {}
 TT_dict = {}
-#QCD_dict = {}
+QCD_dict = {}
 for samples in SAMP:
-    #if "QCD" in samples[0]:
+    print(samples)
+    samp = '_'.join(samples.split("_")[6:])
+    samp_ext = '_'.join(samples.split("_")[6:-1])
+    print(samp)
+    print(samp_ext)
+    if "QCD" in samp:
+        background_samples["QCD"].append(    (samp_folder + samples + "/*.root", xsecs[samp] ))
     #if "QCD" in samples:
-        #background_samples["QCD"].append(    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-        #if "ext" in samples:
-        #    background_samples["QCD"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_MET_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])]))
-        #    QCD_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])])]
-        #else:
-        #    background_samples["QCD"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_MET_trig_" + samples + "/*.root", xsecs[samples] ))
-        #    QCD_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs[samples] )]
-    #if "TT" in samples[0]:
-    #    background_samples["TT"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    if "TT" in samples:
-        if "ext" in samples:
-            background_samples["TT"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_MET_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])]))
-            TT_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])])]
+    #    if "ext" in samples:
+    #        background_samples["QCD"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])]))
+    #        QCD_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])])]
+    #    else:
+    #        background_samples["QCD"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs[samples] ))
+    #        QCD_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs[samples] )]
+    if "TT" in samp:
+        if "ext" in samp:
+            background_samples["TT"].append(     (samp_folder + samples + "/*.root", xsecs[samp_ext] ))
         else:
-            background_samples["TT"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_MET_trig_" + samples + "/*.root", xsecs[samples] ))
-            TT_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs[samples] )]
-    #if "W" in samples[0]:
-    #    background_samples["W"].append(      ("/eos/uscms/store/user/dally/first_skim/merged/merged_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    #if "DY" in samples[0]:
-    #    background_samples["DY"].append(     ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] ))
-    #if is_data.data == "data":
-    #    if "JetMET" in samples[0]: 
-    #        data_samples["JetMET"].append(   ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", 1                 ))
-    #else:
-    #    if "Stau" in samples[0]:
-    #        lifetime = samples[0].split("_")[2]
-    #        mass =     samples[0].split("_")[1]
-    #        if lifetime in stau_dict.keys(): 
-    #            stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] )]
-    #        else:
-    #            stau_dict[lifetime] = {}
-    #            stau_dict[lifetime][mass] = [    ("/eos/uscms/store/user/dally/second_jet_dxy/merged/merged_TT_CR_" + samples[0] + "/*.root", xsecs[samples[0]] )]
+            background_samples["TT"].append(     (samp_folder + samples + "/*.root", xsecs[samp] ))
+    #if "TT" in samples:
+    #    if "ext" in samples:
+    #        background_samples["TT"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])]))
+    #        TT_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs['_'.join(samples.split('_')[0:-1])])]
+    #    else:
+    #        background_samples["TT"].append(     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs[samples] ))
+    #        TT_dict[samples] = [     ("/eos/uscms/store/group/lpcdisptau/dally/second_skim/merged/merged_first_skim_all_trig_" + samples + "/*.root", xsecs[samples] )]
+    if "W" in samp:
+        if "ext" in samp:
+            background_samples["W"].append(      (samp_folder + samples + "/*.root", xsecs[samp_ext] ))
+        else:
+            background_samples["W"].append(      (samp_folder + samples + "/*.root", xsecs[samp] ))
+    if "DY" in samp:
+        background_samples["DY"].append(     (samp_folder + samples + "/*.root", xsecs[samp] ))
+    if is_data.data == "data":
+        if "JetMET" in samp: 
+            data_samples["JetMET"].append(   (samp_folder + samples + "/*.root", 1                 ))
+    if is_data.data == "MC":
+        if "Stau" in samp:
+            lifetime = samp.split("_")[2]
+            mass =     samp.split("_")[1]
+            if lifetime in stau_dict.keys(): 
+                stau_dict[lifetime][mass] = [    (samp_folder + samples + "/*.root", xsecs[samp] )]
+            else:
+                stau_dict[lifetime] = {}
+                stau_dict[lifetime][mass] = [    (samp_folder + samples + "/*.root", xsecs[samp] )]
 
 # Initialize dictionary to hold accumulated ROOT histograms for each background
 background_histograms = {}
@@ -279,6 +289,7 @@ for background, samples in background_samples.items():
         try:
             # Step 1: Load events for the sample using dask-awkward
             events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+            #print(f"Number of {sample_file} events is {ak.num(events, axis = 0).compute()}")
             #events = uproot.dask(sample_file)
             print(f'Starting {sample_file} histogram')         
 
@@ -292,20 +303,20 @@ for background, samples in background_samples.items():
 
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
-
+'''
 TT_histograms = {}
 
+for var in variables_with_bins:
+    TT_histograms[var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
 # Process each background
 for background, samples in TT_dict.items():
     print(background)
     # Initialize a dictionary to hold ROOT histograms for the current background
-    for var in variables_with_bins:
-        TT_histograms[var] = hda.hist.Hist(hist.axis.Regular(*variables_with_bins[var][0], name=var, label = var + ' ' + variables_with_bins[var][1])).compute()
-
     for sample_file, sample_weight in samples:
         try:
             # Step 1: Load events for the sample using dask-awkward
             events = NanoEventsFactory.from_root({sample_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+            print(f"Number of {sample_file} events is {ak.num(events, axis = 0).compute()}")
             #events = uproot.dask(sample_file)
             print(f'Starting {sample_file} histogram')         
 
@@ -319,6 +330,7 @@ for background, samples in TT_dict.items():
 
         except Exception as e:
             print(f"Error processing {sample_file}: {e}")
+'''
 
 if is_data.data == "data":
     print("Should only be going through this loop if fata flag true")
@@ -378,33 +390,33 @@ else:
 #print(f"pkl file written")
 
 for var in variables_with_bins:
-    #QCD_event_num = background_histograms["QCD"][var].sum()
-    #TT_event_num = background_histograms["TT"][var].sum()
-    #DY_event_num = background_histograms["DY"][var].sum()
-    #W_event_num = background_histograms["W"][var].sum()
+    QCD_event_num = background_histograms["QCD"][var].sum()
+    TT_event_num = background_histograms["TT"][var].sum()
+    DY_event_num = background_histograms["DY"][var].sum()
+    W_event_num = background_histograms["W"][var].sum()
 
-    #total_event_number = QCD_event_num + \
-    #                     TT_event_num  + \
-    #                     DY_event_num  #+ \
-    #                     W_event_num
+    total_event_number = QCD_event_num + \
+                         TT_event_num  + \
+                         DY_event_num  + \
+                         W_event_num
     plt.cla()
     plt.clf()
 
-    #QCD_frac = 0
-    #TT_frac  = 0
-    #DY_frac  = 0
-    #W_frac   = 0
+    QCD_frac = 0
+    TT_frac  = 0
+    DY_frac  = 0
+    W_frac   = 0
 
-    #if total_event_number > 0:
-    #    QCD_frac = QCD_event_num/total_event_number
-    #    TT_frac  = TT_event_num/total_event_number
-    #    DY_frac  = DY_event_num/total_event_number
-    #    W_frac  = W_event_num/total_event_number
+    if total_event_number > 0:
+        QCD_frac = QCD_event_num/total_event_number
+        TT_frac  = TT_event_num/total_event_number
+        DY_frac  = DY_event_num/total_event_number
+        W_frac  = W_event_num/total_event_number
     if is_data.data == "data":
         s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                                 f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                                 "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                #"W" + "%.2f"%(W_frac): background_histograms["W"][var],
+                                "W " + "%.2f"%(W_frac): background_histograms["W"][var],
                                   })
         s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
         data_histograms["JetMET"][var].plot(color = 'black', label = 'data')
@@ -414,12 +426,12 @@ for var in variables_with_bins:
         plt.xlabel(var + ' ' + variables_with_bins[var][1])
         plt.ylabel("A.U.")
         plt.yscale('log')
-        plt.title(r"$\mathcal{L}_{int}$ = 26.7 fb$^{-1}$")
+        plt.title(r"$\mathcal{L}_{int}$ = 26.3 fb$^{-1}$")
         plt.ylim(top=data_histograms["JetMET"][var].view().max()*10)
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
         if is_data.folder not in os.listdir("../www/"):
             os.mkdir(f"../www/{is_data.folder}")
-        plt.savefig(f"../www/{is_data.folder}/data_histogram_{var}.png")
+        plt.savefig(f"../www/{is_data.folder}/data_histogram_{var}_zoomed.png")
 
         plt.cla()
         plt.clf()
@@ -429,9 +441,9 @@ for var in variables_with_bins:
             s = hist.Stack.from_dict({f"QCD " + "%.2f"%(QCD_frac): background_histograms["QCD"][var],
                                     f"TT " + "%.2f"%(TT_frac) : background_histograms["TT"][var],
                                     "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
-                                    #"W " + "%.2f"%(W_frac): background_histograms["W"][var],
+                                    "W " + "%.2f"%(W_frac): background_histograms["W"][var],
                                       })
-            s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
+            s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3], colors[2]])
             stau_counter = 0
             for mass in stau_dict[lifetime].keys():
                 stau_histograms[lifetime][mass][var].plot(color = Stau_colors[stau_counter], label = r"$\tilde{\tau}$ " + mass + "_" + lifetime)
@@ -444,7 +456,7 @@ for var in variables_with_bins:
             plt.ylabel("A.U.")
             plt.yscale('log')
             plt.ylim(top=get_stack_maximum(s)*10)
-            plt.title(r"L$_{int}$ = 26.7 fb$^{-1}$")
+            plt.title(r"L$_{int}$ = 26.3 fb$^{-1}$")
             plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
             if is_data.folder not in os.listdir("../www/"):
                 os.mkdir(f"../www/{is_data.folder}")
@@ -452,9 +464,10 @@ for var in variables_with_bins:
 
             plt.cla()
             plt.clf()
+    '''
     if is_data.data == "trig":
-        background_histograms["TT"][var].plot(histtype= "fill", color = colors[0], label = "MET triggers")
-        TT_histograms[var].plot(histtype= "step", color = colors[1], label = "all triggers")            
+        background_histograms["TT"][var].plot(histtype= "fill", color = colors[0], label = "MET triggers: " + "%.2f"%(background_histograms["TT"][var].sum()))
+        TT_histograms[var].plot(histtype= "step", color = colors[1], label = "all triggers: " + "%.2f"%(TT_histograms[var].sum()))            
         box = plt.subplot().get_position()
         plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   
 
@@ -463,14 +476,14 @@ for var in variables_with_bins:
         plt.yscale('log')
         plt.ylim(top=max(background_histograms["TT"][var].view().max(), TT_histograms[var].view().max())*10)
         plt.title(r"TT L$_{int}$ = 26.7 fb$^{-1}$")
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 8})
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = {"size": 6})
         if is_data.folder not in os.listdir("../www/"):
             os.mkdir(f"../www/{is_data.folder}")
         plt.savefig(f"../www/{is_data.folder}/{var}.png")
 
         plt.cla()
         plt.clf()
-        
+    ''' 
 
 
 
