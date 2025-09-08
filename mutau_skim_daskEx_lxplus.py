@@ -3,7 +3,7 @@ import uproot
 from coffea import processor
 from coffea.nanoevents.methods import candidate
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
-from dask.distributed import Client, wait, progress, LocalCluster
+from dask.distributed import Client, wait, progress, LocalCluster, performance_report
 from dask_lxplus import CernCluster
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
@@ -123,44 +123,15 @@ def is_rootcompat(a):
             return True
     return False
 
-## for new coffea and uproot.recreate    
-## https://github.com/scikit-hep/coffea/discussions/735
-# def uproot_writeable(events):
-#     """Restrict to columns that uproot can write compactly"""
-#     out = {}
-# #     out = events[
-# #         [x for x in events.fields if (is_included(x)) or (is_good_hlt(x))]
-# #     ]    
-#     for bname in events.fields:
-#         if events[bname].fields and ((is_included(bname) or is_good_hlt(bname))):
-#             out[bname] = ak.zip(
-#                 {
-#                     n: ak.to_packed(ak.without_parameters(events[bname][n])) 
-#                     for n in events[bname].fields 
-#                     if is_rootcompat(events[bname][n])
-#                 }, depth_limit=1
-#             )
-#     return out    
 
 def uproot_writeable(events):
-    """Restrict to columns uproot can write compactly"""
+    """Restrict to columns that uproot can write compactly"""
     out = {}
-
     for bname in events.fields:
         if events[bname].fields and (is_included(bname) or is_good_hlt(bname)):
-            # Flatten the collection: Tau -> Tau_pt, Tau_eta, ...
-            for n in events[bname].fields:
-                if is_rootcompat(events[bname][n]):
-                    branch_name = f"{bname}_{n}"
-                    out[branch_name] = ak.to_packed(
-                        ak.without_parameters(events[bname][n])
-                    )
-
-        # handle simple top-level fields too
+            out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in events[bname].fields if is_rootcompat(events[bname][n])})
         elif is_included(bname) or is_good_hlt(bname):
-            if is_rootcompat(events[bname]):
-                out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
-
+            out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
     return out
 
 
@@ -262,8 +233,8 @@ class SkimProcessor(processor.ProcessorABC):
 
 
     def postprocess(self, accumulator):
-        pass
-#         return accumulator
+#         pass
+        return accumulator
   
   
     
@@ -300,10 +271,7 @@ if __name__ == "__main__":
     print(cluster.job_script())
     client = Client(cluster)
 
-#     cluster = LocalCluster(n_workers=4, threads_per_worker=1)
-#     client = Client(cluster)
-
-    iterative_run = processor.Runner(
+    lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=30_000,
         skipbadfiles=True,
@@ -312,15 +280,26 @@ if __name__ == "__main__":
 #         maxchunks=4,
     )
     
-    out = iterative_run(
+    out, proc_report = lxplus_run(
         fileset,
         treename="Events",
         processor_instance=SkimProcessor(),
+        uproot_options={"allow_read_errors_with_report": (OSError, KeyError)}
     )
     print(out)
+
+    import json
+    with open(f'{out_folder}/result.json', 'w') as fp:  
+        json.dump(proc_report,fp)
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
 
+
+#         with performance_report(filename="/tmp/dask-report.html"):
+#             logger.info("The performance report will be saved in /tmp/dask-report.html")
+#             (futures,) = dask.persist(to_compute)
+#             progress(futures)
+#             (out,) = dask.compute(futures)
 
 #     with open("signal_test_preprocessed_fileset.pkl", "rb") as  f:
 #         Stau_dataset_runnable = pickle.load(f)    

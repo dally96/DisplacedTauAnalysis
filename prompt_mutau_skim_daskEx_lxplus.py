@@ -11,11 +11,13 @@ cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some 
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
-import os, argparse, importlib, pdb
+import os, argparse, importlib, pdb, socket
 import time
 from datetime import datetime
 
 from itertools import islice
+from collections import defaultdict
+import json
 
 PFNanoAODSchema.warn_missing_crossrefs = False
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
@@ -50,7 +52,7 @@ def take(n, iterable):
     return list(islice(iterable, n))
 
 
-out_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/v0/'
+out_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/'
 
 
 all_fileset = {}
@@ -70,7 +72,7 @@ if not args.usePkl:
     }
   
     module = importlib.import_module(samples[args.sample])
-    input_dataset = module.fileset  #['Stau_100_0p1mm'] 
+    input_dataset = module.fileset   
 
 ## restrict to specific sub-samples
 if args.subsample == 'all':
@@ -100,7 +102,6 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     ]
                     
 
-# include_prefixes = ['Jet']
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
                     'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'
@@ -180,6 +181,11 @@ class SkimProcessor(processor.ProcessorABC):
             except:
                 print (f"[ lumimask ] Skip now! Unable to find year info of {dataset_name}")
 
+        ## retrieve the list of run/lumi being processed        
+        run_lumi_list = set(zip(events.run, events.luminosityBlock))
+        run_dict = defaultdict(list)
+        for run, lumi in sorted(run_lumi_list):
+            run_dict[str(int(run))].append(int(lumi))
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
@@ -188,23 +194,31 @@ class SkimProcessor(processor.ProcessorABC):
             & (events.Muon.tightId)
             & (events.Muon.pfIsoId >= 4)
         )
-#         events['Muon'] = events.Muon[good_prompt_muon_mask]
         num_evts = ak.num(events, axis=0)
         num_good_muons = ak.count_nonzero(good_prompt_muon_mask, axis=1)
+        sel_muons = events.Muon[good_prompt_muon_mask]
+        events['Muon'] = sel_muons
         events = events[num_good_muons >= 1]
-#         events['Muon'] = events.Muon[good_prompt_muon_mask]
 
         good_tau_mask = (
             (events.Tau.pt > 28)
             & (abs(events.Tau.eta) < 2.1)
             & (events.Tau.idDecayModeNewDMs)
-            & (events.Tau.idDeepTau2018v2p5VSe >= 5)         ## Medium
+            & (events.Tau.idDeepTau2018v2p5VSe >= 5)     ## Medium 
             & (events.Tau.idDeepTau2018v2p5VSjet >= 5)   ## Medium
             & (events.Tau.idDeepTau2018v2p5VSmu >= 3)    ## Medium
         )
         num_good_taus = ak.count_nonzero(good_tau_mask, axis=1)
+        sel_taus = events.Tau[good_tau_mask]
+        events['Tau'] = sel_taus
         events = events[num_good_taus >= 1]
-#         events['Tau'] = events.Tau[good_tau_mask]
+        ## add mT cut to remove W contamination
+        ## veto other leptons
+        ## QCD from MC will not pass the selection
+        ## same for W
+        ## could take them from SS
+        ## veto on bjets?
+          
 
         #Noise filter
         noise_mask = (
@@ -220,6 +234,7 @@ class SkimProcessor(processor.ProcessorABC):
 
         events = events[noise_mask] 
 
+        n_jets = ak.num(events.Jet.pt)
         charged_sel = events.Jet.constituents.pf.charge != 0
         dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
         dxy = ak.fill_none(dxy, -999)
@@ -238,7 +253,10 @@ class SkimProcessor(processor.ProcessorABC):
             fout["Events"] = events_to_write
 
         # You can also return a summary/histogram/etc.
-        return {"entries_written": len(events_to_write)}
+        return {
+          "entries_written": len(events_to_write),
+          "run_dict" : run_dict
+        }
 
 
     def postprocess(self, accumulator):
@@ -252,35 +270,32 @@ if __name__ == "__main__":
     print("Time started:", datetime.now().strftime("%H:%M:%S"))
     tic = time.time()
 
-    from dask.distributed import Client, wait, progress, LocalCluster
-#     cluster = LocalCluster(n_workers=4, threads_per_worker=1)
 
-    import socket
-    n_port = 8786
-    cluster = CernCluster(
-            cores=1,
-            memory='3000MB',
-            disk='1000MB',
-            death_timeout = '60',
-            container_runtime = "none",
-            log_directory = "/eos/user/f/fiorendi/condor/log/prompt_skim",
-            scheduler_options={
-                'port': n_port,
-                'host': socket.gethostname(),
-                },
-            job_extra={
-                '+JobFlavour': '"longlunch"',
-                },
-            job_script_prologue=[
-                "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
-                f"export X509_USER_PROXY=/afs/cern.ch/user/f/fiorendi/x509up_u58808",
-                "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR",
-            ],
-            extra = ['--worker-port 10000:10100']
-           )
-    cluster.adapt(minimum=1, maximum=2000)
-    print(cluster.job_script())
-#     cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+#     n_port = 8786
+#     cluster = CernCluster(
+#             cores=1,
+#             memory='3000MB',
+#             disk='1000MB',
+#             death_timeout = '60',
+#             container_runtime = "none",
+#             log_directory = "/eos/user/f/fiorendi/condor/log/prompt_skim",
+#             scheduler_options={
+#                 'port': n_port,
+#                 'host': socket.gethostname(),
+#                 },
+#             job_extra={
+#                 '+JobFlavour': '"longlunch"',
+#                 },
+#             job_script_prologue=[
+#                 "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
+#                 f"export X509_USER_PROXY=/afs/cern.ch/user/f/fiorendi/x509up_u58808",
+#                 "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR",
+#             ],
+#             extra = ['--worker-port 10000:10100']
+#            )
+#     cluster.adapt(minimum=1, maximum=2000)
+#     print(cluster.job_script())
+    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
     client = Client(cluster)
 
     lxplus_run = processor.Runner(
@@ -300,8 +315,15 @@ if __name__ == "__main__":
     )
     print(out)
 
-    import json
+    # Save to JSON file
     with open(f'{out_folder}/result.json', 'w') as fp:  
         json.dump(proc_report,fp)
+
+    ## save processed run/lumi to json file 
+    run_dict = defaultdict(list)
+    for run in out['run_dict']:
+        run_dict[run] = [out['run_dict'][run]]
+    with open(f'{out_folder}/processed_lumis.json', 'w') as fp:  
+        json.dump(run_dict, fp, indent=2)
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
