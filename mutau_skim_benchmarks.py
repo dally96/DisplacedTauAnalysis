@@ -13,7 +13,7 @@ import time
 from datetime import datetime
 
 PFNanoAODSchema.warn_missing_crossrefs = False
-
+import os
 
 # import uproot
 # import uproot.exceptions
@@ -36,7 +36,7 @@ PFNanoAODSchema.warn_missing_crossrefs = False
 # cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
 # import dask_awkward as dak
 # from dask_jobqueue import HTCondorCluster
-# from dask.distributed import Client, wait, progress, LocalCluster
+from dask.distributed import Client, wait, progress, LocalCluster
 # from fileset import *
 # from dask_lxplus import CernCluster
 # 
@@ -61,8 +61,8 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     'Electron'
                     ]
                     
-include_prefixes = ['DisMuon', 'Jet', 'Tau', 'PFMET', 'SV', 'PV', 'GenPart', 'GenVisTau', 'GenVtx', 'Pileup',
-                    'event', 'run', 'luminosityBlock', 'nDisMuon', 'nTau', 'nJet', 'nGenPart', 'nGenVisTau'
+include_prefixes = ['DisMuon', 'Jet', 'Tau', 'PFMET', 'MET', 'ChsMET', 'PuppiMET', 'SV', 'PV', 'GenPart', 'GenVisTau', 'GenVtx', 'Pileup',
+                    'event', 'run', 'luminosityBlock', 'nDisMuon', 'nTau', 'nJet', 'nGenPart', 'nGenVisTau', 'nVtx'
                    ]                    
 
 good_hlts = [
@@ -133,19 +133,47 @@ def is_rootcompat(a):
     return False
 
 ## for new coffea and uproot.recreate    
+## https://github.com/scikit-hep/coffea/discussions/735
+# def uproot_writeable(events):
+#     """Restrict to columns that uproot can write compactly"""
+#     out = {}
+# #     out = events[
+# #         [x for x in events.fields if (is_included(x)) or (is_good_hlt(x))]
+# #     ]    
+#     for bname in events.fields:
+#         if events[bname].fields and ((is_included(bname) or is_good_hlt(bname))):
+#             out[bname] = ak.zip(
+#                 {
+#                     n: ak.to_packed(ak.without_parameters(events[bname][n])) 
+#                     for n in events[bname].fields 
+#                     if is_rootcompat(events[bname][n])
+#                 }, depth_limit=1
+#             )
+#     return out    
+
 def uproot_writeable(events):
-    """Restrict to columns that uproot can write compactly"""
+    """Restrict to columns uproot can write compactly"""
     out = {}
+
     for bname in events.fields:
-        if events[bname].fields and ((is_included(bname) or is_good_hlt(bname))):
-            out[bname] = ak.zip(
-                {
-                    n: ak.to_packed(ak.without_parameters(events[bname][n])) 
-                    for n in events[bname].fields 
-                    if is_rootcompat(events[bname][n])
-                }
-            )
-    return out    
+        if events[bname].fields and (is_included(bname) or is_good_hlt(bname)):
+            # Flatten the collection: Tau -> Tau_pt, Tau_eta, ...
+            for n in events[bname].fields:
+                if is_rootcompat(events[bname][n]):
+                    branch_name = f"{bname}_{n}"
+                    out[branch_name] = ak.to_packed(
+                        ak.without_parameters(events[bname][n])
+                    )
+
+        # handle simple top-level fields too
+        elif is_included(bname) or is_good_hlt(bname):
+            if is_rootcompat(events[bname]):
+                out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
+
+    return out
+
+
+
 
 
 class MyProcessor(processor.ProcessorABC):
@@ -354,6 +382,13 @@ class MyProcessorSara(processor.ProcessorABC):
         if events is None: 
             return output
 
+
+
+        # Combine into one record (uproot expects a single awkward Array)
+#         ak_array = ak.zip(events_to_write)
+#         ak_array = ak.Array(events_to_write)
+
+
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
         if not is_MC:
@@ -363,8 +398,6 @@ class MyProcessorSara(processor.ProcessorABC):
             except:
                 print (f"[ lumimask ] Skip now! Unable to find year info of {dataset_name}")
 
-#         logger.info("Starting process")
-
 
         # Define the "good muon" condition for each muon per event
         good_muon_mask = (
@@ -372,28 +405,19 @@ class MyProcessorSara(processor.ProcessorABC):
              (events.DisMuon.pt > 20)
             & (abs(events.DisMuon.eta) < 2.4) # Acceptance of the CMS muon system
         )
-#         logger.info(f"Defined good muons")
         events['DisMuon'] = events.DisMuon[good_muon_mask]
-#         logger.info(f"Applied mask to DisMuon")
         num_evts = ak.num(events, axis=0)
-#         logger.info("Counted the number of original events")
         num_good_muons = ak.count_nonzero(good_muon_mask, axis=1)
-#         logger.info("Counted the number of events with good muons")
         events = events[num_good_muons >= 1]
-#         logger.info("Counted the number of events with one or more good muons")
-#         logger.info(f"Cut muons")
 
         good_jet_mask = (
             (events.Jet.pt > 20)
             & (abs(events.Jet.eta) < 2.4)
             & ~(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1)) 
         )
-#         logger.info("Defined good jets")
-        
         events['Jet'] = events.Jet[good_jet_mask]
         num_good_jets = ak.count_nonzero(good_jet_mask, axis=1)
         events = events[num_good_jets >= 1]
-#         logger.info(f"Cut jets")
 
         #Noise filter
         noise_mask = (
@@ -408,16 +432,23 @@ class MyProcessorSara(processor.ProcessorABC):
                          )
 
         events = events[noise_mask] 
-#         logger.info(f"Filtered noise")
 
         n_jets = ak.num(events.Jet.pt)
         charged_sel = events.Jet.constituents.pf.charge != 0
         dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
         events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
-#         logger.info(f"Filled dictionary")
-        
-        out_dict_sara = events
-        events_to_write = uproot_writeable(events)
+# #         logger.info(f"Filled dictionary")
+#         
+# #         out_dict_sara = events
+#         events_to_write = uproot_writeable(events)
+#         print ('sara:', type(ak.zip(events_to_write)))
+#         out_file = uproot.dask_write(ak.zip(events_to_write), "out.root", compute=False, tree_name='Events')
+#         return out_file
+# #         uproot.dask_write(
+# #         skimmed,
+# #         destination="skimtest/",
+# #         prefix=f"{dataset}/skimmed",
+# #     )
 
 ### old
 #         out_file = uproot.dask_write(
@@ -429,11 +460,28 @@ class MyProcessorSara(processor.ProcessorABC):
 #             tree_name="Events"
 #         )
 #         uproot.dask_write(conv, "out.root", "Events")
-        with uproot.recreate("out.root") as f:
-          f["Events"] = events_to_write  # regular Awkward array
+#         with uproot.recreate("out.root") as f:
+#           f["Events"] = events_to_write  # regular Awkward array
 
 #         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
 #         return out_file
+#         out_file = uproot.dask_write(out_dict, "/eos/cms/store/user/fiorendi/displacedTaus/skim/mutau/v3/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        # Write directly to ROOT
+        events_to_write = uproot_writeable(events)
+        
+        # unique name: dataset name + chunk range
+        fname = os.path.basename(events.metadata["filename"]).replace(".root", "")
+        start = events.metadata["entrystart"]
+        stop  = events.metadata["entrystop"]
+        outname = f"{fname}_{start}_{stop}.root"
+
+        with uproot.recreate(outname) as fout:
+#         with uproot.recreate("out.root") as fout:
+            fout["Events"] = events_to_write
+
+        # You can also return a summary/histogram/etc.
+        return {"entries_written": len(events_to_write)}
+
 
     def postprocess(self, accumulator):
         pass
@@ -441,31 +489,41 @@ class MyProcessorSara(processor.ProcessorABC):
   
   
   
-fileset = {
-    'signal': [
-        'root://cms-xrd-global.cern.ch///store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_10_0.root',
-    ]
-}
+# fileset = {
+#     'signal': [
+#         'root://cms-xrd-global.cern.ch///store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_10_0.root',
+# #         'root://cms-xrd-global.cern.ch///store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_7_0.root',
+# #         'root://cms-xrd-global.cern.ch///store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_8_0.root',
+# #         'root://cms-xrd-global.cern.ch///store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_9_0.root',
+#     ]
+# }
+# 
 
+import cloudpickle
+from dask.distributed import LocalCluster
 
+    
 if __name__ == "__main__":
 ## https://github.com/CoffeaTeam/coffea-hats/blob/master/04-processor.ipynb
 
     print("Time started:", datetime.now().strftime("%H:%M:%S"))
     tic = time.time()
 
-    filename = 'nano_10_0.root'
+#     filename = 'nano_10_0.root'
 #     filename = '/eos/cms/store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_10_0.root'
 #     filename = 'root://cms-xrd-global.cern.ch///store/user/fiorendi/displacedTaus/inputFiles_fortesting/nano_10_0.root'
 
 ## simple processing
-#     file = uproot.open({filename:"Events"})
-    events = NanoEventsFactory.from_root(
-      {filename: "Events"}, 
-      schemaclass=PFNanoAODSchema, 
-      mode="virtual",
-      metadata={"dataset": "Stau"},
-    ).events()
+#     events = NanoEventsFactory.from_root(
+#       {filename: "Events"}, 
+#       schemaclass=PFNanoAODSchema, 
+#       mode="virtual",
+#       metadata={"dataset": "Stau"},
+#     ).events()
+#     p = MyProcessorSara()
+#     out = p.process(events)
+## simple processing new version
+    
 
 ## old versions
 #     file = uproot.open({filename:"Events"})
@@ -476,9 +534,9 @@ if __name__ == "__main__":
 #         schemaclass=PFNanoAODSchema,
 #     ).events()
 
-    p = MyProcessorSara()
+#     p = MyProcessorSara()
 #     p = MyProcessor()
-    out = p.process(events)
+#     out = p.process(events)
 ## end simple processing       
 
 
@@ -487,12 +545,51 @@ if __name__ == "__main__":
 #         schema=PFNanoAODSchema,
 #         maxchunks=4,
 #     )
-#     
+    
 #     out = iterative_run(
 #         fileset,
 #         treename="Events",
 #         processor_instance=MyProcessorSara(),
 #     )
+    from fileset_xrootd_all import fileset
+
+    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+    client = Client(cluster)
+
+    iterative_run = processor.Runner(
+        executor=processor.DaskExecutor(client=client, compression=None),
+        chunksize=5_000,
+        skipbadfiles=True,
+#         executor=processor.FuturesExecutor(compression=None, workers = 4),
+#         executor=processor.IterativeExecutor(compression=None),
+        schema=PFNanoAODSchema,
+#         maxchunks=4,
+    )
+    
+    out = iterative_run(
+        fileset,
+        treename="Events",
+        processor_instance=MyProcessorSara(),
+    )
+
+
+    print(out)
+
+#     cluster = LocalCluster(n_workers=1, threads_per_worker=1)
+#     client = Client(cluster)
+# 
+# 
+#     dask_run = processor.Runner(
+#         processor.DaskExecutor(client=client, compression=None),
+#         schema=PFNanoAODSchema,
+#         maxchunks=4,
+#     )
+#     out = dask_run(
+#         fileset,
+#         treename="Events",
+#         processor_instance=MyProcessorSara(),
+#     )
+# 
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
 #     out

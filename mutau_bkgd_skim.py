@@ -24,13 +24,14 @@ import dask_awkward as dak
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client, wait, progress, LocalCluster
 from fileset import *
+from dask_lxplus import CernCluster
 
 from selections.lumi_selections import select_lumis
 
 import time
 from datetime import datetime
 from distributed import Client
-from lpcjobqueue import LPCCondorCluster
+# from lpcjobqueue import LPCCondorCluster
 
 import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
@@ -232,7 +233,8 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim/noLepVeto/"+events.metadata['dataset'], compute=False, tree_name='Events')
+#         out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/user/dally/first_skim/noLepVeto/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        out_file = uproot.dask_write(out_dict, "/eos/cms/store/user/fiorendi/first_skim/noLepVeto/"+events.metadata['dataset'], compute=False, tree_name='Events')
         return out_file
 
     def postprocess(self, accumulator):
@@ -248,7 +250,27 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     
     tic = time.time()
-    cluster = LPCCondorCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
+#     cluster = CernCluster(ship_env=True, transfer_input_files='/uscms/home/dally/x509up_u57864')
+    import socket
+    cluster = CernCluster(
+            cores=1,
+            memory='3000MB',
+            disk='1000MB',
+            death_timeout = '60',
+            lcg = True,
+            nanny = False,
+            container_runtime = "none",
+            log_directory = "/eos/user/f/fiorendi/condor/log",
+            scheduler_options={
+                'port': n_port,
+                'host': socket.gethostname(),
+                },
+            job_extra={
+                '+JobFlavour': '"longlunch"',
+                },
+            extra = ['--worker-port 10000:10100']
+            )
+
     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
     cluster.adapt(minimum=1, maximum=5000)
     client = Client(cluster)
@@ -285,7 +307,7 @@ if __name__ == "__main__":
 #    )
 
     for samp in Stau_QCD_DY_dataset_runnable.keys(): 
-        if  samp not in os.listdir("/eos/uscms/store/user/dally/first_skim/noLepVeto"):
+        if  samp not in os.listdir("/eos/cms/store/user/fiorendi/first_skim/noLepVeto"):
             if "TT" in samp or "DY" in samp or "Stau" in samp or "QCD" in samp or "MET" in samp: continue
             
             samp_runnable = {}
