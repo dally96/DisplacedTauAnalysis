@@ -70,18 +70,20 @@ def list_root_files(path):
     return [f for f in files if f.endswith(".root")]
 
 def make_key(dirname):
-    if "QCD_PT-" in dirname:
-        part = dirname.split("_")[0]+'_'+dirname.split("_")[1]
-        return part
-    elif "SMS-TStauStau" in dirname:
-        part = 'Stau_'+dirname.split('_')[1].split('-')[1]+'_'+dirname.split('_')[2].split('-')[1]
-        return part
-    elif "Stau_" in dirname:
-        return dirname
-    elif "Wto" in dirname or "TTto" in dirname:
-        return dirname.split("Tune")[0][:-1]
-    else:
-        return dirname
+    if args.skim == '':
+        if "QCD_PT-" in dirname:
+            part = dirname.split("_")[0]+'_'+dirname.split("_")[1]
+            return part
+        elif "SMS-TStauStau" in dirname:
+            part = 'Stau_'+dirname.split('_')[1].split('-')[1]+'_'+dirname.split('_')[2].split('-')[1]
+            return part
+        elif "Stau_" in dirname:
+            return dirname
+        elif "Wto" in dirname or "TTto" in dirname:
+            return dirname.split("Tune")[0][:-1]
+        else:
+            return dirname
+    return dirname      
 
 
 import importlib
