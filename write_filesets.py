@@ -45,8 +45,8 @@ if args.skim != '':
 GROUPS = {
     "SMS-TStauStau": f"{outdir}fileset_signal.py",
     "Stau"         : f"{outdir}fileset_signal.py",
-    "Wto2Q"        : f"{outdir}fileset_WTo2Q.py",
-    "WtoLNu"       : f"{outdir}fileset_WToLNu.py",
+    "Wto2Q"        : f"{outdir}fileset_Wto2Q.py",
+    "WtoLNu"       : f"{outdir}fileset_WtoLNu.py",
     "QCD_PT"       : f"{outdir}fileset_QCD.py",
     "DYJetsToLL"   : f"{outdir}fileset_DY.py",
     "TTto"         : f"{outdir}fileset_TT.py",

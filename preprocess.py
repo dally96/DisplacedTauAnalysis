@@ -55,8 +55,8 @@ if args.skim != '':
     outdir_s = args.skim + '/'
   
 samples = {
-    "Wto2Q"  : f"samples.{outdir_p}fileset_WTo2Q",
-    "WtoLNu" : f"samples.{outdir_p}fileset_WToLNu",
+    "Wto2Q"  : f"samples.{outdir_p}fileset_Wto2Q",
+    "WtoLNu" : f"samples.{outdir_p}fileset_WtoLNu",
     "QCD"    : f"samples.{outdir_p}fileset_QCD",
     "DY"     : f"samples.{outdir_p}fileset_DY",
     "signal" : f"samples.{outdir_p}fileset_signal",
