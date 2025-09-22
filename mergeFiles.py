@@ -10,14 +10,16 @@ Adapted from script from Tova Holmes who adapted it from Jonathan Long
 
 import sys, os, subprocess
 from math import floor
-from ROOT import *
+# from ROOT import *
+import ROOT
+from ROOT import TFile
 
 mergeDir = "merged"
 
 doMerge = True           # This really doesn't need to be an option, but is here in case I decide to separate data and MC at some point
 
 
-doFinalMerge = False    # Hadds together all the chunks for one dataset and deletes the partial files
+doFinalMerge = True    # Hadds together all the chunks for one dataset and deletes the partial files
 includeEmptyFiles = False   # Hadds histograms from files without trees
 
 #haddTemplateMC = "/afs/cern.ch/user/t/tholmes/LLP/scripts/ntuple_macros/haddTemplate_slimmed_mc_sfs.root"
@@ -30,18 +32,23 @@ skipMergedFiles = True      # This will check the metadata of the final file and
 
 treeName = "Events"
 #sampleDir = "/eos/uscms/store/user/dally/first_skim/noLepVeto"
-sourceDir = "/eos/uscms/store/group/lpcdisptau/dally/second_skim/all_trig_SR/"
+# sourceDir = "/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/fake/"
+sourceDir = "/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/selected/"
 sampleDir = sourceDir
 
 # Create directory for merged output
 if not mergeDir in os.listdir(sourceDir): os.mkdir(os.path.join(sourceDir, mergeDir))
 
-if doMerge:
+import pdb
 
+
+if doMerge:
     # Get list of files; assume we're in the directory we rucio downloaded to
     for folder in os.listdir(sampleDir):
+        print (folder)
         if mergeDir in folder: continue
-        fFiles = os.listdir(os.path.join(sampleDir,folder))
+        allfFiles = os.listdir(os.path.join(sampleDir,folder))
+        fFiles = [f for f in allfFiles if '.root' in f]
         mergeName = mergeDir + "_" + folder
         print(mergeName)
 
@@ -120,7 +127,8 @@ if doMerge:
                 print("Merged file already exists. Skipping final merge.")
                 continue
             filesToMerge = []
-            for i in fDict: filesToMerge.append("%s/%s_%d.root"%(mergeDir, mergeName, i))
+#             for i in fDict: filesToMerge.append("%s/%s_%d.root"%(mergeDir, mergeName, i))
+            for i in fDict: filesToMerge.append("%s/%s_%d.root"%(fullMergeDir, mergeName, i))
             if finalName in os.listdir(fullMergeDir) and skipMergedFiles: filesToMerge.append(finalPath)
             if len(filesToMerge)==1:
                 print("Only have one subfile; just renaming instead of hadding.")
@@ -131,7 +139,7 @@ if doMerge:
                 for name in filesToMerge: command += " %s"%name
                 os.system(command)
                 for i in fDict:
-                    os.remove("%s/%s_%d.root"%(mergeDir, mergeName, i))
+                    os.remove("%s/%s_%d.root"%(fullMergeDir, mergeName, i))
                 os.rename("%s.tmp"%finalPath, finalPath)
 
         # Now add in the histograms from any files without trees
