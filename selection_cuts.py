@@ -31,7 +31,7 @@ parser.add_argument("-m"    , "--muon"    , dest = "leading_muon_type"   , help 
 parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "pt")         
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -92,8 +92,8 @@ if args.usePkl==True:
         input_dataset = pickle.load(f)
 else:
     samples = {
-        "Wto2Q": f"samples.{skim_folder}.fileset_WTo2Q",
-        "WtoLNu": f"samples.{skim_folder}.fileset_WToLNu",
+        "Wto2Q": f"samples.{skim_folder}.fileset_Wto2Q",
+        "WtoLNu": f"samples.{skim_folder}.fileset_WtoLNu",
         "QCD": f"samples.{skim_folder}.fileset_QCD",
         "DY": f"samples.{skim_folder}.fileset_DY",
         "signal": f"samples.{skim_folder}.fileset_signal",
@@ -122,20 +122,23 @@ print("Will process {} files from the following samples:".format(nfiles), filese
 
 
 ## prompt skim case
-include_prefixes = ['DisMuon',  'Muon',  'Jet',   'GenPart',   'GenVisTau', 'GenVtx'
+include_prefixes = ['DisMuon',  'Muon',  'Jet',   
+                    'GenPart',   
+                    'GenVisTau', 'GenVtx'
                    ]
 
 include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass', 'dxy', 'charge', 'dz',
                      'mediumId', 'tightId', 'nTrackerLayers', 'tkRelIso', 'pfRelIso03_all', 'pfRelIso03_chg',
                      'disTauTag_score1', 'rawFactor', 'nConstituents',
-                     'genPartIdxMother']           
+                     'genPartIdxMother'
+                     ]           
                      
 ### need to add Lxy and IP at GEN level                             
 
 include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',     #'GenPart',  'GenVisTau', 'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',    #'nGenPart', 'nGenVisTau', 'nGenVtx',
-               'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight',
-               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau',
+               'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 
+               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV'
               ]
 
 def is_rootcompat(a):
@@ -167,6 +170,7 @@ def uproot_writeable(events):
             fields = {}
             for n in events[bname].fields:
                 if is_rootcompat(events[bname][n]):
+#                     print (bname, n)
                     if keep_branch or (reduced_branch and n in include_postfixes):
                         fields[n] = ak.to_packed(ak.without_parameters(events[bname][n]))
 
@@ -190,7 +194,7 @@ class SelectionProcessor(processor.ProcessorABC):
         assert mode in ["hpstau_mu", "jet_dmu"]
         self._mode = mode
 
-#         self._accumulator = {}
+        self._accumulator = {}
 #         for samp in skimmed_fileset:
 #             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
@@ -231,6 +235,13 @@ class SelectionProcessor(processor.ProcessorABC):
 
 
     def process(self, events):
+        n_evts = len(events)  
+        logger.info(f"starting process")
+        if n_evts == 0: 
+#         out = self._accumulator.identity() 
+#         if events is None: 
+            logger.info(f"no input events")
+            return {"entries_written": 0}
 
         logger.info(f"Start process for {events.metadata['dataset']}")
         dataset = events.metadata["dataset"]    
@@ -240,7 +251,7 @@ class SelectionProcessor(processor.ProcessorABC):
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
-        if is_MC: 
+        if is_MC and 'Stau' in dataset: 
 #             sumWeights = num_events[events.metadata["dataset"]]
 
             events["Stau"] = events.GenPart[(abs(events.GenPart.pdgId) == 1000015) &\
@@ -261,10 +272,28 @@ class SelectionProcessor(processor.ProcessorABC):
         ## these selections are not there anymore in the previous skimming step
         ## test to check the function in the SR
         if self._mode == "hpstau_mu":
-            events["Muon"] = events.Muon[ak.argsort(events["Muon"][leading_muon_var], ascending=False, axis = 1)]
-            events["Muon"] = ak.singletons(ak.firsts(events.Muon))
-            events["Tau"] = events.Tau[ak.argsort(events["Tau"][leading_jet_var], ascending=False, axis = 1)]
-            events["Tau"] = ak.singletons(ak.firsts(events.Tau))
+#             print(ak.num(events.Muon.pt, axis=1))
+#             print(ak.num(events.Muon.eta, axis=1))
+#             print(ak.num(events.Muon.IPx, axis=1))
+##             sort_indices = ak.argsort(ak.to_numpy(muons[leading_muon_var]), ascending=False, axis=1)
+##             muons = muons[sort_indices]
+            
+            muons = events.Muon
+            muons = muons[ak.argsort(muons[leading_muon_var], ascending=False, axis=1)]
+            muons = ak.singletons(ak.firsts(muons))
+            events["Muon"] = muons
+            taus = events.Tau
+            taus = events.Tau[ak.argsort(taus[leading_jet_var], ascending=False, axis = 1)]
+            taus = ak.singletons(ak.firsts(taus))
+            events["Tau"] = taus
+            
+            met = events.PFMET.pt            
+            met_phi =  events.PFMET.phi        
+            dphi = abs(muons.phi - met_phi)
+            dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
+            mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
+            events = ak.with_field(events, mT, "mT")
+#             
             events = event_selection_hpstau_mu(events, selection_string)
         else:
             events["DisMuon"] = events.DisMuon[ak.argsort(events["DisMuon"][leading_muon_var], ascending=False, axis = 1)]
@@ -275,7 +304,7 @@ class SelectionProcessor(processor.ProcessorABC):
 
         logger.info(f"Chose leading objects & filtered events")
 
-        weights = 1 * ak.ones_like(events.event) if is_MC else events.genWeight
+        weights = events.genWeight if is_MC else 1 * ak.ones_like(events.event) 
         logger.info("mc weights")
 
         # Handle systematics and weights
@@ -286,6 +315,13 @@ class SelectionProcessor(processor.ProcessorABC):
         logger.info("all weights")
         events = ak.with_field(events, weight_branches["weight"], "weight")
 
+        ## prevent writing out files with empty trees
+        if not len(events) > 0:
+            return {
+                "entries_written": 0,
+#                 "run_dict" : run_dict
+            }
+
         # Write to ROOT
         events_to_write = uproot_writeable(events)
         # unique name: dataset name + chunk range
@@ -294,6 +330,7 @@ class SelectionProcessor(processor.ProcessorABC):
 
         with uproot.recreate(outname) as fout:
             fout["Events"] = events_to_write
+#         skim = ak.to_parquet(events_to_write, outname.replace('.root', '.parquet'), extensionarray=False)
         return {"entries_written": len(events_to_write)}
 
 
@@ -328,11 +365,13 @@ if __name__ == "__main__":
 #      #minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
 #     cluster.adapt(minimum=1, maximum=10000)
     
-#     cluster = LocalCluster(n_workers=1, threads_per_worker=1)
-#     client = Client(cluster)
+    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+    client = Client(cluster)
 
     lxplus_run = processor.Runner(
-        executor=processor.IterativeExecutor(compression=None),
+#         executor=processor.FuturesExecutor(compression=None, workers = 4),
+#         executor=processor.IterativeExecutor(compression=None),
+        executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=30_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
@@ -340,13 +379,23 @@ if __name__ == "__main__":
 #         maxchunks=4,
     )
     
+#     myfileset = {
+#       "WLNu0J": {
+#         "files": {
+#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_1J/nano_2644_0_0_9429.root" : "Events",
+# #           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_0J/nano_10022_0_0_5251.root": "Events",
+# # #           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_0J/nano_10038_0_0_4011.root": "Events",
+#          }
+#       }
+#     }
+#     out = lxplus_run(
     out, proc_report = lxplus_run(
         fileset,
         treename="Events",
         processor_instance=SelectionProcessor(args.leading_muon_type, args.leading_jet_type, mode_string),
         uproot_options={"allow_read_errors_with_report": (OSError, KeyError)}
     )
-    print(out)
+#     print(out)
 
     elapsed = time.time() - tic 
     print(f"Finished in {elapsed:.1f}s")

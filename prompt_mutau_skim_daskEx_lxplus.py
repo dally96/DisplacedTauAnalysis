@@ -25,7 +25,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -64,8 +64,8 @@ if args.usePkl:
 
 if not args.usePkl:
     samples = {
-        "Wto2Q": "samples.fileset_WTo2Q",
-        "WtoLNu": "samples.fileset_WToLNu",
+        "Wto2Q": "samples.fileset_Wto2Q",
+        "WtoLNu": "samples.fileset_WtoLNu",
         "QCD": "samples.fileset_QCD",
         "DY": "samples.fileset_DY",
         "signal": "samples.fileset_signal",
@@ -273,17 +273,13 @@ class SkimProcessor(processor.ProcessorABC):
         return accumulator
   
   
-def hname():
-    import socket
-    return socket.gethostname()
-   
 if __name__ == "__main__":
 ## https://github.com/CoffeaTeam/coffea-hats/blob/master/04-processor.ipynb
 
     print("Time started:", datetime.now().strftime("%H:%M:%S"))
     tic = time.time()
 
-    test_job = True 
+    test_job = False 
     
     if not test_job:
         n_port = 8786
@@ -292,7 +288,7 @@ if __name__ == "__main__":
                 memory='4000MB',
                 disk='1000MB',
                 death_timeout = '240',
-                nanny=True,
+                nanny=False,
                 container_runtime = "none",
                 log_directory = "root://eosuser.cern.ch//eos/user/f/fiorendi/condor/log/prompt_skim/v3",
                 scheduler_options={
@@ -309,10 +305,10 @@ if __name__ == "__main__":
                 ],
                 extra = ['--worker-port 10000:10100']
                )
-        cluster.adapt(minimum=1, maximum=200, wait_count=3)
+        cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
         print(cluster.job_script())
     else:    
-        cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=1, threads_per_worker=1)
     
     client = Client(cluster)
     lxplus_run = processor.Runner(
@@ -327,10 +323,12 @@ if __name__ == "__main__":
 #     myfileset = {
 #       "WLNu1J": {
 #         "files": {
-# #           "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_1J/nano_2644_0_0_9429.root"
-#           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-2Jets_1J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/nano_2644_0.root": "Events",
-# #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-2Jets_0J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/nano_10001_0.root": "Events",
-# #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-2Jets_0J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/nano_10002_0.root": "Events",
+#           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_9_0.root" : "Events",
+#           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_89_0.root" : "Events",
+# # #           "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_1J/nano_2644_0_0_9429.root"
+# #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-2Jets_1J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/nano_2644_0.root": "Events",
+# # #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-2Jets_0J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/nano_10001_0.root": "Events",
+# # #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-2Jets_0J_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/nano_10002_0.root": "Events",
 #          }
 #       }
 #     }
@@ -343,11 +341,11 @@ if __name__ == "__main__":
 
     # Save to JSON file
     sub_string = '_'.join(subs for subs in args.subsample)
-    with open(f'{out_folder_json}/result_{args.sample}{sub_string}.json', 'w') as fp:  
+    with open(f'{out_folder_json}/result_{args.sample}_{sub_string}.json', 'w') as fp:  
         json.dump(proc_report,fp)
 
     ## save processed run/lumi to json file 
-    with open(f"{out_folder_json}/processed_lumis_{args.sample}{sub_string}.json", "w") as fp:
+    with open(f"{out_folder_json}/processed_lumis_{args.sample}_{sub_string}.json", "w") as fp:
         # Convert defaultdicts into normal dicts for clean JSON
         json.dump({k: dict(v) for k, v in out['run_dict'].items()}, fp, indent=2)
 
