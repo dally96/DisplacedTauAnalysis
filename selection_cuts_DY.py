@@ -44,7 +44,7 @@ parser.add_argument("-j"    , "--jet"     , dest = "jet"    , help = "Leading je
 
 leading_var = parser.parse_args()
 
-second_skim_dir = 'potential_W_CR'
+second_skim_dir = 'TT_CR_MET_trig_JetLooseId'
 
 if second_skim_dir not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/"):
     os.mkdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/" + second_skim_dir)
@@ -125,6 +125,11 @@ class skimProcessor(processor.ProcessorABC):
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
 
+        good_jet_mask = (events.Jet.isLoose)
+        events['Jet'] = events.Jet[good_jet_mask]
+        num_good_jets = ak.count_nonzero(good_jet_mask, axis = 1)
+        events = events[num_good_jets >= 1]
+        logger.info(f"Chosen jets that passed isTightLeptonVeto") 
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
@@ -169,7 +174,7 @@ class skimProcessor(processor.ProcessorABC):
         #    
         #events = events[good_muons & good_jets & good_events]
 
-        events = event_selection(events, SR_selections, "W_CR")
+        events = event_selection(events, SR_selections, "TT_CR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####

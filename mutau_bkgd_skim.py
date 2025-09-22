@@ -75,9 +75,6 @@ class MyProcessor(processor.ProcessorABC):
         )
         logger.info(f"Defined good muons")
         events['DisMuon'] = events.DisMuon[good_muon_mask]
-        logger.info(f"Applied mask to DisMuon")
-        num_evts = ak.num(events, axis=0)
-        logger.info("Counted the number of original events")
         num_good_muons = ak.count_nonzero(good_muon_mask, axis=1)
         logger.info("Counted the number of events with good muons")
         events = events[num_good_muons >= 1]
@@ -87,7 +84,6 @@ class MyProcessor(processor.ProcessorABC):
         good_jet_mask = (
             (events.Jet.pt > 20)
             & (abs(events.Jet.eta) < 2.4)
-            & ~(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1)) 
         )
         logger.info("Defined good jets")
         
@@ -232,7 +228,7 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/first_skim/noLepVeto/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/first_skim/trackless_jets/"+events.metadata['dataset'], compute=False, tree_name='Events')
         return out_file
 
     def postprocess(self, accumulator):
@@ -267,7 +263,9 @@ if __name__ == "__main__":
         data_dataset_runnable = pickle.load(f)    
     with open("W_preprocessed_fileset.pkl", "rb") as  f:
         W_dataset_runnable = pickle.load(f)    
-    dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable | DY_dataset_runnable 
+    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
+        lower_lifetime_dataset_runnable = pickle.load(f)    
+    dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable #| DY_dataset_runnable 
 #    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
 #        lower_lifetime_dataset_runnable = pickle.load(f)    
 #    with open("W_preprocessed_fileset.pkl", "rb") as  f:
@@ -284,17 +282,15 @@ if __name__ == "__main__":
 #                 schemaclass=PFNanoAODSchema
 #    )
 
-    for samp in Stau_QCD_DY_dataset_runnable.keys(): 
-        if  samp not in os.listdir("/eos/uscms/store/user/dally/first_skim/noLepVeto/"):
-            if  samp in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/first_skim/noLepVeto"): continue
+    for samp in dataset_runnable.keys(): 
+        if  samp not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/first_skim/trackless_jets/"):
             #if "TT" in samp or "DY" in samp or "Stau" in samp or "QCD" in samp or "MET" in samp: continue
-            
             samp_runnable = {}
-            samp_runnable[samp] = Stau_QCD_DY_dataset_runnable[samp]
+            samp_runnable[samp] = dataset_runnable[samp]
             print("Time before comupute:", datetime.now().strftime("%H:%M:%S")) 
             to_compute = apply_to_fileset(
                      MyProcessor(),
-                     max_chunks(samp_runnable, 100000),
+                     max_chunks(samp_runnable,),
                      schemaclass=PFNanoAODSchema,
                      uproot_options={"coalesce_config": uproot.source.coalesce.CoalesceConfig(max_request_ranges=10, max_request_bytes=1024*1024),
                                      "allow_read_errors_with_report": True}

@@ -97,27 +97,27 @@ colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 Stau_colors = ['#EA7AF4', '#B43E8F', '#6200B3', '#218380']
 variables_with_bins = {
     #"DisMuon_pt": [(49, 20, 1000), "GeV"],
-    "DisMuon_pt": [(49, 20, 300), "GeV"],
+    #"DisMuon_pt": [(49, 20, 300), "GeV"],
     #"DisMuon_eta": [(50, -2.5, 2.5), ""],
     #"DisMuon_phi": [(64, -3.2, 3.2), ""],
     #"DisMuon_dxy": [(50, -1, 1), "cm"],
-    "DisMuon_dxy": [(50, -0.1, 0.1), "cm"],
+    #"DisMuon_dxy": [(50, -0.1, 0.1), "cm"],
     #"DisMuon_dz" : [(50, -0.1, 0.1), "cm"],
     #"DisMuon_pfRelIso03_all": [(50, 0, 1), ""],
     #"DisMuon_pfRelIso03_chg": [(50, 0, 1), ""],
     #"DisMuon_pfRelIso04_all": [(50, 0, 1), ""],
     #"DisMuon_tkRelIso":       [(50, 0, 1), ""],
 
-    #"Jet_pt" : [(49, 20, 1000), "GeV"],
-    "Jet_pt" : [(49, 20, 300), "GeV"],
+    "Jet_pt" : [(49, 20, 1000), "GeV"],
+    #"Jet_pt" : [(49, 20, 300), "GeV"],
     #"Jet_eta": [(48, -2.4, 2.4), ""],
     #"Jet_phi": [(64, -3.2, 3.2), ""],
     #"Jet_disTauTag_score1": [(20, 0, 1), ""],
     #"Jet_dxy": [(50, -0.5, 0.5), "cm"],
-    "Jet_dxy": [(50, -0.1, 0.1), "cm"],
+    #"Jet_dxy": [(50, -0.1, 0.1), "cm"],
     
     #"PFMET_pt": [(50, 105, 1000), "GeV"],
-    "PFMET_pt": [(50, 105, 300), "GeV"],
+    #"PFMET_pt": [(50, 105, 300), "GeV"],
     }
 
 def get_histogram_minimum(hist_dict, var):
@@ -292,6 +292,7 @@ for background, samples in background_samples.items():
             #print(f"Number of {sample_file} events is {ak.num(events, axis = 0).compute()}")
             #events = uproot.dask(sample_file)
             print(f'Starting {sample_file} histogram')         
+            print(f"The number of events is {ak.num(events, axis = 0).compute()}")
 
             processor_instance = MCProcessor(variables_with_bins, sample_weight)
             output = processor_instance.process(events)
@@ -418,7 +419,7 @@ for var in variables_with_bins:
                                 "DY " + "%.2f"%(DY_frac): background_histograms["DY"][var],       
                                 "W " + "%.2f"%(W_frac): background_histograms["W"][var],
                                   })
-        s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3]])
+        s.plot(stack = True, histtype= "fill", color = [colors[0], colors[1], colors[3], colors[2]])
         data_histograms["JetMET"][var].plot(color = 'black', label = 'data')
         box = plt.subplot().get_position()
         plt.subplot().set_position([box.x0, box.y0, box.width * 0.8, box.height])   

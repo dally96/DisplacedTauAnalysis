@@ -44,7 +44,7 @@ parser.add_argument("-j"    , "--jet"     , dest = "jet"    , help = "Leading je
 
 leading_var = parser.parse_args()
 
-second_skim_dir = 'MET_trig_TT_CR_PROMPTMUONS_TIGHTID'
+second_skim_dir = 'TT_CR_MET_trig_JetTightId'
 
 if second_skim_dir not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/"):
     os.mkdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/" + second_skim_dir)
@@ -124,6 +124,12 @@ class skimProcessor(processor.ProcessorABC):
         
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
+
+        good_jet_mask = ((events.Jet.neHEF < 0.99) & (events.Jet.neEmEF < 0.9) & (events.Jet.chMultiplicity + events.Jet.neMultiplicity > 1) & (events.Jet.chHEF > 0.01) & (events.Jet.chMultiplicity > 0))
+        events['Jet'] = events.Jet[good_jet_mask]
+        num_good_jets = ak.count_nonzero(good_jet_mask, axis = 1)
+        events = events[num_good_jets >= 1]
+        logger.info(f"Chosen jets that passed isTightLeptonVeto") 
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
@@ -258,35 +264,35 @@ class skimProcessor(processor.ProcessorABC):
             out_dict["DisMuon_"   + branch]  = ak.drop_none(events["DisMuon"][branch])
         for branch in jet_vars:
             out_dict["Jet_"       + branch]  = ak.drop_none(events["Jet"][branch])
-        for branch in tau_vars:
-            out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
+        #for branch in tau_vars:
+        #    out_dict["Tau_"       + branch]  = ak.drop_none(events["Tau"][branch])
         for branch in MET_vars: 
             out_dict["PFMET_"     + branch]  = ak.drop_none(events["PFMET"][branch])    
-        if is_MC:
-            gpart_vars =   ['eta', 
-                            'genPartIdxMother', 
-                            'mass', 
-                            'pdgId', 
-                            'phi', 
-                            'pt', 
-                            'status', 
-                            'statusFlags', 
-                            'vertexR', 
-                            'vertexRho', 
-                            'vx', 
-                            'vy', 
-                            'vz',]
+        #if is_MC:
+        #    gpart_vars =   ['eta', 
+        #                    'genPartIdxMother', 
+        #                    'mass', 
+        #                    'pdgId', 
+        #                    'phi', 
+        #                    'pt', 
+        #                    'status', 
+        #                    'statusFlags', 
+        #                    'vertexR', 
+        #                    'vertexRho', 
+        #                    'vx', 
+        #                    'vy', 
+        #                    'vz',]
 
-            gvist_vars = events.GenVisTau.fields   
+        #    gvist_vars = events.GenVisTau.fields   
 
-            for branch in gpart_vars:
-                out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
-            for branch in gpart_vars:
-                out_dict["Stau_"      + branch]  = ak.drop_none(events["Stau"][branch])
-            for branch in gpart_vars:
-                out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
-            for branch in gvist_vars:
-                out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
+        #    for branch in gpart_vars:
+        #        out_dict["GenPart_"   + branch]  = ak.drop_none(events["GenPart"][branch])
+        #    for branch in gpart_vars:
+        #        out_dict["Stau_"      + branch]  = ak.drop_none(events["Stau"][branch])
+        #    for branch in gpart_vars:
+        #        out_dict["StauTau_"   + branch]  = ak.drop_none(events["StauTau"][branch])
+        #    for branch in gvist_vars:
+        #        out_dict["GenVisTau_" + branch]  = ak.drop_none(events["GenVisTau"][branch])
 
         out_dict["event"]           = ak.drop_none(events.event)
         out_dict["weight"]          = dak.drop_none(events.weight)
@@ -294,10 +300,10 @@ class skimProcessor(processor.ProcessorABC):
         out_dict["luminosityBlock"] = ak.drop_none(events.luminosityBlock)
         out_dict["nDisMuon"]        = dak.num(ak.drop_none(events.DisMuon))
         out_dict["nJet"]            = dak.num(ak.drop_none(events.Jet))
-        out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
-        if is_MC:
-            out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
-            out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
+        #out_dict["nTau"]            = dak.num(ak.drop_none(events.Tau))
+        #if is_MC:
+        #    out_dict["nGenPart"]        = dak.num(ak.drop_none(events.GenPart))
+        #    out_dict["nGenVisTau"]      = dak.num(ak.drop_none(events.GenVisTau))
             
             
         try:

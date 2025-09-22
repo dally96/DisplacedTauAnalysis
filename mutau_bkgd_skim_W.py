@@ -87,7 +87,6 @@ class MyProcessor(processor.ProcessorABC):
         good_jet_mask = (
             (events.Jet.pt > 20)
             & (abs(events.Jet.eta) < 2.4)
-            & ~(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1)) 
         )
         logger.info("Defined good jets")
         
@@ -232,7 +231,7 @@ class MyProcessor(processor.ProcessorABC):
         out_dict = dak.zip(out_dict, depth_limit = 1)
 
         logger.info(f"Dictionary zipped: {events.metadata['dataset']}: {out_dict}")
-        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/first_skim/noLepVeto/"+events.metadata['dataset'], compute=False, tree_name='Events')
+        out_file = uproot.dask_write(out_dict, "root://cmseos.fnal.gov//store/group/lpcdisptau/dally/first_skim/trackless_jets/"+events.metadata['dataset'], compute=False, tree_name='Events')
         return out_file
 
     def postprocess(self, accumulator):
@@ -285,8 +284,7 @@ if __name__ == "__main__":
 #    )
 
     for samp in W_dataset_runnable.keys(): 
-        if  samp not in os.listdir("/eos/uscms/store/user/dally/first_skim/noLepVeto"):
-            if  samp in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/first_skim/noLepVeto"): continue
+        if  samp not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/first_skim/trackless_jets"):
             if "TT" in samp or "DY" in samp or "Stau" in samp or "QCD" in samp or "MET" in samp: continue
             
             samp_runnable = {}

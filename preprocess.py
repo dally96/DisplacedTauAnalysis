@@ -44,8 +44,10 @@ from TT_fileset import TT_fileset
 from data_fileset import data_fileset
 from merged_fileset import merged_fileset
 from new_merged_fileset import new_merged_fileset
+from second_skim_fileset import second_skim_fileset
 from jet_dxy_fileset import jet_dxy_fileset
-
+from merged_lower_lifetime_fileset import merged_lower_lifetime_fileset
+from local_fileset import local_fileset
 
 if __name__ == "__main__":
 
@@ -135,7 +137,7 @@ if __name__ == "__main__":
         with open("data_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(data_dataset_runnable, f)
 
-    elif "merged" in samp or "skimmed" in samp:
+    elif "merged" in samp:
         merged_dataset_runnable, merged_dataset_updated = preprocess(
             new_merged_fileset,
             align_clusters=False,
@@ -150,8 +152,54 @@ if __name__ == "__main__":
         with open("merged_W_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(merged_dataset_runnable, f)
 
+    elif "second skim" in samp:
+        second_skim_dataset_runnable, second_skim_dataset_updated = preprocess(
+            second_skim_fileset,
+            align_clusters=False,
+            step_size=10_000,
+            files_per_batch=100,
+            skip_bad_files=True,
+            save_form=False,
+            file_exceptions=(OSError, KeyInFileError),
+            allow_empty_datasets=False,
+        )
+         
+        with open("second_skim_preprocessed_fileset.pkl", "wb") as f:
+            pickle.dump(second_skim_dataset_runnable, f)
+
+    elif "second lower lifetime" in samp:
+        print("Making merged lower lifetime")
+        merged_lower_lifetime_dataset_runnable, merged_lower_lifetime_dataset_updated = preprocess(
+            merged_lower_lifetime_fileset,
+            align_clusters=False,
+            step_size=10_000,
+            files_per_batch=100,
+            skip_bad_files=True,
+            save_form=False,
+            file_exceptions=(OSError, KeyInFileError),
+            allow_empty_datasets=False,
+        )
+         
+        with open("merged_lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
+            pickle.dump(merged_lower_lifetime_dataset_runnable, f)
+
+    elif "local" in samp:
+        local_dataset_runnable, local_dataset_updated = preprocess(
+            local_fileset,
+            align_clusters=False,
+            step_size=10_000,
+            files_per_batch=100,
+            skip_bad_files=True,
+            save_form=False,
+            file_exceptions=(OSError, KeyInFileError),
+            allow_empty_datasets=False,
+        )
+         
+        with open("local_preprocessed_fileset.pkl", "wb") as f:
+            pickle.dump(local_dataset_runnable, f)
+
     else:
-        print("That isn't an option. Options are: 'TT', 'DY', 'W', 'Lower Lifetime', 'data', 'merged', or 'skimmed'")
+        print("That isn't an option. Options are: 'TT', 'DY', 'W', 'Lower Lifetime', 'data', 'merged', 'second skim', 'merged lower lifetime', 'local', or 'skimmed'")
 
     elapsed = time.time() - tic 
     print(f"Preproccessing datasets finished in {elapsed:.1f}s") 

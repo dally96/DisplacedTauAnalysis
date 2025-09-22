@@ -44,7 +44,7 @@ parser.add_argument("-j"    , "--jet"     , dest = "jet"    , help = "Leading je
 
 leading_var = parser.parse_args()
 
-second_skim_dir = 'potential_W_CR_promptmuons_prompterjets'
+second_skim_dir = 'TT_CR_MET_trig_JetTightId'
 
 if second_skim_dir not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/"):
     os.mkdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/" + second_skim_dir)
@@ -67,8 +67,8 @@ selections = {
 
 class skimProcessor(processor.ProcessorABC):
     def __init__(self, leading_muon_var, leading_jet_var):
-        self.leading_muon_var = leading_var.muon
-        self.leading_jet_var  = leading_var.jet
+        self.leading_muon_var = leading_muon_var
+        self.leading_jet_var  = leading_jet_var
 
         self._accumulator = {}
         for samp in skimmed_fileset:
@@ -141,11 +141,11 @@ class skimProcessor(processor.ProcessorABC):
         events = events[trigger_mask]
         logger.info(f"Applied trigger mask")
 
-        #good_jet_mask = ((events.Jet.isTightLeptonVeto) & (events.Jet.chHEF > 0.01))
-        #events['Jet'] = events.Jet[good_jet_mask]
-        #num_good_jets = ak.count_nonzero(good_jet_mask, axis = 1)
-        #events = events[num_good_jets >= 1]
-        #logger.info(f"Chosen jets that passed isTightLeptonVeto") 
+        good_jet_mask = (events.Jet.isTight)
+        events['Jet'] = events.Jet[good_jet_mask]
+        num_good_jets = ak.count_nonzero(good_jet_mask, axis = 1)
+        events = events[num_good_jets >= 1]
+        logger.info(f"Chosen jets that passed isTightLeptonVeto") 
 
         # Determine if dataset is MC or Data
         is_MC = True if hasattr(events, "GenPart") else False
@@ -189,7 +189,7 @@ class skimProcessor(processor.ProcessorABC):
         #good_events = (events.PFMET.pt > selections["MET_pt"])
         #    
         #events = events[good_muons & good_jets & good_events]
-        events = event_selection(events, SR_selections, "W_CR")
+        events = event_selection(events, SR_selections, "TT_CR")
 
         ### ONLY FOR Z PEAK CALCULATION WHERE WE NEED AT LEAST 2 MUONS ###
         #### Make sure to comment out leading jet and leading muon selection ####
@@ -365,7 +365,7 @@ if __name__ == "__main__":
     for samp in dataset_runnable.keys():
         #if samp in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/second_skim/all_trig_SR"): continue
         print(samp)
-        if "MET" in samp or "TT" in samp or "W" in samp or "Stau" in samp or "DY" in samp: continue
+        if "MET" in samp or "TT" in samp or "W" in samp: continue
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
         to_compute = apply_to_fileset(
