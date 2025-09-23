@@ -19,6 +19,9 @@ from itertools import islice
 from collections import defaultdict
 import json
 
+from utils import process_n_files
+
+
 PFNanoAODSchema.warn_missing_crossrefs = False
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 
@@ -45,11 +48,6 @@ parser.add_argument(
 	required=False,
 	help='Turn it to false to use the non-preprocessed samples')
 args = parser.parse_args()
-
-
-def take(n, iterable):
-    """Return the first n items of the iterable as a list."""
-    return list(islice(iterable, n))
 
 
 out_folder = 'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v3/'
@@ -83,12 +81,7 @@ else:
 
 
 ## restrict to n files
-nfiles = int(args.nfiles)
-if nfiles != -1:
-    for k in fileset.keys():
-        if nfiles < len(fileset[k]['files']):
-            fileset[k]['files'] = take(nfiles, fileset[k]['files'])
-
+process_n_files(int(args.nfiles), fileset)
 print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
 
 
@@ -297,6 +290,8 @@ if __name__ == "__main__":
                     },
                 job_extra={
                     '+JobFlavour': '"workday"',
+                    'transfer_input_files': 'utils.py',
+                    'should_transfer_files': 'YES',
                     },
                 job_script_prologue=[
                     "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files

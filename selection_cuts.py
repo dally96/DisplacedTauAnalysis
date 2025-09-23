@@ -16,14 +16,16 @@ import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
 from dask.distributed import Client, wait, progress, LocalCluster
+from dask_lxplus import CernCluster
 import socket, time
 
 import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
 
-from xsec import *
+# from xsec import *
 from selection_function import event_selection, event_selection_hpstau_mu
+from utils import process_n_files
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -75,14 +77,7 @@ else:
     
 
 out_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{skim_folder}/selected/'
-
-
-## move to an utils file
-from itertools import islice
-def take(n, iterable):
-    """Return the first n items of the iterable as a list."""
-    return list(islice(iterable, n))
-
+# out_folder = ''
 
 all_fileset = {}
 if args.usePkl==True:
@@ -111,14 +106,10 @@ else:
 
 
 ## restrict to n files
-nfiles = int(args.nfiles)
-if nfiles != -1:
-    for k in fileset.keys():
-        if nfiles < len(fileset[k]['files']):
-            fileset[k]['files'] = take(nfiles, fileset[k]['files'])
+process_n_files(int(args.nfiles), fileset)
 ## add an else statement to prevent empty lists if nfiles > len(fileset)            
 
-print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
+print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
 
 
 ## prompt skim case
@@ -138,7 +129,7 @@ include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass
 include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',     #'GenPart',  'GenVisTau', 'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',    #'nGenPart', 'nGenVisTau', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 
-               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV'
+               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau'
               ]
 
 def is_rootcompat(a):
@@ -293,6 +284,10 @@ class SelectionProcessor(processor.ProcessorABC):
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
             events = ak.with_field(events, mT, "mT")
+            
+            mutau_cand = taus + muons
+            mutau_mass =mutau_cand.mass 
+            events = ak.with_field(events, mutau_mass, "mutau_mass")
 #             
             events = event_selection_hpstau_mu(events, selection_string)
         else:
@@ -343,29 +338,31 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     tic = time.time()
 
-#     n_port = 8786
-#     cluster = CernCluster(
-#             cores=1,
-#             memory='3000MB',
-#             disk='1000MB',
-#             death_timeout = '60',
-#             lcg = True,
-#             nanny = False,
-#             container_runtime = "none",
-#             log_directory = "/eos/user/f/fiorendi/condor/log",
-#             scheduler_options={
-#                 'port': n_port,
-#                 'host': socket.gethostname(),
-#                 },
-#             job_extra={
-#                 '+JobFlavour': '"longlunch"',
-#                 },
-#             extra = ['--worker-port 10000:10100']
-#             )
-#      #minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
-#     cluster.adapt(minimum=1, maximum=10000)
+    n_port = 8786
+    cluster = CernCluster(
+            cores=1,
+            memory='3000MB',
+            disk='1000MB',
+            death_timeout = '60',
+            lcg = True,
+            nanny = False,
+            container_runtime = "none",
+            log_directory = "/eos/user/f/fiorendi/condor/log",
+            scheduler_options={
+                'port': n_port,
+                'host': socket.gethostname(),
+                },
+            job_extra={
+                '+JobFlavour': '"longlunch"',
+                "transfer_input_files": "selection_function.py, utils.py",
+                "should_transfer_files": "YES",
+                },
+            extra = ['--worker-port 10000:10100']
+            )
+     #minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
+    cluster.adapt(minimum=1, maximum=200)
     
-    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+#     cluster = LocalCluster(n_workers=10, threads_per_worker=1)
     client = Client(cluster)
 
     lxplus_run = processor.Runner(
@@ -383,12 +380,9 @@ if __name__ == "__main__":
 #       "WLNu0J": {
 #         "files": {
 #           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_1J/nano_2644_0_0_9429.root" : "Events",
-# #           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_0J/nano_10022_0_0_5251.root": "Events",
-# # #           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v1/WtoLNu-2Jets_0J/nano_10038_0_0_4011.root": "Events",
 #          }
 #       }
 #     }
-#     out = lxplus_run(
     out, proc_report = lxplus_run(
         fileset,
         treename="Events",
