@@ -9,6 +9,26 @@
         "color": "palegreen",
         "per_event": true
     },
+    "mT": {
+        "field": "mT",
+        "variable": "",
+        "binning_linspace": [0, 300, 301],
+        "density": false,
+        "ylabel": "Events / 1 GeV",
+        "xlabel": "mT in GeV",
+        "color": "palegreen",
+        "per_event": true
+    },
+    "mutau_mass": {
+        "field": "mutau_mass",
+        "variable": "",
+        "binning_linspace": [0, 300, 301],
+        "density": false,
+        "ylabel": "Events / 1 GeV",
+        "xlabel": "mass($\\mu_\\tau$) in GeV",
+        "color": "palegreen",
+        "per_event": true
+    },
     "Muon_pt": {
         "field": "Muon",
         "variable": "pt",
