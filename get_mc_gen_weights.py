@@ -76,7 +76,7 @@ for idataset, dataset_info in fileset.items():
             if result:
                 results.append(result)
 
-    out_path = f"samples/ls_sumw_dict_{the_sample}_{idataset}.json"
+    out_path = f"samples/processed_LS_from_crab//ls_sumw_dict_{the_sample}_{idataset}.json"
     with open(out_path, "w") as fp:
         json.dump(results, fp)
 

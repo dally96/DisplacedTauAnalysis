@@ -23,7 +23,7 @@ for isample in samples_list:
             ls_sumw_filename = f'ls_sumw_dict_{isample}.json'
             if 'QCD' in isubsample or 'Wto' in isubsample or 'TT' in isubsample:
                 ls_sumw_filename = f'ls_sumw_dict_{isample}_{isubsample}.json'
-            with open(f'samples/{ls_sumw_filename}') as sumw_file:
+            with open(f'samples/processed_LS_from_crab/{ls_sumw_filename}') as sumw_file:
                 sumgenw_dict = json.load(sumw_file)
                 ## this one above is a list of dictionaries with keys lumisections, sumgenw, ngen
               
