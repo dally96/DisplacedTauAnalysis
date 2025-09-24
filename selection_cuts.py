@@ -58,6 +58,12 @@ parser.add_argument(
 	required=False,
 	choices=['prompt_mutau','mutau'],
 	help='Specify input skim, which objects, and selections (Muon and HPSTau, or DisMuon and Jet)')
+parser.add_argument(
+	"--nanov",
+	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v9',
+	required=False,
+	help='Specify the custom nanoaod version to process')
 
 args = parser.parse_args()
 
@@ -76,23 +82,25 @@ else:
     exit(0)
     
 
-out_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{skim_folder}/selected/'
+out_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{args.nanov}/{skim_folder}/selected/'
+
 # out_folder = ''
 
 all_fileset = {}
 if args.usePkl==True:
     import pickle 
     ## to be made configurable
-    with open(f"samples/{skim_folder}/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
 else:
     samples = {
-        "Wto2Q": f"samples.{skim_folder}.fileset_Wto2Q",
-        "WtoLNu": f"samples.{skim_folder}.fileset_WtoLNu",
-        "QCD": f"samples.{skim_folder}.fileset_QCD",
-        "DY": f"samples.{skim_folder}.fileset_DY",
-        "signal": f"samples.{skim_folder}.fileset_signal",
-        "TT": f"samples.{skim_folder}.fileset_TT",
+        "Wto2Q": f"samples.{args.nanov}.{skim_folder}.fileset_Wto2Q",
+        "WtoLNu": f"samples.{args.nanov}.{skim_folder}.fileset_WtoLNu",
+        "QCD": f"samples.{args.nanov}.{skim_folder}.fileset_QCD",
+        "DY": f"samples.{args.nanov}.{skim_folder}.fileset_DY",
+        "signal": f"samples.{args.nanov}.{skim_folder}.fileset_signal",
+        "TT": f"samples.{args.nanov}.{skim_folder}.fileset_TT",
+        "singleT": f"samples.{custom_nano_v_p}.{skim_folder}.fileset_singleT",
     }
     module = importlib.import_module(samples[args.sample])
     input_dataset = module.fileset  #['Stau_100_0p1mm'] 
