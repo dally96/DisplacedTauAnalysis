@@ -1,7 +1,30 @@
 import json, pdb
-samples_list = ['DY', 'QCD', 'WtoLNu', 'Wto2Q', 'TT']
+import argparse
+
+parser = argparse.ArgumentParser(description="")
+parser.add_argument(
+	"--nanov",
+	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v9',
+	required=False,
+	help='Specify the custom nanoaod version to process')
+parser.add_argument(
+	"--skim",
+	default='prompt_mutau',
+	required=False,
+	choices=['prompt_mutau','mutau'],
+	help='Specify input skim, which objects, and selections (Muon and HPSTau, or DisMuon and Jet)')
+parser.add_argument(
+	"--skimversion",
+	default='v0',
+	required=False,
+	help='If listing skimmed files, select which version of the inputs')
+
+args = parser.parse_args()
+
+samples_list = ['DY', 'QCD', 'WtoLNu', 'Wto2Q', 'TT', 'singleT']
  
-processed_json_folder = '/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/v3/'
+processed_json_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{args.nanov}/{args.skim}/{args.skimversion}/'
 # processed_json_folder = ''
 
 final_results = {}
@@ -23,7 +46,7 @@ for isample in samples_list:
             ls_sumw_filename = f'ls_sumw_dict_{isample}.json'
             if 'QCD' in isubsample or 'Wto' in isubsample or 'TT' in isubsample:
                 ls_sumw_filename = f'ls_sumw_dict_{isample}_{isubsample}.json'
-            with open(f'samples/processed_LS_from_crab/{ls_sumw_filename}') as sumw_file:
+            with open(f'samples/{args.nanov}/processed_LS_from_crab/{ls_sumw_filename}') as sumw_file:
                 sumgenw_dict = json.load(sumw_file)
                 ## this one above is a list of dictionaries with keys lumisections, sumgenw, ngen
               

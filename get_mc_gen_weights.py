@@ -22,18 +22,27 @@ parser.add_argument(
     default=-1,
     required=False,
     help="Specify the number of input files to process")
+parser.add_argument(
+	"--nanov",
+	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v9',
+	required=False,
+	help='Specify the custom nanoaod version to process')
 args = parser.parse_args()
+custom_nano_v = args.nanov + '/'
+custom_nano_v_p = args.nanov + '.'
 
-def remap_keys(mapping):
-    return [{'lumisections': k, 'sumgenw': v[0], 'ngen': v[1]} for k, v in mapping.items()]
+# def remap_keys(mapping):
+#     return [{'lumisections': k, 'sumgenw': v[0], 'ngen': v[1]} for k, v in mapping.items()]
 
 samples = {
-    "Wto2Q": "samples.fileset_Wto2Q",
-    "WtoLNu": "samples.fileset_WtoLNu",
-    "QCD": "samples.fileset_QCD",
-    "DY": "samples.fileset_DY",
-    "signal": "samples.fileset_signal",
-    "TT": "samples.fileset_TT",
+    "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
+    "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
+    "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
+    "DY": f"samples.{custom_nano_v_p}fileset_DY",
+    "signal": f"samples.{custom_nano_v_p}fileset_signal",
+    "TT": f"samples.{custom_nano_v_p}fileset_TT",
+    "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
 }
 
 the_sample = args.sample
@@ -76,7 +85,7 @@ for idataset, dataset_info in fileset.items():
             if result:
                 results.append(result)
 
-    out_path = f"samples/processed_LS_from_crab//ls_sumw_dict_{the_sample}_{idataset}.json"
+    out_path = f"samples/{custom_nano_v}processed_LS_from_crab/ls_sumw_dict_{the_sample}_{idataset}.json"
     with open(out_path, "w") as fp:
         json.dump(results, fp)
 
