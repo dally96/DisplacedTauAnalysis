@@ -110,22 +110,22 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
 
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
-                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'
+                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'#, 'HLT'
                    ]
 
 
 good_hlts = [
-  "HLT_PFMET120_PFMHT120_IDTight",                  
-  "HLT_PFMET130_PFMHT130_IDTight",
-  "HLT_PFMET140_PFMHT140_IDTight",
-  "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight",
-  "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight",
-  "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight",
-  "HLT_PFMET120_PFMHT120_IDTight_PFHT60",
-  "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
-  "HLT_PFMETTypeOne140_PFMHT140_IDTight",
-  "HLT_MET105_IsoTrk50",
-  "HLT_MET120_IsoTrk50",
+  "PFMET120_PFMHT120_IDTight",                  
+  "PFMET130_PFMHT130_IDTight",
+  "PFMET140_PFMHT140_IDTight",
+  "PFMETNoMu120_PFMHTNoMu120_IDTight",
+  "PFMETNoMu130_PFMHTNoMu130_IDTight",
+  "PFMETNoMu140_PFMHTNoMu140_IDTight",
+  "PFMET120_PFMHT120_IDTight_PFHT60",
+  "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
+  "PFMETTypeOne140_PFMHT140_IDTight",
+  "MET105_IsoTrk50",
+  "MET120_IsoTrk50",
 #   "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
 #   "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
 #   "HLT_Ele30_WPTight_Gsf",                                         
@@ -138,7 +138,15 @@ def is_included(name):
         return any(name.startswith(prefix) for prefix in include_prefixes)
 
 def is_good_hlt(name):
-        return (name in good_hlts)
+
+    if not name.startswith("HLT"):
+        return False
+
+    parts = name.split(".")
+    if len(parts) == 2:
+        name = parts[1]
+        return name in good_hlts
+    return False
    
 
 def is_rootcompat(a):
@@ -156,9 +164,16 @@ def uproot_writeable(events):
     """Restrict to columns that uproot can write compactly"""
     out = {}
     for bname in events.fields:
-        if events[bname].fields and (is_included(bname) or is_good_hlt(bname)):
+#         if 'HLT' in bname:  print(' checking ', events[bname].fields)
+        if bname == "HLT":
+            good_fields = [n for n in events[bname].fields if is_good_hlt(f"HLT.{n}")]
+            if good_fields:
+                out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in good_fields if is_rootcompat(events[bname][n])})
+            continue
+        
+        if events[bname].fields and is_included(bname):
             out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in events[bname].fields if is_rootcompat(events[bname][n])})
-        elif is_included(bname) or is_good_hlt(bname):
+        elif is_included(bname):
             out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
     return out
 
@@ -336,15 +351,15 @@ if __name__ == "__main__":
       "WLNu1J": {
         "files": {
             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_0_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_100_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_10_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_102_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_103_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_104_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_105_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_106_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_107_0.root": "Events",
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_108_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_100_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_10_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_102_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_103_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_104_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_105_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_106_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_107_0.root": "Events",
+#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_108_0.root": "Events",
          }
       }
     }

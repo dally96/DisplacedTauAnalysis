@@ -53,6 +53,11 @@ parser.add_argument(
 	default='Summer22_CHS_v9',
 	required=False,
 	help='Specify the custom nanoaod version to process')
+parser.add_argument(
+	"--testjob",
+	default=False,
+	required=False,
+	help='Turn it to true to run a test job locally')
 args = parser.parse_args()
 
 
@@ -111,30 +116,38 @@ include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsM
 
 
 good_hlts = [
-#   "HLT_PFMET120_PFMHT120_IDTight",                  
-#   "HLT_PFMET130_PFMHT130_IDTight",
-#   "HLT_PFMET140_PFMHT140_IDTight",
-#   "HLT_PFMETNoMu120_PFMHTNoMu120_IDTight",
-#   "HLT_PFMETNoMu130_PFMHTNoMu130_IDTight",
-#   "HLT_PFMETNoMu140_PFMHTNoMu140_IDTight",
-#   "HLT_PFMET120_PFMHT120_IDTight_PFHT60",
-#   "HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
-#   "HLT_PFMETTypeOne140_PFMHT140_IDTight",
-#   "HLT_MET105_IsoTrk50",
-#   "HLT_MET120_IsoTrk50",
-  "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
-  "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
-#   "HLT_Ele30_WPTight_Gsf",                                         
-#   "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
-#   "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
-#   "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"
+#   "PFMET120_PFMHT120_IDTight",                  
+#   "PFMET130_PFMHT130_IDTight",
+#   "PFMET140_PFMHT140_IDTight",
+#   "PFMETNoMu120_PFMHTNoMu120_IDTight",
+#   "PFMETNoMu130_PFMHTNoMu130_IDTight",
+#   "PFMETNoMu140_PFMHTNoMu140_IDTight",
+#   "PFMET120_PFMHT120_IDTight_PFHT60",
+#   "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
+#   "PFMETTypeOne140_PFMHT140_IDTight",
+#   "MET105_IsoTrk50",
+#   "MET120_IsoTrk50",
+  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
+  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
+#   "Ele30_WPTight_Gsf",                                         
+#   "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
+#   "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
+#   "DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"
 ]
 
 def is_included(name):
         return any(name.startswith(prefix) for prefix in include_prefixes)
 
 def is_good_hlt(name):
-        return (name in good_hlts)
+
+    if not name.startswith("HLT"):
+        return False
+
+    parts = name.split(".")
+    if len(parts) == 2:
+        name = parts[1]
+        return name in good_hlts
+    return False
    
 
 def is_rootcompat(a):
@@ -152,9 +165,16 @@ def uproot_writeable(events):
     """Restrict to columns that uproot can write compactly"""
     out = {}
     for bname in events.fields:
-        if events[bname].fields and (is_included(bname) or is_good_hlt(bname)):
+#         if 'HLT' in bname:  print(' checking ', events[bname].fields)
+        if bname == "HLT":
+            good_fields = [n for n in events[bname].fields if is_good_hlt(f"HLT.{n}")]
+            if good_fields:
+                out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in good_fields if is_rootcompat(events[bname][n])})
+            continue
+        
+        if events[bname].fields and is_included(bname):
             out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in events[bname].fields if is_rootcompat(events[bname][n])})
-        elif is_included(bname) or is_good_hlt(bname):
+        elif is_included(bname):
             out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
     return out
 
@@ -280,7 +300,7 @@ if __name__ == "__main__":
     print("Time started:", datetime.now().strftime("%H:%M:%S"))
     tic = time.time()
 
-    test_job = False 
+    test_job = args.testjob 
     
     if not test_job:
         n_port = 8786
