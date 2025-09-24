@@ -1,7 +1,7 @@
 import os
 import subprocess
 import pdb, json, argparse
-
+from pathlib import path
 
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
@@ -20,13 +20,15 @@ args = parser.parse_args()
 # directory on EOS with input files
 ## to replace with v8 once available
 BASE_DIRS = [
+#   "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v9/",
   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
 ]
+custom_nano_v = 'Summer22_CHS_v7/'
 
 XROOTD_PREFIX = "root://cmsxrootd.fnal.gov/"
 EOS_LOC = 'root://cmseos.fnal.gov'
-outdir = 'samples/'
+outdir = 'samples/' + custom_nano_v
 
 
 if args.skim != '':
@@ -38,8 +40,12 @@ if args.skim != '':
     
     XROOTD_PREFIX = "root://eoscms.cern.ch/"
     EOS_LOC = 'root://eoscms.cern.ch/'
-    outdir = f'samples/{skim_folder}/'
+    outdir = f'samples/{custom_nano_v}/{skim_folder}/'
     
+
+if not outdir.exists():
+    outdir.mkdir(parents=True, exist_ok=True)
+    print(f"Folder '{outdir}' created.")
 
 # patterns for grouping different processes
 GROUPS = {
@@ -50,6 +56,7 @@ GROUPS = {
     "QCD_PT"       : f"{outdir}fileset_QCD.py",
     "DYJetsToLL"   : f"{outdir}fileset_DY.py",
     "TTto"         : f"{outdir}fileset_TT.py",
+    "T"            : f"{outdir}fileset_singleT.py",  ## more on this later
 }
 
 
@@ -79,10 +86,11 @@ def make_key(dirname):
             return part
         elif "Stau_" in dirname:
             return dirname
-        elif "Wto" in dirname or "TTto" in dirname:
+        else:    
+#         elif "Wto" in dirname or "TTto" in dirname :
             return dirname.split("Tune")[0][:-1]
-        else:
-            return dirname
+#         else:
+#             return dirname
     return dirname      
 
 
@@ -107,15 +115,25 @@ def write_filesets(grouped):
         for d in dirs:
             dirname = os.path.basename(d)
             for key, outfile in GROUPS.items():
-                if dirname.startswith(key):
-                    sample_key = make_key(dirname)
-                    rootfiles = list_root_files(d)
-                    if not rootfiles:
-                        continue
-                    if sample_key not in grouped[key]:
-                        grouped[key][sample_key] = {"files": {}}
-                    for rf in rootfiles:
-                        grouped[key][sample_key]["files"][XROOTD_PREFIX + rf] = "Events"
+                match = False
+                if key == "T":  ## special case for single tops, as don't want to include TT into them
+                    if dirname.startswith(("TB", "Tb", "TW")):
+                        match = True
+                elif dirname.startswith(key):
+                    match = True
+                if not match:
+                    continue
+                if "WtoLNu" in dirname and "ext" in dirname:
+                   continue
+
+                sample_key = make_key(dirname)
+                rootfiles = list_root_files(d)
+                if not rootfiles:
+                    continue
+                if sample_key not in grouped[key]:
+                    grouped[key][sample_key] = {"files": {}}
+                for rf in rootfiles:
+                    grouped[key][sample_key]["files"][XROOTD_PREFIX + rf] = "Events"
 
     ## write out into fileset files, as dictionary
     for key, outfile in GROUPS.items():
