@@ -28,7 +28,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -47,27 +47,35 @@ parser.add_argument(
 	default=True,
 	required=False,
 	help='Turn it to false to use the non-preprocessed samples')
+parser.add_argument(
+	"--nanov",
+	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v9',
+	required=False,
+	help='Specify the custom nanoaod version to process')
 args = parser.parse_args()
 
 
-out_folder = 'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/prompt_mutau/v3/'
+out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/prompt_mutau/v3/'
 out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
+custom_nano_v = args.nanov + '/'
+custom_nano_v_p = args.nanov + '.'
 
 
 all_fileset = {}
-if args.usePkl:
+if args.usePkl == True:
     import pickle 
-    with open(f"samples/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{custom_nano_v}{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
-
-if not args.usePkl:
+else:
     samples = {
-        "Wto2Q": "samples.fileset_Wto2Q",
-        "WtoLNu": "samples.fileset_WtoLNu",
-        "QCD": "samples.fileset_QCD",
-        "DY": "samples.fileset_DY",
-        "signal": "samples.fileset_signal",
-        "TT": "samples.fileset_TT",
+        "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
+        "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
+        "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
+        "DY": f"samples.{custom_nano_v_p}fileset_DY",
+        "signal": f"samples.{custom_nano_v_p}fileset_signal",
+        "TT": f"samples.{custom_nano_v_p}fileset_TT",
+        "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
     }
   
     module = importlib.import_module(samples[args.sample])
@@ -82,7 +90,7 @@ else:
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
-print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
+print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
 
 
 ## exclude not used
@@ -96,8 +104,8 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     ]
                     
 
-include_prefixes = ['DisMuon',  'Muon',  'Jet_',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
-                    'nDisMuon', 'nMuon', 'nJet_', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
+include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
+                    'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
                     'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'
                    ]
 
@@ -303,7 +311,7 @@ if __name__ == "__main__":
         cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
         print(cluster.job_script())
     else:    
-        cluster = LocalCluster(n_workers=1, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=4, threads_per_worker=1)
     
     client = Client(cluster)
     lxplus_run = processor.Runner(
