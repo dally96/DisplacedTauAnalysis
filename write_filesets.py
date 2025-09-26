@@ -1,7 +1,7 @@
 import os
 import subprocess
 import pdb, json, argparse
-from pathlib import path
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
@@ -24,27 +24,27 @@ BASE_DIRS = [
   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
 ]
-custom_nano_v = 'Summer22_CHS_v7/'
+custom_nano_v = 'Summer22_CHS_v7'
 
 XROOTD_PREFIX = "root://cmsxrootd.fnal.gov/"
 EOS_LOC = 'root://cmseos.fnal.gov'
-outdir = 'samples/' + custom_nano_v
+outdir = 'samples/' + custom_nano_v + '/'
 
 
 if args.skim != '':
     skim_folder = args.skim
     skim_version = args.skimversion
     BASE_DIRS = [
-      f"/store/user/fiorendi/displacedTaus/skim/{skim_folder}/{skim_version}/"
+      f"/store/user/fiorendi/displacedTaus/skim/{custom_nano_v}/{skim_folder}/{skim_version}/"
     ]
     
     XROOTD_PREFIX = "root://eoscms.cern.ch/"
     EOS_LOC = 'root://eoscms.cern.ch/'
     outdir = f'samples/{custom_nano_v}/{skim_folder}/'
     
-
-if not outdir.exists():
-    outdir.mkdir(parents=True, exist_ok=True)
+outfolder = Path(f'{outdir}')
+if not outfolder.exists():
+    outfolder.mkdir(parents=True, exist_ok=True)
     print(f"Folder '{outdir}' created.")
 
 # patterns for grouping different processes
