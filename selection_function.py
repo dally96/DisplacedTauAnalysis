@@ -30,6 +30,13 @@ loose_SR["jet_score_min"] =  0.7
 loose_noIso_SR = {j:k for j,k in loose_SR.items()}
 loose_noIso_SR["muon_iso_max"] =  999.
 
+## validate w/ daniel
+validation_daniel = {j:k for j,k in loose_noIso_SR.items()}
+validation_daniel["muon_dxy_max"]  =  50E-4 ##cm
+validation_daniel["muon_dxy_min"]  =  0 ##cm
+validation_daniel["jet_score_min"] =  0 ##cm
+validation_daniel["jet_score_max"] =  0.7 ##cm
+
 ## loose cuts to validate even with few events and in DY region
 validation_prompt = {j:k for j,k in loose_noIso_SR.items()}
 validation_prompt["jet_dxy_min"] =  -999
@@ -79,6 +86,7 @@ selections_dict = {
   'loose_SR_selections' : loose_SR,
   'loose_noIso_SR_selections' : loose_noIso_SR,
   'validation_prompt' : validation_prompt,
+  'validation_daniel' : validation_daniel,
   'TT_CR' : TT_CR,
   'QCD_CR' : QCD_CR,
   'HPSTauMu' : HPSTauMu,
