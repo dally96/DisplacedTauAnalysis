@@ -46,7 +46,8 @@ lumi = 26.3 ##fb-1
 colors = ['#56CBF9', '#FDCA40', '#5DFDCB', '#D3C0CD', '#3A5683', '#FF773D']
 samples = ['QCD', 'TT', 'W', 'JetMET']
 
-hist_vars = {'nPV': [70, 0, 70, ' '],
+hist_vars = {'npvs': [80, 0, 80, ' '],
+             'npvsGood': [80, 0, 80, ' '],
             }
 
 hist_dict = {}
@@ -163,26 +164,30 @@ class skimProcessor(processor.ProcessorABC):
         
         events = events[trigger_mask]
         print(f"Applied  TT trigger mask")
+    
+        if "JetMET" not in self.samp:
+            weights = events.genWeight
+            if "ext" in self.samp:
+                weights = weights / num_events['_'.join(self.samp.split('_')[:-1])]
+            else:
+                weights = weights / num_events[self.samp] 
 
-        weights = events.genWeight
-        if "ext" in self.samp:
-            weights = weights / num_events['_'.join(self.samp.split('_')[:-1])]
-        else:
-            weights = weights / num_events[self.samp] 
+            weight_branches = self.process_weight_corrs_and_systs(events, weights)
 
-        weight_branches = self.process_weight_corrs_and_systs(events, weights)
-
-        events = ak.with_field(events, weight_branches["weight"], "weight") 
-
+            events = ak.with_field(events, weight_branches["weight"], "weight") 
+    
 
         true_samp = self.samp
+
         if "ext"  in self.samp:
             true_samp = '_'.join(self.samp.split('_')[:-1])
-        if "JetMET" in samp:
-            histogram_dict['nPV'].fill(dak.flatten(events.PV.npvs, axis = None)) 
-        else:
-            histogram_dict['nPV'].fill(dak.flatten(events.PV.npvs, axis = None), weight = dak.flatten(events.weight, axis = None) * lumi * 1000 * xsecs[true_samp])
-
+        for var in self.hist_vars:
+            if "JetMET" in samp:
+                histogram_dict[var].fill(dak.flatten(events['PV'][var], axis = None)) 
+            else:
+                histogram_dict[var].fill(dak.flatten(events['PV'][var], axis = None), weight = dak.flatten(events.weight, axis = None) * lumi * 1000 * xsecs[true_samp])
+                #histogram_dict['nPV'].fill(dak.flatten(events.PV.npvs, axis = None))
+        
         return histogram_dict
 
     def postprocess(self):
@@ -220,22 +225,22 @@ if __name__ == "__main__":
 
     for samp in dataset_runnable.keys():
         if "Stau" in samp: continue
+        #if "TT" not in samp: continue
         print(samp)
         samp_runnable = {}
         samp_runnable[samp] = dataset_runnable[samp]
-        if f"{samp}.pkl" in os.listdir("/eos/uscms/store/user/dally/DisplacedTauAnalysis/prelimSelections/"): continue
+        if f"{samp}_npvsGood.pkl" in os.listdir("/eos/uscms/store/user/dally/DisplacedTauAnalysis/prelimSelections/"): continue
         to_compute = apply_to_fileset(
             skimProcessor(hist_vars, samp),
             max_chunks(samp_runnable, 100000000), # add 10 to run over 10
             schemaclass=PFNanoAODSchema,
         )
         (out, ) = dask.compute(to_compute)
-        print(out) 
-        with open(f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/prelimSelections/{samp}.pkl", "wb")  as f:
+        with open(f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/prelimSelections/{samp}_npvsGood.pkl", "wb")  as f:
             pickle.dump(out, f)
         end = time.time()
         print(f"{samp} took { (end - start) / 60 } minutes to run")
-        
+'''        
         for var in hist_vars.keys():
             if "QCD" in samp:
                 hist_dict["QCD"][var] += out[samp][var]
@@ -269,4 +274,5 @@ if __name__ == "__main__":
 
         plt.cla()
         plt.clf()
+'''
         

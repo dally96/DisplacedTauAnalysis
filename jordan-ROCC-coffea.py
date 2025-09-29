@@ -63,6 +63,15 @@ jetId_colors = {'tight': '#EA7AF4', 'tightLV': '#B43E8F', 'tight_chHEF': '#6200B
 
 lumi = 26.3
 
+###From Brandi's code###
+pt_bins_low    = np.arange(20, 100, 20)
+pt_bins_med    = np.arange(100, 400, 30)
+pt_bins_high   = np.arange(400, 600, 40)
+pt_bins_higher = np.arange(600, 1000, 50)
+pt_bins_eff = np.array(np.concatenate([pt_bins_low, pt_bins_med, pt_bins_high, pt_bins_higher]))
+print(pt_bins_eff)
+###
+
 def passing_mask(jets, score):
     return jets['score'] >= score
 
@@ -207,8 +216,10 @@ class BGProcessor(processor.ProcessorABC):
                                               ]
 
         if is_MC: 
-             events["GenVisStauTau"] = events.GenVisStauTau[(abs(events.GenVisStauTau.lxy) < 100)]
+            events["GenVisStauTau"] = events.GenVisStauTau[(abs(events.GenVisStauTau.lxy) < 100)]
 
+            num_gvt_mask = ak.count_nonzero(events.GenVisStauTau.pt, axis = 1)
+            events = events[num_gvt_mask < 2]
 
         tight_jet_mask         = (events.Jet.isTight)
         tightLV_jet_mask       = (events.Jet.isTightLeptonVeto)
@@ -281,6 +292,36 @@ class BGProcessor(processor.ProcessorABC):
 
             output_dict[cut]["matched_jet_histo"].fill(dak.flatten(tau_jets.disTauTag_score1, axis = None), weight = dak.flatten(jetid_dict[cut]["events"].weight[match_mask], axis = None) * lumi * 1000 * xsecs[dataset]) 
             output_dict[cut]["unmatched_jet_histo"].fill(dak.flatten(fake_jets.disTauTag_score1, axis = None),  weight = dak.flatten(jetid_dict[cut]["events"].weight[fake_mask], axis = None) * lumi * 1000 * xsecs[dataset])
+            if 'tightLV' in cut and 'chHEF' not in cut:
+                tau_jets = tau_jets[tau_jets.disTauTag_score1 > 0.9]
+                tau_jets_tau = tau_jets.nearest(jetid_dict[cut]["events"].GenVisStauTau[match_mask], threshold = max_dr)
+                #print(tau_jets_tau.pt.compute())
+                #print(jetid_dict[cut]["events"]["GenVisStauTau"].pt.compute())
+                
+                num_tjt = ak.count_nonzero(tau_jets_tau.pt, axis = 1)
+                #tau_jets_tau = tau_jets_tau[num_tjt > 0]
+
+                #pt_num =  hda.hist.Hist(hist.axis.Regular(pt_bins_eff, name = "pt_num", label = 'pt_num'))
+                #pt_num_w_weights =  hda.hist.Hist(hist.axis.Regular(pt_bins_eff, name = "pt_num", label = 'pt_num'))
+                #pt_den = hda.hist.Hist(hist.axis.Regular(pt_bins_eff, name = "pt_den", label = 'pt_den'))
+                #pt_den_w_weights =  hda.hist.Hist(hist.axis.Regular(pt_bins_eff, name = "pt_den", label = 'pt_den')) 
+                
+                pt_num =  hda.hist.Hist(hist.axis.Variable(pt_bins_eff, name = "pt_num", label = 'pt_num'))
+                pt_num_w_weights =  hda.hist.Hist(hist.axis.Variable(pt_bins_eff, name = "pt_num", label = 'pt_num'))
+                pt_den = hda.hist.Hist(hist.axis.Variable(pt_bins_eff, name = "pt_den", label = 'pt_den'))
+                pt_den_w_weights =  hda.hist.Hist(hist.axis.Variable(pt_bins_eff, name = "pt_den", label = 'pt_den')) 
+                
+                pt_num.fill(ak.flatten(tau_jets_tau.pt, axis = None))
+                #pt_num_w_weights.fill(ak.flatten(tau_jets_tau.pt, axis = None), weight = ak.flatten(jetid_dict[cut]["events"].weight[match_mask][num_tjt > 0], axis = None) * lumi * 1000 * xsecs[dataset])
+
+                pt_den.fill(ak.flatten(jetid_dict[cut]["events"]["GenVisStauTau"].pt, axis = None))
+                #pt_den_w_weights.fill(ak.flatten(jetid_dict[cut]["events"]["GenVisStauTau"][num_tjt > 0], axis = None), weight = ak.flatten(jetid_dict[cut]["events"].weight[match_mask][num_tjt > 0], axis = None) * lumi * 1000 * xsecs[dataset])
+
+                output_dict["pt_num"] = pt_num
+                #output_dict["pt_numw_weights"] = pt_num_w_weights
+                output_dict["pt_den"] = pt_den
+                #output_dict["pt_den_w_weights"] = pt_den_w_weights
+
 
         #print(jetid_dict["tight"]["total_jets"].compute())
         #print(jetid_dict["tight"]["matched_jet_histo"].compute())

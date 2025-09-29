@@ -59,12 +59,27 @@ cuts = ["tight", "tightLV", "tight_chHEF", "tightLV_chHEF"]
 out = {}
 files = os.listdir("/eos/uscms/store/user/dally/DisplacedTauAnalysis/ROC_hists/")
 for file in files:
+    if "300_100mm" not in file: continue
     samp = file.split('.')[0]
+    print(samp)
     with open("/eos/uscms/store/user/dally/DisplacedTauAnalysis/ROC_hists/" + file, "rb") as f:
         out[samp] = pickle.load(f)[samp]
 
 stau_dict = {}
 
+fig, ax = plt.subplots(2, 1, figsize=(8,10))
+out[samp]["pt_num"].plot_ratio(
+                                out[samp]["pt_den"],
+#                                rp_uncertainty_type = "efficiency",
+                                ax_dict = {"main_ax": ax[1], "ratio_ax": ax[0]},
+)
+#ax[1].remove()
+ax[0].set_ylim((0, 1.1))
+plt.savefig(f"gvt_pt_eff.png")
+plt.savefig(f"gvt_pt_eff.pdf")
+
+
+'''
 unmatched_histo =  {}
 all_histo = {}
 for bkd in bkgds:
@@ -76,7 +91,7 @@ for bkd in bkgds:
     unmatched_histo[bkd]['tightLV_chHEF'] = hda.hist.Hist(hist.axis.Regular(score_granularity, 0, 1, name = 'unmatched_jet_score', label = 'score', overflow = True)).compute()
 
 for samp in out.keys():
-    if "Stau_300_100mm" in samp:
+    if "Stau" in samp:
         lifetime = samp.split('_')[-1]
         mass     = samp.split('_')[-2]
         if lifetime in stau_dict.keys():
@@ -99,8 +114,10 @@ for samp in out.keys():
             #    matched_score_series.append(np.sum(matched_binned_scores[i:]))
 
             matched_score_series = ak.Array(matched_score_series)
-
             passed_matched_jets =  {}
+            print(f"samp: {samp}")
+            print(f"matched_binned_scores: {matched_binned_scores}")
+            print(f"matched_score_series: {matched_score_series}")
             stau_dict[lifetime][mass][cut]['matched'] = matched_score_series/out[samp]['nGenVisStauTau']
         #passed_matched_jets =  {}
         #for score_list in out[samp]['set_s_pmj_pfj']:
@@ -125,11 +142,10 @@ for samp in out.keys():
 #    #    s_sums[score_list[1]][0] += score_list[3]
 #    
 #  
-'''  
+  
 tprocessor = time.time() - tstart
 print(f"{tprocessor/60} minutes for processor to finish")
     #
-    #'''
     ## --- ROC Calculations --- #
     ## Totals
     #all_matched = sum(
@@ -145,7 +161,6 @@ print(f"{tprocessor/60} minutes for processor to finish")
     #)
     #print(f"all_jets is {all_jets}")
     #print(f"{all_jets} total jets, with {all_matched} matched")
-    #'''
     #
     
 thresholds   = []
@@ -215,11 +230,12 @@ for bkd in bkgds:
 #ax.set_xscale("log")
 #ax.set_xlim(-1e-1, 6e-3)
 #ax.set_ylim(0.85, 1.05)
+
 for bkd in bkgds:
     roc = {}
-    for mass in ['300']:
+    for mass in masses:
         roc[mass] = {}
-        for lifetime in ['100mm']:
+        for lifetime in lifetimes:
             print(lifetime)
             roc[mass][lifetime] = {}
             fig, ax = plt.subplots()
@@ -236,9 +252,9 @@ for bkd in bkgds:
             plt.savefig(f'roc-gvt-scatter-{mass}-{lifetime}-jetId_log_{bkd}.png')
     
     roc = {}
-    for mass in ['300']:
+    for mass in masses:
         roc[mass] = {}
-        for lifetime in ['100mm']:
+        for lifetime in lifetimes:
             print(lifetime)
             roc[mass][lifetime] = {}
             fig, ax = plt.subplots()
@@ -248,11 +264,13 @@ for bkd in bkgds:
             plt.ylabel(r"Tau tagger efficiency $\left(\frac{matched\_passing\_jets}{total\_matched\_jets}\right)$")
             plt.title(f"Stau {mass}GeV {lifetime} + {bkd}")
             plt.xscale('log')
-            plt.ylim([0.8, 1])
+            plt.ylim([0, 1])
             plt.legend(loc='lower right')
             
             #plt.grid()
-            plt.savefig(f'roc-gvt-scatter-{mass}-{lifetime}-jetId_log_samescale_TT.pdf')
-            plt.savefig(f'roc-gvt-scatter-{mass}-{lifetime}-jetId_log_samescale_TT.png')
+            plt.savefig(f'roc-gvt-scatter-{mass}-{lifetime}-jetId_log_samescale_{bkd}.pdf')
+            plt.savefig(f'roc-gvt-scatter-{mass}-{lifetime}-jetId_log_samescale_{bkd}.png')
+'''
+
 
 
