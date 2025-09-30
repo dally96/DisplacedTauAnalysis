@@ -48,12 +48,6 @@ parser.add_argument(
 	help='Specify the custom nanoaod version to process')
 args = parser.parse_args()
 
-
-def take(n, iterable):
-    """Return the first n items of the iterable as a list."""
-    return list(islice(iterable, n))
-
-
 outdir_p = f'{args.nanov}.'
 outdir_s = f'{args.nanov}/'
 if args.skim != '':
@@ -78,14 +72,12 @@ if args.subsample == 'all':
 else:  
     fileset = {k: all_fileset[k] for k in args.subsample}
 
-# nfiles = int(args.nfiles)
-# if nfiles != -1:
-#     for k in fileset.keys():
-#         if nfiles < len(fileset[k]['files']):
-#             fileset[k]['files'] = take(nfiles, fileset[k]['files'])
-
-# pdb.set_trace()
-# print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
+nfiles = int(args.nfiles)
+if nfiles != -1:
+    for k in fileset.keys():
+        if nfiles < len(fileset[k]['files']):
+            fileset[k]['files'] = dict(list(fileset[k]['files'].items())[:nfiles])
+print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
 
 ## first element of value is step_size, second is files_per_barch
 pars_per_sample = {
@@ -149,7 +141,7 @@ if __name__ == "__main__":
         for isubsample in dataset_runnable.keys():
             pkl_name = f"samples/{outdir_s}{args.sample}_{isubsample}_preprocessed.pkl"
             with open(pkl_name, "wb") as f:
-               pickle.dump(dataset_runnable[isubsample], f)
+               pickle.dump({isubsample:dataset_runnable[isubsample]}, f)
     else:    
         pkl_name = f"samples/{outdir_s}{args.sample}_preprocessed.pkl"
         with open(pkl_name, "wb") as f:
