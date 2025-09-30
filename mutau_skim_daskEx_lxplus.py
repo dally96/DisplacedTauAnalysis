@@ -15,12 +15,10 @@ import os, argparse, importlib, pdb, socket
 import time
 from datetime import datetime
 
-from itertools import islice
 from collections import defaultdict
 import json
 
-from utils import process_n_files
-
+from utils import process_n_files, is_rootcompat, is_good_hlt, is_included, uproot_writeable
 
 PFNanoAODSchema.warn_missing_crossrefs = False
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
@@ -28,7 +26,8 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all'],
+	nargs='*',
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -49,64 +48,61 @@ parser.add_argument(
 	help='Turn it to false to use the non-preprocessed samples')
 parser.add_argument(
 	"--nanov",
-	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
-	default='Summer22_CHS_v9',
+	choices=['Summer22_CHS_v10', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v10',
 	required=False,
 	help='Specify the custom nanoaod version to process')
 parser.add_argument(
 	"--testjob",
-	default=False,
-	required=False,
-	help='Turn it to true to run a test job locally')
+        action="store_true",
+        help="Run a test job locally")
 args = parser.parse_args()
 
-out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/mutau/v0/'
+out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/mutau/v_all_samples/'
 out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
 
+samples = {
+    "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
+    "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
+    "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
+    "DY": f"samples.{custom_nano_v_p}fileset_DY",
+    "signal": f"samples.{custom_nano_v_p}fileset_signal",
+    "TT": f"samples.{custom_nano_v_p}fileset_TT",
+    "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+}
 
-all_fileset = {}
-if args.usePkl == True:
-    import pickle 
-    with open(f"samples/{custom_nano_v}{args.sample}_preprocessed.pkl", "rb") as  f:
-        input_dataset = pickle.load(f)
-else:
-    samples = {
-        "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
-        "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
-        "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
-        "DY": f"samples.{custom_nano_v_p}fileset_DY",
-        "signal": f"samples.{custom_nano_v_p}fileset_signal",
-        "TT": f"samples.{custom_nano_v_p}fileset_TT",
-        "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
-    }
-  
-    module = importlib.import_module(samples[args.sample])
-    input_dataset = module.fileset   
+all_samples = args.sample
+if args.sample[0] == 'all':
+    all_samples = [k for k in samples.keys()]
 
-## restrict to specific sub-samples
-if args.subsample == 'all':
-    fileset = input_dataset
-else:  
-    fileset = {k: input_dataset[k] for k in args.subsample}
+fileset = {}
+for isample in all_samples:
+    if args.usePkl == True:
+        import pickle 
+        with open(f"samples/{custom_nano_v}{isample}_preprocessed.pkl", "rb") as  f:
+            input_dataset = pickle.load(f)
+    else:
+        try:
+            module = importlib.import_module(samples[isample])
+            input_dataset = module.fileset   
+        except:
+            print ('file:', samples[isample], ' does not exists, skipping it' )    
+            continue
+
+        ## restrict to specific sub-samples
+        if args.subsample == 'all':
+            fileset.update(input_dataset)
+        else:  
+            fileset_tmp = {k: input_dataset[k] for k in args.subsample}
+            fileset.update(fileset_tmp)
+        
 
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
 print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
-
-
-## exclude not used
-exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet', 
-                    'Photon', 'TrigObj', 'TrkMET', 'HLT',
-                    'Puppi', 'OtherPV', 'GenJetCands',
-                    'FsrPhoton', ''
-                    ## tmp
-                    'diele', 'LHE', 'dimuon', 'Rho', 'JetPFCands', 'GenJet', 'GenCands', 
-                    'Electron'
-                    ]
-                    
 
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
@@ -126,56 +122,10 @@ good_hlts = [
   "PFMETTypeOne140_PFMHT140_IDTight",
   "MET105_IsoTrk50",
   "MET120_IsoTrk50",
-#   "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
-#   "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
-#   "HLT_Ele30_WPTight_Gsf",                                         
 #   "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
 #   "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
 #   "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"
 ]
-
-def is_included(name):
-        return any(name.startswith(prefix) for prefix in include_prefixes)
-
-def is_good_hlt(name):
-
-    if not name.startswith("HLT"):
-        return False
-
-    parts = name.split(".")
-    if len(parts) == 2:
-        name = parts[1]
-        return name in good_hlts
-    return False
-   
-
-def is_rootcompat(a):
-    """Is it a flat or 1-d jagged array?"""
-    t = ak.type(a)
-    if isinstance(t, ak.types.ArrayType):
-        if isinstance(t.content, ak.types.NumpyType):
-            return True
-        if isinstance(t.content, ak.types.ListType) and isinstance(t.content.content, ak.types.NumpyType):
-            return True
-    return False
-
-
-def uproot_writeable(events):
-    """Restrict to columns that uproot can write compactly"""
-    out = {}
-    for bname in events.fields:
-#         if 'HLT' in bname:  print(' checking ', events[bname].fields)
-        if bname == "HLT":
-            good_fields = [n for n in events[bname].fields if is_good_hlt(f"HLT.{n}")]
-            if good_fields:
-                out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in good_fields if is_rootcompat(events[bname][n])})
-            continue
-        
-        if events[bname].fields and is_included(bname):
-            out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in events[bname].fields if is_rootcompat(events[bname][n])})
-        elif is_included(bname):
-            out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
-    return out
 
 
 
@@ -275,7 +225,7 @@ class SkimProcessor(processor.ProcessorABC):
             }
             
         # Write directly to ROOT
-        events_to_write = uproot_writeable(events)
+        events_to_write = uproot_writeable(events, good_hlts, include_prefixes)
         
         # unique name: dataset name + chunk range
         fname = os.path.basename(events.metadata["filename"]).replace(".root", "")
@@ -335,11 +285,12 @@ if __name__ == "__main__":
         cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
         print(cluster.job_script())
     else:    
-        cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=8, threads_per_worker=1)
     
     client = Client(cluster)
     lxplus_run = processor.Runner(
-        executor=processor.DaskExecutor(client=client, compression=None),
+#         executor=processor.DaskExecutor(client=client, compression=None),
+        executor=processor.IterativeExecutor(compression=None),
         chunksize=50_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
@@ -347,38 +298,21 @@ if __name__ == "__main__":
 #         maxchunks=4,
     )
     
-    myfileset = {
-      "WLNu1J": {
-        "files": {
-            "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_0_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_100_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_10_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_102_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_103_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_104_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_105_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_106_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_107_0.root": "Events",
-#             "root://cmsxrootd.fnal.gov//store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/QCD_PT-800to1000_TuneCP5_13p6TeV_pythia8_ext/nano_108_0.root": "Events",
-         }
-      }
-    }
     out, proc_report = lxplus_run(
-        myfileset,
+        fileset,
         treename="Events",
         processor_instance=SkimProcessor(),
         uproot_options={"allow_read_errors_with_report": (OSError, KeyError)}
     )
-
-    # Save to JSON file
-    sub_string = '_'.join(subs for subs in args.subsample)
-    with open(f'{out_folder_json}/result_{args.sample}_{sub_string}.json', 'w') as fp:  
-        json.dump(proc_report,fp)
-
+    
     ## save processed run/lumi to json file 
-    with open(f"{out_folder_json}/processed_lumis_{args.sample}_{sub_string}.json", "w") as fp:
-        # Convert defaultdicts into normal dicts for clean JSON
-        json.dump({k: dict(v) for k, v in out['run_dict'].items()}, fp, indent=2)
+    for isubsample in out['run_dict'].keys():
+        with open(f"{out_folder_json}/processed_lumis_{isubsample}.json", "w") as fp:
+            ## convert to normal dict and dump as JSON
+            json.dump({isubsample: v for v in out['run_dict'][isubsample].items()}, fp, indent=2)
+        ## save proc report to json file (not useful for now)
+        with open(f'{out_folder_json}/result_{isubsample}.json', 'w') as fp:  
+            json.dump(proc_report,fp)
 
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
