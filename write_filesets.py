@@ -20,12 +20,12 @@ args = parser.parse_args()
 # directory on EOS with input files
 ## to replace with v8 once available
 BASE_DIRS = [
-#   "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v9/",
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
-  "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10/",
+#   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
+#   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
+#   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
 ]
-custom_nano_v = 'Summer22_CHS_v7'
+custom_nano_v = 'Summer22_CHS_v10'
 
 XROOTD_PREFIX = "root://cmsxrootd.fnal.gov/"
 EOS_LOC = 'root://cmseos.fnal.gov'

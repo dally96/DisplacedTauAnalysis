@@ -63,15 +63,14 @@ parser.add_argument(
 	help='If listing skimmed files, select which version of the inputs')
 parser.add_argument(
 	"--nanov",
-	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
-	default='Summer22_CHS_v9',
+	choices=['Summer22_CHS_v10', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v10',
 	required=False,
 	help='Specify the custom nanoaod version to process')
 parser.add_argument(
 	"--testjob",
-	default=False,
-	required=False,
-	help='Turn it to true to run a test job locally')
+        action="store_true",
+        help="Run a test job locally")
 args = parser.parse_args()
 
 
