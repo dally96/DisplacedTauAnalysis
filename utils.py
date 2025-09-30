@@ -48,6 +48,24 @@ def is_included(name, include_prefixes):
 
 
 ### columns that uproot can write out
+def uproot_writeable(events, good_hlts, include_prefixes):
+    """Restrict to columns that uproot can write compactly"""
+    out = {}
+    for bname in events.fields:
+#         if 'HLT' in bname:  print(' checking ', events[bname].fields)
+        if bname == "HLT":
+            good_fields = [n for n in events[bname].fields if is_good_hlt(f"HLT.{n}", good_hlts)]
+            if good_fields:
+                out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in good_fields if is_rootcompat(events[bname][n])})
+            continue
+        
+        if events[bname].fields and is_included(bname, include_prefixes):
+            out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in events[bname].fields if is_rootcompat(events[bname][n])})
+        elif is_included(bname, include_prefixes):
+            out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
+    return out
+
+### columns that uproot can write out, for selection step 
 def uproot_writeable_selected(events, include_all, include_prefixes, include_postfixes):
     '''
       - keep all branches starting with any prefix in include_all.

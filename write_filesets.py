@@ -23,6 +23,7 @@ BASE_DIRS = [
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v9/",
   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
 ]
 custom_nano_v = 'Summer22_CHS_v7'
 
@@ -57,6 +58,7 @@ GROUPS = {
     "DYJetsToLL"   : f"{outdir}fileset_DY.py",
     "TTto"         : f"{outdir}fileset_TT.py",
     "T"            : f"{outdir}fileset_singleT.py",  ## more on this later
+    "JetMET"       : f"{outdir}fileset_JetMET_2022.py",  ## more on this later
 }
 
 
@@ -84,13 +86,10 @@ def make_key(dirname):
         elif "SMS-TStauStau" in dirname:
             part = 'Stau_'+dirname.split('_')[1].split('-')[1]+'_'+dirname.split('_')[2].split('-')[1]
             return part
-        elif "Stau_" in dirname:
+        elif "Stau_" in dirname or 'JetMET' in dirname:
             return dirname
         else:    
-#         elif "Wto" in dirname or "TTto" in dirname :
             return dirname.split("Tune")[0][:-1]
-#         else:
-#             return dirname
     return dirname      
 
 

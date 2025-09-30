@@ -21,7 +21,7 @@ from itertools import islice
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT'],
+	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -40,6 +40,12 @@ parser.add_argument(
 	default='',
 	required=False,
 	help='Specify, if working on the skimmed samples, the skim name (name of the folder inside samples)')
+parser.add_argument(
+	"--nanov",
+	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v9',
+	required=False,
+	help='Specify the custom nanoaod version to process')
 args = parser.parse_args()
 
 
@@ -48,11 +54,11 @@ def take(n, iterable):
     return list(islice(iterable, n))
 
 
-outdir_p = ''
-outdir_s = ''
+outdir_p = f'{args.nanov}.'
+outdir_s = f'{args.nanov}/'
 if args.skim != '':
-    outdir_p = args.skim + '.'
-    outdir_s = args.skim + '/'
+    outdir_p += f'{args.skim}.'
+    outdir_s += f'{args.skim}/'
   
 samples = {
     "Wto2Q"  : f"samples.{outdir_p}fileset_Wto2Q",
@@ -61,24 +67,25 @@ samples = {
     "DY"     : f"samples.{outdir_p}fileset_DY",
     "signal" : f"samples.{outdir_p}fileset_signal",
     "TT"     : f"samples.{outdir_p}fileset_TT",
+    "singleT": f"samples.{outdir_p}fileset_singleT.py",  ## more on this later
 }
 
 module = importlib.import_module(samples[args.sample])
-all_fileset = module.fileset  #['Stau_100_0p1mm'] 
-
+all_fileset = module.fileset  
 
 if args.subsample == 'all':
     fileset = all_fileset
 else:  
     fileset = {k: all_fileset[k] for k in args.subsample}
 
-nfiles = int(args.nfiles)
-if nfiles != -1:
-    for k in fileset.keys():
-        if nfiles < len(fileset[k]['files']):
-            fileset[k]['files'] = take(nfiles, fileset[k]['files'])
+# nfiles = int(args.nfiles)
+# if nfiles != -1:
+#     for k in fileset.keys():
+#         if nfiles < len(fileset[k]['files']):
+#             fileset[k]['files'] = take(nfiles, fileset[k]['files'])
 
-print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
+# pdb.set_trace()
+# print("Will process {} files from the following samples:".format(nfiles), fileset.keys())
 
 ## first element of value is step_size, second is files_per_barch
 pars_per_sample = {
@@ -88,6 +95,7 @@ pars_per_sample = {
     "DY"     : [10_000, 1000],  
     "signal" : [20_000, 1],  
     "TT"     : [20_000, 1000],  
+    "singleT": [20_000, 1000],  
     "data"   : [20_000, 100] 
 }
 
@@ -123,7 +131,7 @@ if __name__ == "__main__":
 #     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
 #     cluster.adapt(minimum=1, maximum=1000)
  
-    cluster = LocalCluster(n_workers=4, threads_per_worker=1)
+    cluster = LocalCluster(n_workers=8, threads_per_worker=1)
     client = Client(cluster)
 
     dataset_runnable, dataset_updated = preprocess(
@@ -136,8 +144,16 @@ if __name__ == "__main__":
        file_exceptions=(OSError, KeyInFileError),
        allow_empty_datasets=False,
     )
-    with open(f"samples/{outdir_s}{args.sample}_preprocessed.pkl", "wb") as f:
-       pickle.dump(dataset_runnable, f)
+    
+    if args.subsample != 'all':
+        for isubsample in dataset_runnable.keys():
+            pkl_name = f"samples/{outdir_s}{args.sample}_{isubsample}_preprocessed.pkl"
+            with open(pkl_name, "wb") as f:
+               pickle.dump(dataset_runnable[isubsample], f)
+    else:    
+        pkl_name = f"samples/{outdir_s}{args.sample}_preprocessed.pkl"
+        with open(pkl_name, "wb") as f:
+            pickle.dump(dataset_runnable, f)
 
     elapsed = time.time() - tic 
     print(f"Preprocessing datasets finished in {elapsed:.1f}s") 
