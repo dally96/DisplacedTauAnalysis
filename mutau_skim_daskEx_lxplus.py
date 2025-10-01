@@ -91,14 +91,13 @@ for isample in all_samples:
             print ('file:', samples[isample], ' does not exists, skipping it' )    
             continue
 
-        ## restrict to specific sub-samples
-        if args.subsample == 'all':
-            fileset.update(input_dataset)
-        else:  
-            fileset_tmp = {k: input_dataset[k] for k in args.subsample}
-            fileset.update(fileset_tmp)
-        
-
+    ## restrict to specific sub-samples
+    if args.subsample == 'all':
+        fileset.update(input_dataset)
+    else:  
+        fileset_tmp = {k: input_dataset[k] for k in args.subsample}
+        fileset.update(fileset_tmp)
+     
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
@@ -289,8 +288,7 @@ if __name__ == "__main__":
     
     client = Client(cluster)
     lxplus_run = processor.Runner(
-#         executor=processor.DaskExecutor(client=client, compression=None),
-        executor=processor.IterativeExecutor(compression=None),
+        executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=50_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
