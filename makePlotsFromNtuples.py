@@ -14,7 +14,9 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 
 hep.style.use("CMS")
 
-sample_folder = "/eos/cms/store/user/fiorendi/displacedTaus/skim/prompt_mutau/selected/merged/"
+nanov = 'Summer22_CHS_v7/'
+# nanov = ''
+sample_folder = f"/eos/cms/store/user/fiorendi/displacedTaus/skim/{nanov}prompt_mutau/selected/merged/"
 
 
 ## if a sample is not ready yet, comment it out
@@ -75,7 +77,7 @@ xsec = xsec_and_br['xsec']
 br = xsec_and_br['br']
 
 ## load sum_gen_w from another JSON file
-with open("./plots_config/all_total_sumw.json", "r") as file:
+with open(f"./plots_config/{nanov}/all_total_sumw.json", "r") as file:
     sum_gen_w = json.load(file)
     
 ## target lumi, for now fixed value
@@ -120,7 +122,8 @@ for process in available_processes:
     if "data" in process.lower():
         weights = events.weight
     else:
-        lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
+        lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
+#         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
         weights = events.weight * lumi_weight ## am i missing the sumGenW here?
 
     for plot_name, settings in plot_settings.items():

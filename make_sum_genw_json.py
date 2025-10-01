@@ -62,7 +62,6 @@ for isample in subsamples_list:
             sumgenw_dict = json.load(sumw_file)
             ## this one above is a list of dictionaries with keys lumisections, sumgenw, ngen
           
-            pdb.set_trace()
             processed_lumis = set(processed_dict[isubsample][1])  # make a set for O(1) lookups
         
             for i, ibunch in enumerate(sumgenw_dict):

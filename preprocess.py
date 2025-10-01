@@ -42,8 +42,8 @@ parser.add_argument(
 	help='Specify, if working on the skimmed samples, the skim name (name of the folder inside samples)')
 parser.add_argument(
 	"--nanov",
-	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
-	default='Summer22_CHS_v9',
+	choices=['Summer22_CHS_v10', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v10',
 	required=False,
 	help='Specify the custom nanoaod version to process')
 args = parser.parse_args()
@@ -61,7 +61,7 @@ samples = {
     "DY"     : f"samples.{outdir_p}fileset_DY",
     "signal" : f"samples.{outdir_p}fileset_signal",
     "TT"     : f"samples.{outdir_p}fileset_TT",
-    "singleT": f"samples.{outdir_p}fileset_singleT.py",  ## more on this later
+    "singleT": f"samples.{outdir_p}fileset_singleT",  ## more on this later
 }
 
 module = importlib.import_module(samples[args.sample])
@@ -99,30 +99,6 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)    
     tic = time.time()
 
-#     n_port = 8786
-#     import socket
-#     cluster = CernCluster(
-#             cores=1,
-#             memory='3000MB',
-#             disk='1000MB',
-#             death_timeout = '60',
-#             lcg = True,
-#             nanny = False,
-#             container_runtime = "none",
-#             log_directory = "/eos/user/f/fiorendi/condor/log",
-#             scheduler_options={
-#                 'port': n_port,
-#                 'host': socket.gethostname(),
-#                 },
-#             job_extra={
-#                 '+JobFlavour': '"longlunch"',
-#                 },
-#             extra = ['--worker-port 10000:10100']
-#             )
-#     
-#     # minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
-#     cluster.adapt(minimum=1, maximum=1000)
- 
     cluster = LocalCluster(n_workers=8, threads_per_worker=1)
     client = Client(cluster)
 
@@ -140,10 +116,14 @@ if __name__ == "__main__":
     if args.subsample != 'all':
         for isubsample in dataset_runnable.keys():
             pkl_name = f"samples/{outdir_s}{args.sample}_{isubsample}_preprocessed.pkl"
+            if nfiles > 0:
+                pkl_name.replace('.pkl', f'_{nfiles}files.pkl')
             with open(pkl_name, "wb") as f:
                pickle.dump({isubsample:dataset_runnable[isubsample]}, f)
     else:    
         pkl_name = f"samples/{outdir_s}{args.sample}_preprocessed.pkl"
+        if nfiles > 0:
+            pkl_name.replace('.pkl', f'_{nfiles}files.pkl')
         with open(pkl_name, "wb") as f:
             pickle.dump(dataset_runnable, f)
 
