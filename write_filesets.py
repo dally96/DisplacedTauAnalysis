@@ -46,6 +46,9 @@ if args.skim != '':
 outfolder = Path(f'{outdir}')
 if not outfolder.exists():
     outfolder.mkdir(parents=True, exist_ok=True)
+    ## create init file to be able to import modules later
+    init_file = outfolder / "__init__.py"
+    init_file.touch(exist_ok=True)    
     print(f"Folder '{outdir}' created.")
 
 # patterns for grouping different processes
