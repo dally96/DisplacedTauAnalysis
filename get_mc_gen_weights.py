@@ -3,11 +3,12 @@ import awkward as ak
 import json
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
     "--sample",
-    choices=['QCD', 'DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT'],
+    choices=['QCD', 'DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT'],
     required=True,
     help="Specify the sample you want to process")
 parser.add_argument(
@@ -24,16 +25,13 @@ parser.add_argument(
     help="Specify the number of input files to process")
 parser.add_argument(
 	"--nanov",
-	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
-	default='Summer22_CHS_v9',
+	choices=['Summer22_CHS_v10', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v10',
 	required=False,
 	help='Specify the custom nanoaod version to process')
 args = parser.parse_args()
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
-
-# def remap_keys(mapping):
-#     return [{'lumisections': k, 'sumgenw': v[0], 'ngen': v[1]} for k, v in mapping.items()]
 
 samples = {
     "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
@@ -70,11 +68,11 @@ def process_file(ifile):
         print(f"Error processing {ifile}: {e}")
         return None
 
-for idataset, dataset_info in fileset.items():
+for isubsample, dataset_info in fileset.items():
     files = dataset_info["files"]
     if args.nfiles > 0:
         files = files[:args.nfiles]
-    print(f"Dataset {idataset}, n files: {len(files)}")
+    print(f"Dataset {isubsample}, n files: {len(files)}")
 
     results = []
     # ThreadPoolExecutor is usually better for uproot (I/O bound)
@@ -85,8 +83,11 @@ for idataset, dataset_info in fileset.items():
             if result:
                 results.append(result)
 
-    out_path = f"samples/{custom_nano_v}processed_LS_from_crab/ls_sumw_dict_{the_sample}_{idataset}.json"
-    with open(out_path, "w") as fp:
+    outfolder = Path(f'samples/{custom_nano_v}processed_LS_from_crab')
+    outpath = f"{outfolder}/ls_sumw_dict_{isubsample}.json"
+    if not outfolder.exists():
+        outfolder.mkdir(parents=True, exist_ok=True)
+    with open(outpath, "w") as fp:
         json.dump(results, fp)
 
-    print(f"{out_path} written")
+    print(f"{outpath} written")
