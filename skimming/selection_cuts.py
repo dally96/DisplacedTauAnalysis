@@ -1,11 +1,10 @@
 import awkward as ak
-import uproot
-import sys, argparse, os
+import uproot, os
 import numpy as np
-import json, gzip, correctionlib, importlib, pickle
+import gzip, correctionlib, importlib, pickle
 
 from coffea import processor
-from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
+from coffea.nanoevents import PFNanoAODSchema
 from coffea.lumi_tools import LumiData, LumiList, LumiMask
 
 import fsspec_xrootd
@@ -14,7 +13,7 @@ from  fsspec_xrootd import XRootDFileSystem
 import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-from dask.distributed import Client, wait, progress, LocalCluster
+from dask.distributed import Client, LocalCluster
 from dask_lxplus import CernCluster
 import socket, time
 
@@ -339,9 +338,10 @@ if __name__ == "__main__":
 
     client = Client(cluster)
     lxplus_run = processor.Runner(
-#         executor=processor.FuturesExecutor(compression=None, workers = 4),
-#         executor=processor.IterativeExecutor(compression=None),
         executor=processor.DaskExecutor(client=client, compression=None),
+        ### alternative executors
+        ## executor=processor.FuturesExecutor(compression=None, workers = 4),
+        ## executor=processor.IterativeExecutor(compression=None),
         chunksize=30_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
@@ -349,22 +349,6 @@ if __name__ == "__main__":
 #         maxchunks=4,
     )
     
-    myfileset = {
-      "QCD_PT-800to1000": {
-        "files": {
-          "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_0_0_0_10086.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_10_0_0_10138.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_102_0_0_10109.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_108_0_0_9931.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_107_0_0_10118.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_103_0_0_10015.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_105_0_0_10211.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_104_0_0_10139.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_100_0_0_10120.root" : "Events",
-#           "root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/v_sync/QCD_PT-800to1000/nano_106_0_0_10158.root" : "Events",
-         }
-      }
-    }
     out, proc_report = lxplus_run(
         fileset,
         treename="Events",

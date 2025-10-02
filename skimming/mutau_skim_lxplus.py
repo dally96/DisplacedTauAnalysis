@@ -1,7 +1,6 @@
 import awkward as ak
 import uproot
 from coffea import processor
-from coffea.nanoevents.methods import candidate
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 from dask.distributed import Client, wait, progress, LocalCluster, performance_report
 from dask_lxplus import CernCluster

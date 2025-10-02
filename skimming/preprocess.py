@@ -1,6 +1,5 @@
-import os, sys, pdb
 import argparse, importlib
-import pickle
+import pickle, pdb
 
 from coffea.dataset_tools import (
     apply_to_fileset,
@@ -12,9 +11,7 @@ cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some 
 from uproot.exceptions import KeyInFileError
 
 import time, logging
-# from distributed import Client
 from dask.distributed import Client, wait, progress, LocalCluster
-from itertools import islice
 # from dask_lxplus import CernCluster
 
 
