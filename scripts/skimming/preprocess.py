@@ -35,19 +35,21 @@ import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
 
-from fileset import fileset
-from skimmed_fileset import skimmed_fileset
-from lower_lifetime_fileset import lower_lifetime_fileset
-from DY_fileset import DY_fileset
-from W_fileset import W_fileset
-from TT_fileset import TT_fileset
-from data_fileset import data_fileset
-from merged_fileset import merged_fileset
-from new_merged_fileset import new_merged_fileset
-from second_skim_fileset import second_skim_fileset
-from jet_dxy_fileset import jet_dxy_fileset
-from merged_lower_lifetime_fileset import merged_lower_lifetime_fileset
-from local_fileset import local_fileset
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+from filesets.fileset import fileset
+from filesets.skimmed_fileset import skimmed_fileset
+from filesets.lower_lifetime_fileset import lower_lifetime_fileset
+from filesets.DY_fileset import DY_fileset
+from filesets.W_fileset import W_fileset
+from filesets.TT_fileset import TT_fileset
+from filesets.data_fileset import data_fileset
+from filesets.merged_fileset import merged_fileset
+from filesets.new_merged_fileset import new_merged_fileset
+from filesets.second_skim_fileset import second_skim_fileset
+from filesets.jet_dxy_fileset import jet_dxy_fileset
+from filesets.merged_lower_lifetime_fileset import merged_lower_lifetime_fileset
+from filesets.local_fileset import local_fileset
 
 if __name__ == "__main__":
 
@@ -75,7 +77,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
 
-        with open("TT_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/TT_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(TT_dataset_runnable, f)
     elif "DY" in samp:
         DY_dataset_runnable, DY_dataset_updated = preprocess(
@@ -89,7 +91,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
 
-        with open("DY_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/DY_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(DY_dataset_runnable, f)
 
     elif "Lower Lifetime" in samp:
@@ -103,8 +105,7 @@ if __name__ == "__main__":
             file_exceptions=(OSError, KeyInFileError),
             allow_empty_datasets=False,
         )
-
-        with open("lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(lower_lifetime_dataset_runnable, f)
 
     elif "W" in samp:    
@@ -119,7 +120,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
 
-        with open("W_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/W_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(W_dataset_runnable, f)
 
     elif "data" in samp or "JetMET" in samp: 
@@ -134,7 +135,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
          
-        with open("data_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/data_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(data_dataset_runnable, f)
 
     elif "merged" in samp:
@@ -149,7 +150,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
          
-        with open("merged_W_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/merged_W_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(merged_dataset_runnable, f)
 
     elif "second skim" in samp:
@@ -164,7 +165,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
          
-        with open("second_skim_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/second_skim_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(second_skim_dataset_runnable, f)
 
     elif "second lower lifetime" in samp:
@@ -180,7 +181,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
          
-        with open("merged_lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/merged_lower_lifetime_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(merged_lower_lifetime_dataset_runnable, f)
 
     elif "local" in samp:
@@ -195,7 +196,7 @@ if __name__ == "__main__":
             allow_empty_datasets=False,
         )
          
-        with open("local_preprocessed_fileset.pkl", "wb") as f:
+        with open("processed_filesets/local_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(local_dataset_runnable, f)
 
     else:

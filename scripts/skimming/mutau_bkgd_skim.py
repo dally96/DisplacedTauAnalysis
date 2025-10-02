@@ -7,6 +7,7 @@ from uproot.exceptions import KeyInFileError
 import pickle
 import json, gzip, correctionlib
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 import numpy as np
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema, NanoAODSchema
@@ -23,7 +24,7 @@ cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some 
 import dask_awkward as dak
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client, wait, progress, LocalCluster
-from fileset import *
+from filesets.fileset import fileset
 
 from selections.lumi_selections import select_lumis
 
@@ -249,23 +250,24 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=5000)
     client = Client(cluster)
 
-    with open("preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/preprocessed_fileset.pkl", "rb") as  f:
         Stau_QCD_DY_dataset_runnable = pickle.load(f)    
     del Stau_QCD_DY_dataset_runnable["TTtoLNu2Q"]
     del Stau_QCD_DY_dataset_runnable["TTto2L2Nu"]
     del Stau_QCD_DY_dataset_runnable["TTto4Q"]
     del Stau_QCD_DY_dataset_runnable["DYJetsToLL"]
-    with open("TT_preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/TT_preprocessed_fileset.pkl", "rb") as  f:
         TT_dataset_runnable = pickle.load(f)    
-    with open("DY_preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/DY_preprocessed_fileset.pkl", "rb") as  f:
         DY_dataset_runnable = pickle.load(f)    
-    with open("data_preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/data_preprocessed_fileset.pkl", "rb") as  f:
         data_dataset_runnable = pickle.load(f)    
-    with open("W_preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/W_preprocessed_fileset.pkl", "rb") as  f:
         W_dataset_runnable = pickle.load(f)    
-    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
         lower_lifetime_dataset_runnable = pickle.load(f)    
-    dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable #| DY_dataset_runnable 
+        
+    #dataset_runnable = Stau_QCD_DY_dataset_runnable | data_dataset_runnable | TT_dataset_runnable #| DY_dataset_runnable 
 #    with open("lower_lifetime_preprocessed_fileset.pkl", "rb") as  f:
 #        lower_lifetime_dataset_runnable = pickle.load(f)    
 #    with open("W_preprocessed_fileset.pkl", "rb") as  f:
@@ -283,7 +285,7 @@ if __name__ == "__main__":
 #    )
 
     for samp in dataset_runnable.keys(): 
-        if  samp not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/first_skim/trackless_jets/"):
+        #if  samp not in os.listdir("/eos/uscms/store/group/lpcdisptau/dally/first_skim/trackless_jets/"):
             #if "TT" in samp or "DY" in samp or "Stau" in samp or "QCD" in samp or "MET" in samp: continue
             samp_runnable = {}
             samp_runnable[samp] = dataset_runnable[samp]

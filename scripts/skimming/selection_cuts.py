@@ -16,6 +16,7 @@ from coffea.dataset_tools import (
     max_chunks,
     preprocess,
 )
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from coffea.lumi_tools import LumiData, LumiList, LumiMask
 import awkward as ak
 import dask
@@ -33,9 +34,9 @@ import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
 
-from skimmed_fileset import *
-from xsec import *
-from selection_function import SR_selections, loose_SR_selections, loose_noIso_SR_selections, event_selection, Zpeak_selection
+from filesets.skimmed_fileset import *
+from definitions.xsec import *
+from definitions.selection_function import SR_selections, loose_SR_selections, loose_noIso_SR_selections, event_selection, Zpeak_selection
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -351,7 +352,7 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=10000)
     client = Client(cluster)
 
-    with open("merged_preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/merged_preprocessed_fileset.pkl", "rb") as  f:
         dataset_runnable = pickle.load(f)    
     print(f"Keys in dataset_runnable {dataset_runnable.keys()}")
     #del dataset_runnable["QCD50_80"]["files"]["root://cmsxrootd.fnal.gov:1094//store/user/dally/first_skim/merged/merged_QCD50_80/merged_QCD50_80_2.root"]

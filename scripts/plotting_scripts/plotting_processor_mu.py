@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
 import numpy as np 
 import uproot
 import hist
@@ -14,7 +17,7 @@ from coffea.analysis_tools import Weights, PackedSelection
 import hist.dask as hda
 import matplotlib  as mpl
 from  matplotlib import pyplot as plt
-from xsec import *
+from definitions.xsec import *
 import time
 import pickle
 import os
