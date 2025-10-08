@@ -65,6 +65,21 @@ if __name__ == "__main__":
     cluster.adapt(minimum=1, maximum=1000)
     client = Client(cluster)
 
+    if "QCD" or "Stau" in samp: 
+        dataset_runnable, dataset_updated = preprocess(
+            fileset,
+            align_clusters=False,
+            step_size=20_000,
+            files_per_batch=1000,
+            skip_bad_files=True,
+            save_form=False,
+            file_exceptions=(OSError, KeyInFileError),
+            allow_empty_datasets=False,
+        )
+
+        with open("processed_filesets/preprocessed_fileset.pkl", "wb") as f:
+            pickle.dump(dataset_runnable, f)
+
     if "TT" in samp: 
         TT_dataset_runnable, TT_dataset_updated = preprocess(
             TT_fileset,
@@ -79,6 +94,7 @@ if __name__ == "__main__":
 
         with open("processed_filesets/TT_preprocessed_fileset.pkl", "wb") as f:
             pickle.dump(TT_dataset_runnable, f)
+
     elif "DY" in samp:
         DY_dataset_runnable, DY_dataset_updated = preprocess(
             DY_fileset,

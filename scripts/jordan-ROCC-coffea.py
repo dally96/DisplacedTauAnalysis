@@ -22,12 +22,13 @@ from coffea.dataset_tools import (
     max_chunks,
     preprocess,
 )
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
 import dask_awkward as dak
 from dask_jobqueue import HTCondorCluster
 from dask.distributed import Client, wait, progress, LocalCluster
-from xsec import *
+from definitions.xsec import *
 
 import time
 from distributed import Client
@@ -290,8 +291,15 @@ class BGProcessor(processor.ProcessorABC):
             output_dict[cut]["matched_jet_histo"]   = hda.hist.Hist(hist.axis.Regular(score_granularity , 0, 1, name = 'matched_jet_score', label = 'score', overflow = True))
             output_dict[cut]["unmatched_jet_histo"] = hda.hist.Hist(hist.axis.Regular(score_granularity, 0, 1, name = 'unmatched_jet_score', label = 'score', overflow = True))
 
+            output_dict[cut]["matched_jet_histo_woWeights"]   = hda.hist.Hist(hist.axis.Regular(score_granularity , 0, 1, name = 'matched_jet_score', label = 'score', overflow = True))
+            output_dict[cut]["unmatched_jet_histo_woWeights"] = hda.hist.Hist(hist.axis.Regular(score_granularity, 0, 1, name = 'unmatched_jet_score', label = 'score', overflow = True))
+
             output_dict[cut]["matched_jet_histo"].fill(dak.flatten(tau_jets.disTauTag_score1, axis = None), weight = dak.flatten(jetid_dict[cut]["events"].weight[match_mask], axis = None) * lumi * 1000 * xsecs[dataset]) 
             output_dict[cut]["unmatched_jet_histo"].fill(dak.flatten(fake_jets.disTauTag_score1, axis = None),  weight = dak.flatten(jetid_dict[cut]["events"].weight[fake_mask], axis = None) * lumi * 1000 * xsecs[dataset])
+
+            output_dict[cut]["matched_jet_histo_woWeights"].fill(dak.flatten(tau_jets.disTauTag_score1, axis = None)) 
+            output_dict[cut]["unmatched_jet_histo_woWeights"].fill(dak.flatten(fake_jets.disTauTag_score1, axis = None))
+
             if 'tightLV' in cut and 'chHEF' not in cut:
                 tau_jets = tau_jets[tau_jets.disTauTag_score1 > 0.9]
                 tau_jets_tau = tau_jets.nearest(jetid_dict[cut]["events"].GenVisStauTau[match_mask], threshold = max_dr)
@@ -444,7 +452,7 @@ if __name__ == "__main__":
     unmatched_histo['tightLV_chHEF'] = hda.hist.Hist(hist.axis.Regular(score_granularity, 0, 1, name = 'unmatched_jet_score', label = 'score', overflow = True)).compute()
     
     
-    with open("preprocessed_fileset.pkl", "rb") as  f:
+    with open("processed_filesets/preprocessed_fileset.pkl", "rb") as  f:
         Stau_QCD_DY_dataset_runnable = pickle.load(f)    
     del Stau_QCD_DY_dataset_runnable["TTtoLNu2Q"]
     del Stau_QCD_DY_dataset_runnable["TTto2L2Nu"]
@@ -479,7 +487,7 @@ if __name__ == "__main__":
         (out, ) = dask.compute(to_compute)
         print(out) 
         
-        with open(f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/ROC_hists/{samp}.pkl", "wb") as f:
+        with open(f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/ROC_hists/{samp}_woWeights.pkl", "wb") as f:
             pickle.dump(out, f)
         '''
         for samp in out.keys():
