@@ -57,8 +57,9 @@ parser.add_argument(
         help="Run a test job locally")
 args = parser.parse_args()
 
-out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/mutau/v_all_samples/'
-out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/test/skim/{args.nanov}/mutau/v_all_samples/'
+#out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
+out_folder_json = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/mutau/v_all_samples/' 
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
 
@@ -263,7 +264,7 @@ if __name__ == "__main__":
                 death_timeout = '240',
                 nanny=False,
                 container_runtime = "none",
-                log_directory = "root://eosuser.cern.ch//eos/user/f/fiorendi/condor/log/mutau_skim/v3",
+                log_directory = "root://eosuser.cern.ch//eos/user/d/dally/condor/log/mutau_skim/v3",
                 scheduler_options={
                     'port': n_port,
                     'host': socket.gethostname(),
@@ -275,7 +276,7 @@ if __name__ == "__main__":
                     },
                 job_script_prologue=[
                     "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
-                    f"export X509_USER_PROXY=/afs/cern.ch/user/f/fiorendi/x509up_u58808",
+                    f"export X509_USER_PROXY=/afs/cern.ch/user/d/dally/x509up_u141138",
                     "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR",
                 ],
                 extra = ['--worker-port 10000:10100']
