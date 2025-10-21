@@ -15,11 +15,13 @@ import os, argparse, importlib, pdb, socket
 import time
 from datetime import datetime
 
-from itertools import islice
 from collections import defaultdict
 import json
 
-from utils import process_n_files
+from utils import process_n_files, is_rootcompat, is_good_hlt, is_included, uproot_writeable
+# import sys
+# sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath('../selections/lumi_selections.py') ) ) )
+from selections.lumi_selections import select_lumis
 
 
 PFNanoAODSchema.warn_missing_crossrefs = False
@@ -28,7 +30,8 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all'],
+	nargs='*',
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -49,15 +52,14 @@ parser.add_argument(
 	help='Turn it to false to use the non-preprocessed samples')
 parser.add_argument(
 	"--nanov",
-	choices=['Summer22_CHS_v9', 'Summer22_CHS_v7'],
-	default='Summer22_CHS_v9',
+	choices=['Summer22_CHS_v10', 'Summer22_CHS_v7'],
+	default='Summer22_CHS_v10',
 	required=False,
 	help='Specify the custom nanoaod version to process')
 parser.add_argument(
 	"--testjob",
-	default=False,
-	required=False,
-	help='Turn it to true to run a test job locally')
+        action="store_true",
+        help="Run a test job locally")
 args = parser.parse_args()
 
 
@@ -66,32 +68,41 @@ out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
 
+samples = {
+    "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
+    "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
+    "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
+    "DY": f"samples.{custom_nano_v_p}fileset_DY",
+    "signal": f"samples.{custom_nano_v_p}fileset_signal",
+    "TT": f"samples.{custom_nano_v_p}fileset_TT",
+    "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+}
 
-all_fileset = {}
-if args.usePkl == True:
-    import pickle 
-    with open(f"samples/{custom_nano_v}{args.sample}_preprocessed.pkl", "rb") as  f:
-        input_dataset = pickle.load(f)
-else:
-    samples = {
-        "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
-        "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
-        "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
-        "DY": f"samples.{custom_nano_v_p}fileset_DY",
-        "signal": f"samples.{custom_nano_v_p}fileset_signal",
-        "TT": f"samples.{custom_nano_v_p}fileset_TT",
-        "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
-    }
-  
-    module = importlib.import_module(samples[args.sample])
-    input_dataset = module.fileset   
+all_samples = args.sample
+if args.sample[0] == 'all':
+    all_samples = [k for k in samples.keys()]
 
-## restrict to specific sub-samples
-if args.subsample == 'all':
-    fileset = input_dataset
-else:  
-    fileset = {k: input_dataset[k] for k in args.subsample}
+fileset = {}
+for isample in all_samples:
+    if args.usePkl == True:
+        import pickle 
+        with open(f"samples/{custom_nano_v}{isample}_preprocessed.pkl", "rb") as  f:
+            input_dataset = pickle.load(f)
+    else:
+        try:
+            module = importlib.import_module(samples[isample])
+            input_dataset = module.fileset   
+        except:
+            print ('file:', samples[isample], ' does not exists, skipping it' )    
+            continue
 
+    ## restrict to specific sub-samples
+    if args.subsample == 'all':
+        fileset.update(input_dataset)
+    else:  
+        fileset_tmp = {k: input_dataset[k] for k in args.subsample}
+        fileset.update(fileset_tmp)
+     
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
@@ -135,49 +146,6 @@ good_hlts = [
 #   "DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"
 ]
 
-def is_included(name):
-        return any(name.startswith(prefix) for prefix in include_prefixes)
-
-def is_good_hlt(name):
-
-    if not name.startswith("HLT"):
-        return False
-
-    parts = name.split(".")
-    if len(parts) == 2:
-        name = parts[1]
-        return name in good_hlts
-    return False
-   
-
-def is_rootcompat(a):
-    """Is it a flat or 1-d jagged array?"""
-    t = ak.type(a)
-    if isinstance(t, ak.types.ArrayType):
-        if isinstance(t.content, ak.types.NumpyType):
-            return True
-        if isinstance(t.content, ak.types.ListType) and isinstance(t.content.content, ak.types.NumpyType):
-            return True
-    return False
-
-
-def uproot_writeable(events):
-    """Restrict to columns that uproot can write compactly"""
-    out = {}
-    for bname in events.fields:
-#         if 'HLT' in bname:  print(' checking ', events[bname].fields)
-        if bname == "HLT":
-            good_fields = [n for n in events[bname].fields if is_good_hlt(f"HLT.{n}")]
-            if good_fields:
-                out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in good_fields if is_rootcompat(events[bname][n])})
-            continue
-        
-        if events[bname].fields and is_included(bname):
-            out[bname] = ak.zip({n: ak.to_packed(ak.without_parameters(events[bname][n])) for n in events[bname].fields if is_rootcompat(events[bname][n])})
-        elif is_included(bname):
-            out[bname] = ak.to_packed(ak.without_parameters(events[bname]))
-    return out
-
 
 
 class SkimProcessor(processor.ProcessorABC):
@@ -189,6 +157,10 @@ class SkimProcessor(processor.ProcessorABC):
 
     def process(self, events):
         
+        import sys
+        sys.path.append('.')
+        from lumi_selections import select_lumis
+
         if events is None: 
             return {
                 "entries_written": 0,
@@ -213,6 +185,13 @@ class SkimProcessor(processor.ProcessorABC):
         for run, lumi in sorted(run_lumi_list):
             run_dict[str(int(run))].append(int(lumi))
         dataset_run_dict[dataset] = dict(run_dict)
+
+        ## Trigger mask
+        trigger_mask = (
+                       events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
+                       events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1  
+        )
+        events = events[trigger_mask]
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
@@ -272,7 +251,7 @@ class SkimProcessor(processor.ProcessorABC):
             }
             
         # Write directly to ROOT
-        events_to_write = uproot_writeable(events)
+        events_to_write = uproot_writeable(events, good_hlts, include_prefixes)
         
         # unique name: dataset name + chunk range
         fname = os.path.basename(events.metadata["filename"]).replace(".root", "")
@@ -294,6 +273,7 @@ class SkimProcessor(processor.ProcessorABC):
         return accumulator
   
   
+    
 if __name__ == "__main__":
 ## https://github.com/CoffeaTeam/coffea-hats/blob/master/04-processor.ipynb
 
@@ -318,7 +298,7 @@ if __name__ == "__main__":
                     },
                 job_extra={
                     '+JobFlavour': '"workday"',
-                    'transfer_input_files': 'utils.py',
+                    'transfer_input_files': 'utils.py,selections/lumi_selections.py',
                     'should_transfer_files': 'YES',
                     },
                 job_script_prologue=[
@@ -334,6 +314,8 @@ if __name__ == "__main__":
         cluster = LocalCluster(n_workers=4, threads_per_worker=1)
     
     client = Client(cluster)
+    client.upload_file('selections/lumi_selections.py')
+
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=50_000,
@@ -361,16 +343,15 @@ if __name__ == "__main__":
         processor_instance=SkimProcessor(),
         uproot_options={"allow_read_errors_with_report": (OSError, KeyError)}
     )
-
-    # Save to JSON file
-    sub_string = '_'.join(subs for subs in args.subsample)
-    with open(f'{out_folder_json}/result_{args.sample}_{sub_string}.json', 'w') as fp:  
-        json.dump(proc_report,fp)
-
+    
     ## save processed run/lumi to json file 
-    with open(f"{out_folder_json}/processed_lumis_{args.sample}_{sub_string}.json", "w") as fp:
-        # Convert defaultdicts into normal dicts for clean JSON
-        json.dump({k: dict(v) for k, v in out['run_dict'].items()}, fp, indent=2)
+    for isubsample in out['run_dict'].keys():
+        with open(f"{out_folder_json}/processed_lumis_{isubsample}.json", "w") as fp:
+            ## convert to normal dict and dump as JSON
+            json.dump({isubsample: v for v in out['run_dict'][isubsample].items()}, fp, indent=2)
+        ## save proc report to json file (not useful for now)
+        with open(f'{out_folder_json}/result_{isubsample}.json', 'w') as fp:  
+            json.dump(proc_report,fp)
 
     elapsed = time.time() - tic
     print(f"Finished in {elapsed:.1f}s")
