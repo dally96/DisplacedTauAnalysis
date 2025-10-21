@@ -30,7 +30,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all', 'JetMET'],
 	nargs='*',
 	required=True,
 	help='Specify the sample you want to process')
@@ -76,6 +76,7 @@ samples = {
     "signal": f"samples.{custom_nano_v_p}fileset_signal",
     "TT": f"samples.{custom_nano_v_p}fileset_TT",
     "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+    "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
 }
 
 all_samples = args.sample
