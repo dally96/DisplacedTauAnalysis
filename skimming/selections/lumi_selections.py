@@ -12,11 +12,11 @@ def select_lumis(
     goldenJson_dict = {
         "2022": os.path.join(
             os.path.dirname(__file__),
-            "/eos/user/c/cmsdqm/www/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json",
+            "root://eosuser.cern.ch//eos/user/c/cmsdqm/www/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json",
         ),
         "2023": os.path.join(
             os.path.dirname(__file__),
-            "/eos/user/c/cmsdqm/www/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json",
+            "root://eosuser.cern.ch//eos/user/c/cmsdqm/www/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json",
         ),
 #         "2024": os.path.join(
 #             os.path.dirname(__file__),
