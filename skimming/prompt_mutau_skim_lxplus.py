@@ -1,13 +1,15 @@
 import awkward as ak
-import uproot
+import uproot, sys, os
 from coffea import processor
 from coffea.nanoevents.methods import candidate
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
 from dask.distributed import Client, wait, progress, LocalCluster
-from dask_lxplus import CernCluster
+from lpcjobqueue import LPCCondorCluster, schedd
+#from dask_lxplus import CernCluster
 from dask import config as cfg
+from dask_jobqueue import HTCondorCluster
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-
+cfg.set({'distributed.scheduler.allowed-failures': 20}) # Check if this solves some dask issues
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
@@ -19,8 +21,6 @@ from collections import defaultdict
 import json
 
 from utils import process_n_files, is_rootcompat, is_good_hlt, is_included, uproot_writeable
-# import sys
-# sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath('../selections/lumi_selections.py') ) ) )
 from selections.lumi_selections import select_lumis
 
 
@@ -63,8 +63,9 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/prompt_mutau/v5/'
-out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
+
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v_all_samples/'
+out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
 
@@ -79,30 +80,32 @@ samples = {
     "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
 }
 
-all_samples = args.sample
-if args.sample[0] == 'all':
-    all_samples = [k for k in samples.keys()]
+all_fileset = {}
+if args.usePkl == True:
+    import pickle 
+    with open(f"samples/{custom_nano_v}{args.sample}_preprocessed.pkl", "rb") as  f:
+        input_dataset = pickle.load(f)
+else:
+    samples = {
+        "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
+        "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
+        "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
+        "DY": f"samples.{custom_nano_v_p}fileset_DY",
+        "signal": f"samples.{custom_nano_v_p}fileset_signal",
+        "TT": f"samples.{custom_nano_v_p}fileset_TT",
+        "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+        "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
+    }
+  
+    module = importlib.import_module(samples[args.sample])
+    input_dataset = module.fileset   
 
-fileset = {}
-for isample in all_samples:
-    if args.usePkl == True:
-        import pickle 
-        with open(f"samples/{custom_nano_v}{isample}_preprocessed.pkl", "rb") as  f:
-            input_dataset = pickle.load(f)
-    else:
-        try:
-            module = importlib.import_module(samples[isample])
-            input_dataset = module.fileset   
-        except:
-            print ('file:', samples[isample], ' does not exists, skipping it' )    
-            continue
-
-    ## restrict to specific sub-samples
-    if args.subsample == 'all':
-        fileset.update(input_dataset)
-    else:  
-        fileset_tmp = {k: input_dataset[k] for k in args.subsample}
-        fileset.update(fileset_tmp)
+## restrict to specific sub-samples
+if args.subsample == 'all':
+    fileset = input_dataset
+    print(fileset.keys())
+else:  
+    fileset = {k: input_dataset[k] for k in args.subsample}
      
 
 ## restrict to n files
@@ -157,6 +160,12 @@ class SkimProcessor(processor.ProcessorABC):
 #             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
     def process(self, events):
+
+        import sys
+
+        sys.path.append('.')
+
+        from lumi_selections import select_lumis
         
         import sys
         sys.path.append('.')
@@ -177,7 +186,7 @@ class SkimProcessor(processor.ProcessorABC):
                 lumimask = select_lumis('2022', events)
                 events = events[lumimask]
             except:
-                print (f"[ lumimask ] Skip now! Unable to find year info of {dataset}")
+                print (f"[ lumimask ] Skip now! Unable to find year info of {args.sample}")
 
         ## retrieve the list of run/lumi being processed        
         run_dict = defaultdict(list)
@@ -308,29 +317,30 @@ if __name__ == "__main__":
     
     if not test_job:
         n_port = 8786
-        cluster = CernCluster(
-                cores=1,  ## increase to 8
-                memory='16000MB', ## increase to 16
-                disk='1000MB',
-                death_timeout = '240',
-                nanny=False,
-                container_runtime = "none",
-                log_directory = "/eos/user/f/fiorendi/condor/log/prompt_skim/v5",
-                scheduler_options={
-                    'port': n_port,
-                    'host': socket.gethostname(),
-                    },
-                job_extra={
-                    '+JobFlavour': '"workday"',
-                    'transfer_input_files': 'utils.py,selections/lumi_selections.py',
-                    'should_transfer_files': 'YES',
-                    },
-                job_script_prologue=[
-                    "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
-                    f"export X509_USER_PROXY=/afs/cern.ch/user/f/fiorendi/x509up_u58808",
-                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR",
-                ],
-                extra = ['--worker-port 10000:10100']
+        cluster = LPCCondorCluster(
+#                cores=1,
+#                memory='2000MB',
+#                disk='4000MB',
+                #death_timeout = '240',
+                #nanny=True,
+#                container_runtime = "none",
+#                log_directory = "/uscms/home/dally/condor/log/prompt_skim/v3",
+#                scheduler_options={
+#                    'port': n_port,
+#                    'host': socket.gethostname(),
+#                    },
+                transfer_input_files=['utils.py', './selections/lumi_selections.py'],
+                #transfer_input_files=['utils.py'],
+                #job_extra={
+                #    '+JobFlavour': '"workday"',
+                #    'should_transfer_files': 'YES',
+                #    },
+#                job_script_prologue=[
+                #    "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
+#                    f"export X509_USER_PROXY=$HOME/x509up_u57864",
+#                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
+#                ],
+                #worker_extra_args = ['--worker-port 10000:10100']
                )
         cluster.adapt(minimum=1, maximum=200)#, wait_count=3)
         print(cluster.job_script())
@@ -338,14 +348,12 @@ if __name__ == "__main__":
         cluster = LocalCluster(n_workers=4, threads_per_worker=1)
     
     client = Client(cluster)
-    client.upload_file('selections/lumi_selections.py')
-
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=50_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
-        savemetrics=True,
+      savemetrics=True,
 #         maxchunks=4,
     )
     
