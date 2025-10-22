@@ -1,7 +1,11 @@
 import awkward as ak
-import uproot, os
+import uproot, os, sys
 import numpy as np
 import gzip, correctionlib, importlib, pickle
+
+#sys.stdout.reconfigure(line_buffering=True)
+#sys.stderr.reconfigure(line_buffering=True)
+#os.environ["PYTHONUNBUFFERED"] = "1"
 
 from coffea import processor
 from coffea.nanoevents import PFNanoAODSchema
@@ -13,8 +17,13 @@ from  fsspec_xrootd import XRootDFileSystem
 import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-from dask.distributed import Client, LocalCluster
-from dask_lxplus import CernCluster
+cfg.set({'distributed.scheduler.allowed-failures': 20}) # Check if this solves some dask issues
+cfg.set({"distributed.logging.distributed": "debug"})
+from dask.distributed import Client, LocalCluster, wait, progress, performance_report
+#from dask_lxplus import CernCluster
+from lpcjobqueue import LPCCondorCluster, schedd 
+from dask import config as cfg
+from dask_jobqueue import HTCondorCluster
 import socket, time
 
 import warnings
@@ -23,14 +32,17 @@ import logging
 
 from selection_function import event_selection, event_selection_hpstau_mu
 from utils import process_n_files, is_rootcompat, uproot_writeable_selected
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../input_jsons")))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 
 from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument("-m"    , "--muon"    , dest = "leading_muon_type"   , help = "Leading muon variable"    , default = "pt")
-parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "disTauTag_score1")         
+parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "pt")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -87,7 +99,7 @@ else:
     exit(0)
     
 
-out_folder = f'/eos/cms/store/user/fiorendi/displacedTaus/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
+out_folder = f'root://cmseos.fnal.gov//store/user/dally/displacedTaus/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
 
 
 ## define input samples
@@ -96,6 +108,7 @@ if args.usePkl==True:
     ## to be made configurable
     with open(f"samples/{args.nanov}/{skim_folder}/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
+        print(input_dataset.keys())
 else:
     samples = {
         "Wto2Q": f"samples.{args.nanov}.{skim_folder}.fileset_Wto2Q",
@@ -150,10 +163,10 @@ class SelectionProcessor(processor.ProcessorABC):
         self._mode = mode
 
         self._accumulator = {}
-#         for samp in skimmed_fileset:
-#             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
+        #for samp in skimmed_fileset:
+        #    self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
-        # Load pileup weights evaluators 
+       # Load pileup weights evaluators 
         jsonpog = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration"
         pileup_file = jsonpog + "/POG/LUM/2022_Summer22EE/puWeights.json.gz"
 
@@ -281,7 +294,7 @@ class SelectionProcessor(processor.ProcessorABC):
         if not len(events) > 0:
             return {
                 "entries_written": 0,
-#                 "run_dict" : run_dict
+                 #"run_dict" : run_dict
             }
 
         # Write to ROOT
@@ -310,28 +323,34 @@ if __name__ == "__main__":
 
     if not test_job:
         n_port = 8786
-        cluster = CernCluster(
-                cores=1,
-                memory='3000MB',
-                disk='1000MB',
-                death_timeout = '60',
-                lcg = True,
-                nanny = False,
-                container_runtime = "none",
-                log_directory = "/eos/user/f/fiorendi/condor/log",
-                scheduler_options={
-                    'port': n_port,
-                    'host': socket.gethostname(),
-                    },
-                job_extra={
-                    '+JobFlavour': '"longlunch"',
-                    "transfer_input_files": "selection_function.py, utils.py",
-                    "should_transfer_files": "YES",
-                    },
-                extra = ['--worker-port 10000:10100']
+        cluster = LPCCondorCluster(
+                #cores=2,
+                #memory='3000MB',
+                #disk='1000MB',
+                #death_timeout = '600',
+                #lcg = True,
+                #nanny = False,
+                #container_runtime = "none",
+                #log_directory = "/uscms/home/dally/condor/log",
+                transfer_input_files = ["selection_function.py", "utils.py"],
+                #scheduler_options={
+                #    'port': n_port,
+                #    'host': socket.gethostname(),
+                #    },
+                #job_extra_directives={
+                #    "should_transfer_files": "YES",
+                #    '+JobFlavour': '"longlunch"',
+                #    },
+                job_script_prologue=[
+                    #"export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
+                    f"export X509_USER_PROXY=$HOME/x509up_u57864",
+                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
+                ],
+                #worker_extra_args = ['--worker-port 10000:10100']
                 )
          #minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
         cluster.adapt(minimum=1, maximum=200)
+        print(cluster.job_script())
     
     else:
         cluster = LocalCluster(n_workers=10, threads_per_worker=1)
