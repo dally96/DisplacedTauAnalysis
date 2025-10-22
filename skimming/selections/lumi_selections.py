@@ -16,7 +16,7 @@ def select_lumis(
         ),
         "2023": os.path.join(
             os.path.dirname(__file__),
-            "./eos/user/c/cmsdqm/www/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json",
+            "/eos/user/c/cmsdqm/www/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json",
         ),
 #         "2024": os.path.join(
 #             os.path.dirname(__file__),
