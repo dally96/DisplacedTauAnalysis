@@ -2,22 +2,29 @@ import awkward as ak
 import uproot
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
+import dask
 from dask.distributed import Client, wait, progress, LocalCluster, performance_report
-from dask_lxplus import CernCluster
+from lpcjobqueue import LPCCondorCluster, schedd
+print("SCHEDD_POOL:", schedd.SCHEDD_POOL)
+#from dask_lxplus import CernCluster
 from dask import config as cfg
+from dask_jobqueue import HTCondorCluster
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
 
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
-import os, argparse, importlib, pdb, socket
+import os, argparse, importlib, pdb, socket, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "./")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 import time
 from datetime import datetime
 
 from collections import defaultdict
 import json
-
 from utils import process_n_files, is_rootcompat, is_good_hlt, is_included, uproot_writeable
+from selections.lumi_selections import select_lumis
 
 PFNanoAODSchema.warn_missing_crossrefs = False
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
@@ -57,8 +64,8 @@ parser.add_argument(
         help="Run a test job locally")
 args = parser.parse_args()
 
-out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/mutau/v_all_samples/'
-out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/test/skim/{args.nanov}/mutau/v_all_samples/'
+out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
 
@@ -66,9 +73,9 @@ samples = {
     "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
     "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
     "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
-    "DY": f"samples.{custom_nano_v_p}fileset_DY",
+#    "DY": f"samples.{custom_nano_v_p}fileset_DY",
     "signal": f"samples.{custom_nano_v_p}fileset_signal",
-    "TT": f"samples.{custom_nano_v_p}fileset_TT",
+#    "TT": f"samples.{custom_nano_v_p}fileset_TT",
     "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
 }
 
@@ -252,33 +259,35 @@ if __name__ == "__main__":
     print("Time started:", datetime.now().strftime("%H:%M:%S"))
     tic = time.time()
 
+
     test_job = args.testjob 
     
     if not test_job:
         n_port = 8786
-        cluster = CernCluster(
-                cores=1,
-                memory='4000MB',
-                disk='1000MB',
-                death_timeout = '240',
-                nanny=False,
-                container_runtime = "none",
-                log_directory = "root://eosuser.cern.ch//eos/user/f/fiorendi/condor/log/mutau_skim/v3",
-                scheduler_options={
-                    'port': n_port,
-                    'host': socket.gethostname(),
-                    },
+        cluster = LPCCondorCluster(
+                cores=4,
+                memory='12000MB',
+                disk='4000MB',
+                death_timeout = '180',
+                nanny=True,
+                #container_runtime = "none",
+                log_directory = "/uscms/home/dally/condor/log/mutau_skim/v3",
+                #ship_env=True,
+                transfer_input_files='utils.py',
+                #scheduler_options={
+                #    'port': n_port,
+                #    'host': socket.gethostname(),
+                #    },
                 job_extra={
-                    '+JobFlavour': '"workday"',
-                    'transfer_input_files': 'utils.py',
                     'should_transfer_files': 'YES',
+                    '+JobFlavour': '"workday"',
                     },
                 job_script_prologue=[
                     "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
-                    f"export X509_USER_PROXY=/afs/cern.ch/user/f/fiorendi/x509up_u58808",
-                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR",
+                    f"export X509_USER_PROXY=$HOME/x509up_u57864",
+                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
                 ],
-                extra = ['--worker-port 10000:10100']
+                #worker_extra_args = ['--worker-port 10000:10100']
                )
         cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
         print(cluster.job_script())
@@ -286,9 +295,10 @@ if __name__ == "__main__":
         cluster = LocalCluster(n_workers=8, threads_per_worker=1)
     
     client = Client(cluster)
+    client.run(lambda: __import__('os').system('ls -l $_CONDOR_SCRATCH_DIR'))
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
-        chunksize=50_000,
+        chunksize=100_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
         savemetrics=True,

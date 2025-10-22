@@ -12,7 +12,7 @@ parser.add_argument(
 	help='If providing list of the skimmed files, select which of the possible skims')
 parser.add_argument(
 	"--skimversion",
-	default='v0',
+	default='v_all_samples',
 	required=False,
 	help='If listing skimmed files, select which version of the inputs')
 args = parser.parse_args()
@@ -21,17 +21,14 @@ args = parser.parse_args()
 ## to replace with v8 once available
 BASE_DIRS = [
   "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10/",
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2/",
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2",
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2",
   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10/",
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2/",
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data/"
-#   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
-#   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
-#   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data",
 ]
 custom_nano_v = 'Summer22_CHS_v10'
 
-XROOTD_PREFIX = "root://cmsxrootd.fnal.gov/"
+XROOTD_PREFIX = "root://cmseos.fnal.gov/"
 EOS_LOC = 'root://cmseos.fnal.gov'
 outdir = 'samples/' + custom_nano_v + '/'
 
@@ -40,11 +37,11 @@ if args.skim != '':
     skim_folder = args.skim
     skim_version = args.skimversion
     BASE_DIRS = [
-      f"/store/user/fiorendi/displacedTaus/skim/{custom_nano_v}/{skim_folder}/{skim_version}/"
+      f"/store/group/lpcdisptau/dally/displacedTaus/skim/{custom_nano_v}/{skim_folder}/{skim_version}"
     ]
     
-    XROOTD_PREFIX = "root://eoscms.cern.ch/"
-    EOS_LOC = 'root://eoscms.cern.ch/'
+    XROOTD_PREFIX = "root://cmseos.fnal.gov/"
+    EOS_LOC = 'root://cmseos.fnal.gov/'
     outdir = f'samples/{custom_nano_v}/{skim_folder}/'
     
 outfolder = Path(f'{outdir}')
@@ -117,8 +114,11 @@ def count_events(outfile, total_events):
 def write_filesets(grouped):
 
     for base in BASE_DIRS:
+        print(base)
         dirs = list_dirs(base)
+        print(dirs)
         for d in dirs:
+            print(d)
             dirname = os.path.basename(d)
             for key, outfile in GROUPS.items():
                 match = False
