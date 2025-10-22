@@ -1,5 +1,6 @@
 import awkward as ak
 import numpy as np
+>>>>>>> f1212d22669 (Pushing changes for the rest of the workflow to work on LPC)
 import uproot, sys, os
 from coffea import processor
 from coffea.nanoevents.methods import candidate
@@ -386,6 +387,8 @@ if __name__ == "__main__":
         cluster = LPCCondorCluster(
                 cores=10,
                 memory='20000MB',
+#                cores=1,
+#                memory='2000MB',
 #                disk='4000MB',
                 #death_timeout = '240',
                 #nanny=True,

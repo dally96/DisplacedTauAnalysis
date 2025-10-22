@@ -16,6 +16,9 @@ import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
 import os, argparse, importlib, pdb, socket, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "./")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 import time
 from datetime import datetime
 
@@ -62,7 +65,11 @@ parser.add_argument(
         help="Run a test job locally")
 args = parser.parse_args()
 
+<<<<<<< HEAD
 out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/mutau/v2/'
+=======
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/test/skim/{args.nanov}/mutau/v_all_samples/'
+>>>>>>> f1212d22669 (Pushing changes for the rest of the workflow to work on LPC)
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -352,7 +359,7 @@ if __name__ == "__main__":
 
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
-        chunksize=50_000,
+        chunksize=100_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
         savemetrics=True,
