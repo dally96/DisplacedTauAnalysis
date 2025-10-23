@@ -60,11 +60,12 @@
         "Wto2Q-2Jets_PTQQ-200to400_1J" : 1.036E2, 
         "Wto2Q-2Jets_PTQQ-400to600_1J" : 3.503E0, 
         "Wto2Q-2Jets_PTQQ-600_1J"      : 4.238E1,
-        "TWminusto2L2Nu"   : 3.599E1,
-        "TWminustoLNu2Q"   : 3.599E1,
-        "TbarWplusto2L2Nu" : 3.605E1,
-        "TbarWplustoLNu2Q" : 3.605E1,
-        "
+        "TWminusto2L2Nu"       : 3.599E1,
+        "TWminustoLNu2Q"       : 3.599E1,
+        "TbarWplusto2L2Nu"     : 3.605E1,
+        "TbarWplustoLNu2Q"     : 3.605E1,
+        "TBbarQ_t-channel_4FS" : 1.238E2,
+        "TbarBQ_t-channel_4FS" : 7.547E1
     },
     "br": {
         "DYJetsToLL": 0.333333, 
@@ -126,6 +127,12 @@
         "Wto2Q-2Jets_PTQQ-100to200_1J" : 1,
         "Wto2Q-2Jets_PTQQ-200to400_1J" : 1,
         "Wto2Q-2Jets_PTQQ-400to600_1J" : 1,
-        "Wto2Q-2Jets_PTQQ-600_1J"      : 1
+        "Wto2Q-2Jets_PTQQ-600_1J"      : 1,
+        "TWminusto2L2Nu"       : 0.109,
+        "TWminustoLNu2Q"       : 0.217,
+        "TbarWplusto2L2Nu"     : 0.109,
+        "TbarWplustoLNu2Q"     : 0.217,
+        "TBbarQ_t-channel_4FS" : 1,
+        "TbarBQ_t-channel_4FS" : 1
     }
 }
