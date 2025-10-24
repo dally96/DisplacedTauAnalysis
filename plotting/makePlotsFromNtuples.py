@@ -2,6 +2,7 @@ import os
 import json
 import numpy as np
 import awkward as ak
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mplhep as hep
 import argparse
@@ -14,9 +15,9 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 
 hep.style.use("CMS")
 
-nanov = 'Summer22_CHS_v7/'
+nanov = 'Summer22_CHS_v10/'
 # nanov = ''
-sample_folder = f"/eos/cms/store/user/fiorendi/displacedTaus/skim/{nanov}prompt_mutau/selected/merged/"
+sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v0/selected/faster_trial/"
 
 
 ## if a sample is not ready yet, comment it out
@@ -25,40 +26,54 @@ all_samples_dict = {
 #         "DY",
       ],
     "QCD" : [
+#       "QCD_PT-50to80",
         "QCD_PT-80to120",
-        "QCD_PT-120to170",
-        "QCD_PT-170to300",
-        "QCD_PT-300to470",
-        "QCD_PT-470to600",
-        "QCD_PT-600to800",
-        "QCD_PT-800to1000",
-        "QCD_PT-1000to1400",
-        "QCD_PT-1400to1800",
-        "QCD_PT-1800to2400",
+#        "QCD_PT-120to170",
+#        "QCD_PT-170to300",
+#        "QCD_PT-300to470",
+#        "QCD_PT-470to600",
+#        "QCD_PT-600to800",
+#        "QCD_PT-800to1000",
+#        "QCD_PT-1000to1400",
+#        "QCD_PT-1400to1800",
+#        "QCD_PT-1800to2400",
       ],
-    "Wto2Q" : [
-        "Wto2Q-2Jets_PTQQ-100to200_1J",
-        "Wto2Q-2Jets_PTQQ-100to200_2J",
-        "Wto2Q-2Jets_PTQQ-200to400_1J",
-        "Wto2Q-2Jets_PTQQ-200to400_2J",
-#         "Wto2Q-2Jets_PTQQ-400to600_1J",
-        "Wto2Q-2Jets_PTQQ-400to600_2J",
-#         "Wto2Q-2Jets_PTQQ-600_1J",
-#         "Wto2Q-2Jets_PTQQ-600_2J",
-     ],
-    "WtoLNu" : [
-#         "WtoLNu-2Jets_0J",
-        "WtoLNu-2Jets_1J",
-#         "WtoLNu-2Jets_2J",
-        "WtoLNu-4Jets_3J",
-        "WtoLNu-4Jets_4J",
-      ],
-    "TT" : [
-      "TTto2L2Nu", 
-#       "TTtoLNu2Q", 
-      "TTto4Q"
-      ],
-    "Stau" : []
+#    "Wto2Q" : [
+#        "Wto2Q-2Jets_PTQQ-100to200_1J",
+##        "Wto2Q-2Jets_PTQQ-100to200_2J",
+#        "Wto2Q-2Jets_PTQQ-200to400_1J",
+#        "Wto2Q-2Jets_PTQQ-200to400_2J",
+##        "Wto2Q-2Jets_PTQQ-400to600_1J",
+#        "Wto2Q-2Jets_PTQQ-400to600_2J",
+##        "Wto2Q-2Jets_PTQQ-600_1J",
+##        "Wto2Q-2Jets_PTQQ-600_2J",
+#     ],
+#    "WtoLNu" : [
+##         "WtoLNu-2Jets_0J",
+##        "WtoLNu-2Jets_1J",
+##         "WtoLNu-2Jets_2J",
+##        "WtoLNu-4Jets_3J",
+#        "WtoLNu-4Jets",
+#      ],
+#    "TT" : [
+#      "TTto2L2Nu", 
+#      "TTtoLNu2Q", 
+#      "TTto4Q"
+#      ],
+#    "singleT": [
+#      "TbarWplustoLNu2Q",
+#      "TbarWplusto2L2Nu",
+#      "TWminusto2L2Nu",
+#      "TBbarQ_t-channel_4FS",
+#      "TWminustoLNu2Q",
+#      "TbarBQ_t-channel_4FS",
+#      ],  
+    "JetMET": [
+      "JetMET_Run2022E",
+#      "JetMET_Run2022F",
+#      "JetMET_Run2022G",
+    ],
+#    "Stau" : []
 }
 
 ## build reverse lookup dict to be used when retrieving sum gen events etc
@@ -81,7 +96,7 @@ with open(f"./plots_config/{nanov}/all_total_sumw.json", "r") as file:
     sum_gen_w = json.load(file)
     
 ## target lumi, for now fixed value
-target_lumi = 50
+target_lumi = 26.7
 
 # int_lumi = ak.from_parquet("../sample_processing/my_skimData2018C").intLumi[0]
 #print(int_lumi)
@@ -112,32 +127,37 @@ binning_dict = {}
 
 for process in available_processes:
     # print(process)
-    tmp_string = f"merged_{process}/merged_{process}.root"
+    tmp_string = f"faster_trial_{process}/faster_trial_{process}.root"
     tmp_file = sample_folder +  tmp_string
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+    print(f"Events fields: {events.mutau.fields}")
 
     ## disable for now
 #     print ('need to put back weights')
     weights = events.run / events.run
-    if "data" in process.lower():
+    if "jetmet" in process.lower():
         weights = events.weight
     else:
         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
 #         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
         weights = events.weight * lumi_weight ## am i missing the sumGenW here?
+    print(f"For process {process}, the weights are {weights}")
 
     for plot_name, settings in plot_settings.items():
         ## test, not clear why
-        var_values = getattr(getattr(events, settings["field"]), settings["variable"])
 #         print("vals type:", type(var_values), "vals layout:", var_values.layout.form)
         if not settings["per_event"]:
+            var_values = getattr(getattr(events, settings["field"]), settings["variable"])
             vals_flat = ak.flatten(var_values)
             weights_broadcast = ak.broadcast_arrays(var_values, weights)[1]
             weights_flat = ak.flatten(weights_broadcast)
             hist, _ = np.histogram(vals_flat, weights=weights_flat, bins=np.linspace(*settings["binning_linspace"]))
 
         else:
-            hist, _ = np.histogram(getattr(getattr(events, settings["field"]), settings["variable"]), weights=weights, bins=np.linspace(*settings["binning_linspace"]))
+            if settings["variable"] == "":
+                hist, _ = np.histogram(getattr(events, settings["field"]), weights=ak.broadcast_arrays(getattr(events, settings["field"]), weights)[1], bins=np.linspace(*settings["binning_linspace"]))
+            else:
+                hist, _ = np.histogram(getattr(getattr(events, settings["field"]), settings["variable"]), weights=ak.broadcast_arrays(getattr(getattr(events, settings["field"]), settings["variable"]), weights)[1], bins=np.linspace(*settings["binning_linspace"]))
 
         if plot_name not in histogram_dict:
             histogram_dict[plot_name] = {}
@@ -164,13 +184,15 @@ for plot_name, histograms in histogram_dict.items():
     do_stack = not plot_settings[plot_name].get("density")
     # if args.groupProcesses:
     if groupProcesses:
-        hist_Sig = np.zeros(len(binning)-1)
-        hist_W   = np.zeros(len(binning)-1)
-        hist_EWK = np.zeros(len(binning)-1)
-        hist_Top = np.zeros(len(binning)-1)
-        hist_QCD = np.zeros(len(binning)-1)
+        hist_Sig  = np.zeros(len(binning)-1)
+        hist_W    = np.zeros(len(binning)-1)
+        hist_EWK  = np.zeros(len(binning)-1)
+        hist_Top  = np.zeros(len(binning)-1)
+        hist_QCD  = np.zeros(len(binning)-1)
+        hist_Data = np.zeros(len(binning)-1)
     
     hists_to_plot = []
+    data_hists = []
     labels = []
 
     for process, histogram in histograms.items():
@@ -180,8 +202,9 @@ for plot_name, histograms in histogram_dict.items():
         # Fix later, hist should not be a list in the first place and should be 60 1d and not (60,1)
         # if args.groupProcesses:
         if groupProcesses:
-            if process == "Data2018C":
-                data_hist = histogram
+            if "T" in process or "W" in process: continue
+            if process in all_samples_dict["JetMET"]:
+                hist_Data += histogram
             elif process in all_samples_dict['TT']:
                 hist_Top += histogram
             elif process in all_samples_dict['DY']:
@@ -217,6 +240,7 @@ for plot_name, histograms in histogram_dict.items():
         labels.append('QCD')
         hists_to_plot.append(hist_Sig)
         labels.append('signal')
+        data_hists.append(hist_Data)
 
     colours = hep.style.cms.cmap_petroff
     
@@ -225,8 +249,8 @@ for plot_name, histograms in histogram_dict.items():
     hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
                  label=labels, sort='label_r', #color=colours,
                  density=plot_settings[plot_name].get("density"), ax=ax_main)
-    # hep.histplot(data_hist, xerr=True, bins=binning, stack=False, histtype='errorbar', 
-                 # color='black', label='Data', density=plot_settings[plot_name].get("density"), ax=ax_main)
+    hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
+                  color='black', label='Data', density=plot_settings[plot_name].get("density"), ax=ax_main)
     ax_main.set_ylabel(plot_settings[plot_name].get("ylabel"))
     ax_main.legend()
     
@@ -250,6 +274,7 @@ for plot_name, histograms in histogram_dict.items():
     hep.cms.label(data=True, loc=0, label="Private Work", com=13.6, lumi=round(target_lumi, 1), ax=ax_main)
     
     # Saving with special name
+    #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
     filename = f"./plots/{dataset_name}_{plot_name}"
     # #if args.groupProcesses:
     if plot_settings[plot_name].get("density"):
@@ -257,6 +282,7 @@ for plot_name, histograms in histogram_dict.items():
     else: 
         filename += "_stacked"
     filename += ".pdf"
+    print(filename)
     plt.savefig(filename)
     ax_main.set_yscale('log')
     plt.savefig(filename.replace('.pdf', '_log.pdf'))
