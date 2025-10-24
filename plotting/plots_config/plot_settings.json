@@ -20,12 +20,12 @@
         "per_event": true
     },
     "mutau_mass": {
-        "field": "mutau_mass",
-        "variable": "",
+        "field": "mutau",
+        "variable": "mass",
         "binning_linspace": [0, 300, 301],
         "density": false,
         "ylabel": "Events / 1 GeV",
-        "xlabel": "mass($\\mu_\\tau$) in GeV",
+        "xlabel": "mass(mutau) in GeV",
         "color": "palegreen",
         "per_event": true
     },
@@ -35,7 +35,7 @@
         "binning_linspace": [20, 175, 151],
         "density": false,
         "ylabel": "Events / 1 GeV",
-        "xlabel": "$p_\\mathrm{T}^{\\mu_\\mathrm{lead}}$ in GeV",
+        "xlabel": "leading muon pT in GeV",
         "color": "red",
         "per_event": false
     },
