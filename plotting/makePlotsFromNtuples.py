@@ -28,52 +28,52 @@ all_samples_dict = {
     "QCD" : [
 #       "QCD_PT-50to80",
         "QCD_PT-80to120",
-#        "QCD_PT-120to170",
-#        "QCD_PT-170to300",
-#        "QCD_PT-300to470",
-#        "QCD_PT-470to600",
-#        "QCD_PT-600to800",
-#        "QCD_PT-800to1000",
-#        "QCD_PT-1000to1400",
-#        "QCD_PT-1400to1800",
-#        "QCD_PT-1800to2400",
+        "QCD_PT-120to170",
+        "QCD_PT-170to300",
+        "QCD_PT-300to470",
+        "QCD_PT-470to600",
+        "QCD_PT-600to800",
+        "QCD_PT-800to1000",
+        "QCD_PT-1000to1400",
+        "QCD_PT-1400to1800",
+        "QCD_PT-1800to2400",
+     ],
+    "Wto2Q" : [
+        "Wto2Q-2Jets_PTQQ-100to200_1J",
+#        "Wto2Q-2Jets_PTQQ-100to200_2J",
+        "Wto2Q-2Jets_PTQQ-200to400_1J",
+        "Wto2Q-2Jets_PTQQ-200to400_2J",
+#        "Wto2Q-2Jets_PTQQ-400to600_1J",
+        "Wto2Q-2Jets_PTQQ-400to600_2J",
+#        "Wto2Q-2Jets_PTQQ-600_1J",
+#        "Wto2Q-2Jets_PTQQ-600_2J",
+     ],
+    "WtoLNu" : [
+#         "WtoLNu-2Jets_0J",
+#        "WtoLNu-2Jets_1J",
+#         "WtoLNu-2Jets_2J",
+#        "WtoLNu-4Jets_3J",
+        "WtoLNu-4Jets",
       ],
-#    "Wto2Q" : [
-#        "Wto2Q-2Jets_PTQQ-100to200_1J",
-##        "Wto2Q-2Jets_PTQQ-100to200_2J",
-#        "Wto2Q-2Jets_PTQQ-200to400_1J",
-#        "Wto2Q-2Jets_PTQQ-200to400_2J",
-##        "Wto2Q-2Jets_PTQQ-400to600_1J",
-#        "Wto2Q-2Jets_PTQQ-400to600_2J",
-##        "Wto2Q-2Jets_PTQQ-600_1J",
-##        "Wto2Q-2Jets_PTQQ-600_2J",
-#     ],
-#    "WtoLNu" : [
-##         "WtoLNu-2Jets_0J",
-##        "WtoLNu-2Jets_1J",
-##         "WtoLNu-2Jets_2J",
-##        "WtoLNu-4Jets_3J",
-#        "WtoLNu-4Jets",
-#      ],
-#    "TT" : [
-#      "TTto2L2Nu", 
-#      "TTtoLNu2Q", 
-#      "TTto4Q"
-#      ],
-#    "singleT": [
-#      "TbarWplustoLNu2Q",
-#      "TbarWplusto2L2Nu",
-#      "TWminusto2L2Nu",
-#      "TBbarQ_t-channel_4FS",
-#      "TWminustoLNu2Q",
-#      "TbarBQ_t-channel_4FS",
-#      ],  
+    "TT" : [
+      "TTto2L2Nu", 
+      "TTtoLNu2Q", 
+      "TTto4Q"
+      ],
+    "singleT": [
+      "TbarWplustoLNu2Q",
+      "TbarWplusto2L2Nu",
+      "TWminusto2L2Nu",
+      "TBbarQ_t-channel_4FS",
+      "TWminustoLNu2Q",
+      "TbarBQ_t-channel_4FS",
+      ],  
     "JetMET": [
       "JetMET_Run2022E",
-#      "JetMET_Run2022F",
-#      "JetMET_Run2022G",
+      "JetMET_Run2022F",
+      "JetMET_Run2022G",
     ],
-#    "Stau" : []
+    "Stau" : []
 }
 
 ## build reverse lookup dict to be used when retrieving sum gen events etc
@@ -130,7 +130,6 @@ for process in available_processes:
     tmp_string = f"faster_trial_{process}/faster_trial_{process}.root"
     tmp_file = sample_folder +  tmp_string
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
-    print(f"Events fields: {events.mutau.fields}")
 
     ## disable for now
 #     print ('need to put back weights')
@@ -202,7 +201,6 @@ for plot_name, histograms in histogram_dict.items():
         # Fix later, hist should not be a list in the first place and should be 60 1d and not (60,1)
         # if args.groupProcesses:
         if groupProcesses:
-            if "T" in process or "W" in process: continue
             if process in all_samples_dict["JetMET"]:
                 hist_Data += histogram
             elif process in all_samples_dict['TT']:
@@ -265,7 +263,7 @@ for plot_name, histograms in histogram_dict.items():
     # #     rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
     # #     hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
     # #     ax_ratio.axhline(1, color='gray', linestyle='--')
-    ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=True)
+    ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
     # #     ax_ratio.set_ylabel('Data / MC')
     # #     ax_ratio.set_xlim(binning[0], binning[-1])
     # #     ax_ratio.set_ylim(0.6, 1.4)
@@ -284,6 +282,8 @@ for plot_name, histograms in histogram_dict.items():
     filename += ".pdf"
     print(filename)
     plt.savefig(filename)
+    plt.savefig(filename.replace('.pdf', '.png'))
     ax_main.set_yscale('log')
     plt.savefig(filename.replace('.pdf', '_log.pdf'))
+    plt.savefig(filename.replace('.pdf', '_log.png'))
     plt.clf()
