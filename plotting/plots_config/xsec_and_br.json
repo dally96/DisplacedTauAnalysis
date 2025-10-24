@@ -128,9 +128,9 @@
         "Wto2Q-2Jets_PTQQ-200to400_1J" : 1,
         "Wto2Q-2Jets_PTQQ-400to600_1J" : 1,
         "Wto2Q-2Jets_PTQQ-600_1J"      : 1,
-        "TWminusto2L2Nu"       : 0.214,
+        "TWminusto2L2Nu"       : 0.107,
         "TWminustoLNu2Q"       : 0.441,
-        "TbarWplusto2L2Nu"     : 0.214,
+        "TbarWplusto2L2Nu"     : 0.107,
         "TbarWplustoLNu2Q"     : 0.441,
         "TBbarQ_t-channel_4FS" : 1,
         "TbarBQ_t-channel_4FS" : 1
