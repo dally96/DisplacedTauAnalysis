@@ -398,6 +398,7 @@ class SelectionProcessor(processor.ProcessorABC):
             mutau_cand = mutau_cand[ak.ravel(mutau_cand.charge == 0)]
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
+            events = events[ak.ravel(mutau_cand.charge == 0)]
 
             events = events[ak.ravel(mutau_mass > 40)]
 
