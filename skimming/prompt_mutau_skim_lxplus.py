@@ -9,7 +9,7 @@ from lpcjobqueue import LPCCondorCluster, schedd
 from dask import config as cfg
 from dask_jobqueue import HTCondorCluster
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-cfg.set({'distributed.scheduler.allowed-failures': 20}) # Check if this solves some dask issues
+#cfg.set({'distributed.scheduler.allowed-failures': 20}) # Check if this solves some dask issues
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
@@ -139,17 +139,17 @@ include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsM
 
 
 good_hlts = [
-#   "PFMET120_PFMHT120_IDTight",                  
-#   "PFMET130_PFMHT130_IDTight",
-#   "PFMET140_PFMHT140_IDTight",
-#   "PFMETNoMu120_PFMHTNoMu120_IDTight",
-#   "PFMETNoMu130_PFMHTNoMu130_IDTight",
-#   "PFMETNoMu140_PFMHTNoMu140_IDTight",
-#   "PFMET120_PFMHT120_IDTight_PFHT60",
-#   "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
-#   "PFMETTypeOne140_PFMHT140_IDTight",
-#   "MET105_IsoTrk50",
-#   "MET120_IsoTrk50",
+   "PFMET120_PFMHT120_IDTight",                  
+   "PFMET130_PFMHT130_IDTight",
+   "PFMET140_PFMHT140_IDTight",
+   "PFMETNoMu120_PFMHTNoMu120_IDTight",
+   "PFMETNoMu130_PFMHTNoMu130_IDTight",
+   "PFMETNoMu140_PFMHTNoMu140_IDTight",
+   "PFMET120_PFMHT120_IDTight_PFHT60",
+   "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
+   "PFMETTypeOne140_PFMHT140_IDTight",
+   "MET105_IsoTrk50",
+   "MET120_IsoTrk50",
   "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
   "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
 #   "Ele30_WPTight_Gsf",                                         
@@ -303,9 +303,9 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-#                cores=1,
-#                memory='2000MB',
-#                disk='4000MB',
+                cores=1,
+                memory='2000MB',
+                disk='4000MB',
                 #death_timeout = '240',
                 #nanny=True,
 #                container_runtime = "none",

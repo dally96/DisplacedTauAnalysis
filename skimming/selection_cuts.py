@@ -254,6 +254,7 @@ class SelectionProcessor(processor.ProcessorABC):
             mutau_cand = taus + muons
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
+            events = events[ak.ravel(mutau_cand.charge == 0)]
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
@@ -331,7 +332,7 @@ if __name__ == "__main__":
                 #lcg = True,
                 #nanny = False,
                 #container_runtime = "none",
-                #log_directory = "/uscms/home/dally/condor/log",
+                log_directory = "/uscms/home/dally/condor/log",
                 transfer_input_files = ["selection_function.py", "utils.py"],
                 #scheduler_options={
                 #    'port': n_port,
