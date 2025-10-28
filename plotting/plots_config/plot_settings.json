@@ -22,9 +22,9 @@
     "mutau_mass": {
         "field": "mutau",
         "variable": "mass",
-        "binning_linspace": [0, 300, 301],
+        "binning_linspace": [0, 300, 61],
         "density": false,
-        "ylabel": "Events / 1 GeV",
+        "ylabel": "Events / 5 GeV",
         "xlabel": "mass(mutau) in GeV",
         "color": "palegreen",
         "per_event": true
@@ -138,5 +138,15 @@
         "xlabel": "Tau_rawDeepTau2018v2p5VSjet",
         "color": "red",
         "per_event": false
+    },
+    "PV_npvs": {
+        "field": "PV",
+        "variable": "npvs",
+        "binning_linspace": [0, 80, 81],
+        "density": true,
+        "ylabel": "Events ",
+        "xlabel": "npvs",
+        "color": "red",
+        "per_event": true
     }
 }

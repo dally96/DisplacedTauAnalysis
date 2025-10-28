@@ -43,7 +43,7 @@
         "TTtoLNu2Q"		  : 7.621E2,
         "TTto4Q"		  : 7.621E2,
         "TTto2L2Nu"		  : 7.621E2,
-        "DYJetsToLL"		  : 5.645E3,
+        "DYJetsToLL_M-50"		  : 5.645E3,
         "WtoLNu-2Jets_0J"         : 5.570E4,
         "WtoLNu-2Jets_1J"         : 9.503E3,
         "WtoLNu-2Jets_2J"         : 3.536E3, 
@@ -68,7 +68,7 @@
         "TbarBQ_t-channel_4FS" : 7.547E1
     },
     "br": {
-        "DYJetsToLL": 0.333333, 
+        "DYJetsToLL_M-50": 0.333333, 
         "TTto2L2Nu": 0.1111,
         "TTtoLNu2Q": 0.444,
         "TTto4Q": 0.444,
