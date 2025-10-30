@@ -12,7 +12,7 @@ parser.add_argument(
 	help='If providing list of the skimmed files, select which of the possible skims')
 parser.add_argument(
 	"--skimversion",
-	default='v_all_samples',
+	default='v0',
 	required=False,
 	help='If listing skimmed files, select which version of the inputs')
 args = parser.parse_args()

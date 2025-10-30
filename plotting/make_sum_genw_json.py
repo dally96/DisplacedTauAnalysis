@@ -18,7 +18,7 @@ parser.add_argument(
 	help='Specify input skim, which objects, and selections (Muon and HPSTau, or DisMuon and Jet)')
 parser.add_argument(
 	"--skimversion",
-	default='v_all_samples',
+	default='v0',
 	required=False,
 	help='If listing skimmed files, select which version of the inputs')
 

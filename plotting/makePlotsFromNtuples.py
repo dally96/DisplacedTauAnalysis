@@ -19,65 +19,69 @@ nanov = 'Summer22_CHS_v10/'
 # nanov = ''
 sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v0/selected/faster_trial/"
 
-
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
     "DY" : [
-#        "DYJetsToLL_M-50",
+        "DYJetsToLL_M-50",
       ],
     "QCD" : [
-##       "QCD_PT-50to80",
-#        "QCD_PT-80to120",
+#       "QCD_PT-50to80",
+        "QCD_PT-80to120",
 #        "QCD_PT-120to170",
-#        "QCD_PT-170to300",
-#        "QCD_PT-300to470",
-#        "QCD_PT-470to600",
-#        "QCD_PT-600to800",
-#        "QCD_PT-800to1000",
+        "QCD_PT-170to300",
+        "QCD_PT-300to470",
+        "QCD_PT-470to600",
+        "QCD_PT-600to800",
+        "QCD_PT-800to1000",
 #        "QCD_PT-1000to1400",
-#        "QCD_PT-1400to1800",
-#        "QCD_PT-1800to2400",
+        "QCD_PT-1400to1800",
+        "QCD_PT-1800to2400",
      ],
     "Wto2Q" : [
-#        "Wto2Q-2Jets_PTQQ-100to200_1J",
-##        "Wto2Q-2Jets_PTQQ-100to200_2J",
-#        "Wto2Q-2Jets_PTQQ-200to400_1J",
-#        "Wto2Q-2Jets_PTQQ-200to400_2J",
-##        "Wto2Q-2Jets_PTQQ-400to600_1J",
-#        "Wto2Q-2Jets_PTQQ-400to600_2J",
-##        "Wto2Q-2Jets_PTQQ-600_1J",
-##        "Wto2Q-2Jets_PTQQ-600_2J",
+        "Wto2Q-2Jets_PTQQ-100to200_1J",
+#        "Wto2Q-2Jets_PTQQ-100to200_2J",
+        "Wto2Q-2Jets_PTQQ-200to400_1J",
+        "Wto2Q-2Jets_PTQQ-200to400_2J",
+#        "Wto2Q-2Jets_PTQQ-400to600_1J",
+        "Wto2Q-2Jets_PTQQ-400to600_2J",
+#        "Wto2Q-2Jets_PTQQ-600_1J",
+#        "Wto2Q-2Jets_PTQQ-600_2J",
      ],
     "WtoLNu" : [
-##         "WtoLNu-2Jets_0J",
-##        "WtoLNu-2Jets_1J",
-##         "WtoLNu-2Jets_2J",
-##        "WtoLNu-4Jets_3J",
-#        "WtoLNu-4Jets",
+#         "WtoLNu-2Jets_0J",
+#        "WtoLNu-2Jets_1J",
+#         "WtoLNu-2Jets_2J",
+#        "WtoLNu-4Jets_3J",
+        "WtoLNu-4Jets",
       ],
     "TT" : [
-#      "TTto2L2Nu", 
-#      "TTtoLNu2Q", 
-#      "TTto4Q"
+      "TTto2L2Nu", 
+      "TTtoLNu2Q", 
+      "TTto4Q"
       ],
     "singleT": [
-#      "TbarWplustoLNu2Q",
-#      "TbarWplusto2L2Nu",
-#      "TWminusto2L2Nu",
-#      "TBbarQ_t-channel_4FS",
-#      "TWminustoLNu2Q",
-#      "TbarBQ_t-channel_4FS",
+      "TbarWplustoLNu2Q",
+      "TbarWplusto2L2Nu",
+      "TWminusto2L2Nu",
+      "TBbarQ_t-channel_4FS",
+      "TWminustoLNu2Q",
+      "TbarBQ_t-channel_4FS",
       ],  
-    "JetMET_Run2022E": [
+    "JetMET": [
       "JetMET_Run2022E",
-    ],
-    "JetMET_Run2022F": [
       "JetMET_Run2022F",
-    ],
-    "JetMET_Run2022G": [
       "JetMET_Run2022G",
-    ],
-    "Stau" : []
+      ], 
+    #"JetMET_Run2022E": [
+    #  "JetMET_Run2022E",
+    #],
+    #"JetMET_Run2022F": [
+    #  "JetMET_Run2022F",
+    #],
+    #"JetMET_Run2022G": [
+    #  "JetMET_Run2022G",
+    #],
+    "Stau" : [],
 }
 
 ## build reverse lookup dict to be used when retrieving sum gen events etc
@@ -197,9 +201,10 @@ for plot_name, histograms in histogram_dict.items():
         hist_TT        = np.zeros(len(binning)-1)
         hist_singleT   = np.zeros(len(binning)-1)
         hist_QCD       = np.zeros(len(binning)-1)
-        hist_Data_E      = np.zeros(len(binning)-1)
-        hist_Data_F      = np.zeros(len(binning)-1)
-        hist_Data_G      = np.zeros(len(binning)-1)
+        hist_Data      = np.zeros(len(binning)-1)
+        #hist_Data_E      = np.zeros(len(binning)-1)
+        #hist_Data_F      = np.zeros(len(binning)-1)
+        #hist_Data_G      = np.zeros(len(binning)-1)
     
     hists_to_plot = []
     data_hists = []
@@ -213,12 +218,14 @@ for plot_name, histograms in histogram_dict.items():
         # Fix later, hist should not be a list in the first place and should be 60 1d and not (60,1)
         # if args.groupProcesses:
         if groupProcesses:
-            if process in all_samples_dict["JetMET_Run2022E"]:
-                hist_Data_E += histogram
-            if process in all_samples_dict["JetMET_Run2022F"]:
-                hist_Data_F += histogram
-            if process in all_samples_dict["JetMET_Run2022G"]:
-                hist_Data_G += histogram
+            #if process in all_samples_dict["JetMET_Run2022E"]:
+            #    hist_Data_E += histogram
+            #elif process in all_samples_dict["JetMET_Run2022F"]:
+            #    hist_Data_F += histogram
+            #eliif process in all_samples_dict["JetMET_Run2022G"]:
+            #    hist_Data_G += histogram
+            if process in all_samples_dict['JetMET']:
+                hist_Data += histogram
             elif process in all_samples_dict['TT']:
                 hist_TT += histogram
             elif process in all_samples_dict['singleT']:
@@ -245,39 +252,40 @@ for plot_name, histograms in histogram_dict.items():
 
     # print (hist_EWK)
     if groupProcesses:
-    # if args.groupProcesses:
-        #hists_to_plot.append(hist_EWK)
-        #labels.append('DY')
-        #hists_to_plot.append(hist_TT)
-        #labels.append('TT')
-        #hists_to_plot.append(hist_singleT)
-        #labels.append('singleT')
-        #hists_to_plot.append(hist_Wto2Q)
-        #labels.append('Wto2Q')
-        #hists_to_plot.append(hist_WtoLNu)
-        #labels.append('WtoLNu')
-        #hists_to_plot.append(hist_QCD)
-        #labels.append('QCD')
-        ##hists_to_plot.append(hist_Sig)
-        ##labels.append('signal')
-        data_hists.append(hist_Data_E)
-        data_labels.append('E')
-        data_hists.append(hist_Data_F)
-        data_labels.append('F')
-        data_hists.append(hist_Data_G)
-        data_labels.append('G')
+     #if args.groupProcesses:
+        hists_to_plot.append(hist_EWK)
+        labels.append('DY')
+        hists_to_plot.append(hist_TT)
+        labels.append('TT')
+        hists_to_plot.append(hist_singleT)
+        labels.append('singleT')
+        hists_to_plot.append(hist_Wto2Q)
+        labels.append('Wto2Q')
+        hists_to_plot.append(hist_WtoLNu)
+        labels.append('WtoLNu')
+        hists_to_plot.append(hist_QCD)
+        labels.append('QCD')
+        #hists_to_plot.append(hist_Sig)
+        #labels.append('signal')
+        data_hists.append(hist_Data)
+        #data_hists.append(hist_Data_E)
+        #data_labels.append('E')
+        #data_hists.append(hist_Data_F)
+        #data_labels.append('F')
+        #data_hists.append(hist_Data_G)
+        #data_labels.append('G')
 
     colours = hep.style.cms.cmap_petroff
     
     fig, (ax_main, ax_ratio) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
     fig.subplots_adjust(hspace=0.0)
-    #hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
-    #             label=labels, sort='label_r', #color=colours,
-    #             density=plot_settings[plot_name].get("density"), ax=ax_main)
-    #hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
-    #              color='black', label='Data', density=plot_settings[plot_name].get("density"), ax=ax_main)
-    hep.histplot(data_hists, bins=binning, stack=do_stack, histtype='fill', 
-                  label=data_labels, density=plot_settings[plot_name].get("density"), ax=ax_main)
+    hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
+                 label=labels, sort='label_r', #color=colours,
+                 density=plot_settings[plot_name].get("density"), ax=ax_main)
+    hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
+                  color='black', label='Data', density=plot_settings[plot_name].get("density"), ax=ax_main)
+    #hep.histplot(data_hists, bins=binning, stack=do_stack, histtype='fill', 
+    #              label=data_labels, density=plot_settings[plot_name].get("density"), ax=ax_main)
     ax_main.set_ylabel(plot_settings[plot_name].get("ylabel"))
     ax_main.legend()
     
@@ -302,7 +310,7 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filename = f"./plots/HPSMuTau_Data/{dataset_name}_{plot_name}"
+    filename = f"./plots/HPSMuTau_METTriggers/{dataset_name}_{plot_name}"
     # #if args.groupProcesses:
     if plot_settings[plot_name].get("density"):
         filename += "_normalized"
