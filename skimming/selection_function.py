@@ -132,9 +132,7 @@ def event_selection_hpstau_mu(events, selection):
                      (abs(events.Muon.eta) < selections["muon_eta_max"]) &\
                      (abs(events.Muon.dxy) > selections["muon_dxy_min"]) &\
                      (abs(events.Muon.dxy) < selections["muon_dxy_max"]) &\
-                     #(events.Muon.pfIsoId > selections["muon_isoid_min"]) &\
-                     ##Only to check if isolation makes a difference for our HPS Tau + mu region
-                     (events.Muon.pfIsoId < 0.15) &\
+                     (events.Muon.pfIsoId > selections["muon_isoid_min"]) &\
                      (events.Muon.mediumId > selections["muon_medium_ID_min"]) &\
                      (events.Muon.mediumId < selections["muon_medium_ID_max"]) &\
                      (events.Muon.tightId > selections["muon_tight_ID_min"]) &\

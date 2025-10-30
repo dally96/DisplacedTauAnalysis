@@ -325,14 +325,14 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                #cores=2,
-                #memory='3000MB',
+                cores=2,
+                memory='4000MB',
                 #disk='1000MB',
                 #death_timeout = '600',
                 #lcg = True,
                 #nanny = False,
                 #container_runtime = "none",
-                log_directory = "/uscms/home/dally/condor/log",
+                log_directory = "/uscms/home/dally/condor/logi/selected/v0",
                 transfer_input_files = ["selection_function.py", "utils.py"],
                 #scheduler_options={
                 #    'port': n_port,

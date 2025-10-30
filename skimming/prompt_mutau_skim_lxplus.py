@@ -65,7 +65,7 @@ args = parser.parse_args()
 
 
 
-out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v_all_samples/'
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v0/'
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -303,13 +303,13 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=1,
-                memory='2000MB',
-                disk='4000MB',
+                cores=4,
+                memory='8000MB',
+#                disk='4000MB',
                 #death_timeout = '240',
                 #nanny=True,
 #                container_runtime = "none",
-#                log_directory = "/uscms/home/dally/condor/log/prompt_skim/v3",
+                log_directory = "/uscms/home/dally/condor/log/prompt_skim/v10",
 #                scheduler_options={
 #                    'port': n_port,
 #                    'host': socket.gethostname(),
