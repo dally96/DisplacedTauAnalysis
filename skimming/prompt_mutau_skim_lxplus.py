@@ -30,8 +30,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all', 'JetMET'],
-	nargs='*',
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -95,6 +94,7 @@ else:
         "TT": f"samples.{custom_nano_v_p}fileset_TT",
         "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
         "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
+        "Muon": f"samples.{custom_nano_v_p}fileset_Muon_2022",
     }
   
     module = importlib.import_module(samples[args.sample])
@@ -142,8 +142,8 @@ good_hlts = [
    "PFMETTypeOne140_PFMHT140_IDTight",
    "MET105_IsoTrk50",
    "MET120_IsoTrk50",
-  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
-  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
+  #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
+  #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
 #   "Ele30_WPTight_Gsf",                                         
 #   "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
 #   "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     

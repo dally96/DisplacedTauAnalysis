@@ -17,7 +17,7 @@ hep.style.use("CMS")
 
 nanov = 'Summer22_CHS_v10/'
 # nanov = ''
-sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v0/selected/faster_trial/"
+sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v1/selected/faster_trial/"
 
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
@@ -67,11 +67,14 @@ all_samples_dict = {
       "TWminustoLNu2Q",
       "TbarBQ_t-channel_4FS",
       ],  
-    "JetMET": [
-      "JetMET_Run2022E",
-      "JetMET_Run2022F",
-      "JetMET_Run2022G",
-      ], 
+    #"JetMET": [
+    #  "JetMET_Run2022E",
+    #  "JetMET_Run2022F",
+    #  "JetMET_Run2022G",
+    #  ], 
+    "Muon": [
+        "Muon_Run2022",
+    ],
     #"JetMET_Run2022E": [
     #  "JetMET_Run2022E",
     #],
@@ -144,6 +147,8 @@ for process in available_processes:
     weights = events.run / events.run
     if "jetmet" in process.lower():
         weights = weights
+    if "muon" in process.lower():
+        weights = weights
     else:
         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
 #         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
@@ -200,6 +205,8 @@ for plot_name, histograms in histogram_dict.items():
         hist_EWK       = np.zeros(len(binning)-1)
         hist_TT        = np.zeros(len(binning)-1)
         hist_singleT   = np.zeros(len(binning)-1)
+        hist_Top   = np.zeros(len(binning)-1)
+        hist_WJets   = np.zeros(len(binning)-1)
         hist_QCD       = np.zeros(len(binning)-1)
         hist_Data      = np.zeros(len(binning)-1)
         #hist_Data_E      = np.zeros(len(binning)-1)
@@ -224,18 +231,22 @@ for plot_name, histograms in histogram_dict.items():
             #    hist_Data_F += histogram
             #eliif process in all_samples_dict["JetMET_Run2022G"]:
             #    hist_Data_G += histogram
-            if process in all_samples_dict['JetMET']:
+            if process in all_samples_dict['Muon']:
                 hist_Data += histogram
             elif process in all_samples_dict['TT']:
                 hist_TT += histogram
+                hist_Top += histogram
             elif process in all_samples_dict['singleT']:
                 hist_singleT += histogram
+                hist_Top += histogram
             elif process in all_samples_dict['DY']:
                 hist_EWK += histogram
             elif process in all_samples_dict['WtoLNu']:
                 hist_WtoLNu += histogram
+                hist_WJets += histogram
             elif process in all_samples_dict['Wto2Q']:
                 hist_Wto2Q += histogram
+                hist_WJets += histogram
             elif process in all_samples_dict['QCD']:
                 hist_QCD += histogram
             elif process in all_samples_dict['Stau']:
@@ -253,18 +264,22 @@ for plot_name, histograms in histogram_dict.items():
     # print (hist_EWK)
     if groupProcesses:
      #if args.groupProcesses:
-        hists_to_plot.append(hist_EWK)
-        labels.append('DY')
-        hists_to_plot.append(hist_TT)
-        labels.append('TT')
-        hists_to_plot.append(hist_singleT)
-        labels.append('singleT')
-        hists_to_plot.append(hist_Wto2Q)
-        labels.append('Wto2Q')
-        hists_to_plot.append(hist_WtoLNu)
-        labels.append('WtoLNu')
         hists_to_plot.append(hist_QCD)
         labels.append('QCD')
+        hists_to_plot.append(hist_Top)
+        labels.append('tt + singlet')
+        hists_to_plot.append(hist_WJets)
+        labels.append('W to jets')
+        hists_to_plot.append(hist_EWK)
+        labels.append('DY')
+        #hists_to_plot.append(hist_TT)
+        #labels.append('TT')
+        #hists_to_plot.append(hist_singleT)
+        #labels.append('singleT')
+        #hists_to_plot.append(hist_Wto2Q)
+        #labels.append('Wto2Q')
+        #hists_to_plot.append(hist_WtoLNu)
+        #labels.append('WtoLNu')
         #hists_to_plot.append(hist_Sig)
         #labels.append('signal')
         data_hists.append(hist_Data)
@@ -280,7 +295,7 @@ for plot_name, histograms in histogram_dict.items():
     fig, (ax_main, ax_ratio) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
     fig.subplots_adjust(hspace=0.0)
     hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
-                 label=labels, sort='label_r', #color=colours,
+                 label=labels, #sort='label_r', color=colours,
                  density=plot_settings[plot_name].get("density"), ax=ax_main)
     hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
                   color='black', label='Data', density=plot_settings[plot_name].get("density"), ax=ax_main)
@@ -310,7 +325,7 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filename = f"./plots/HPSMuTau_METTriggers/{dataset_name}_{plot_name}"
+    filename = f"./plots/HPSMuTau_MuonData/{dataset_name}_{plot_name}"
     # #if args.groupProcesses:
     if plot_settings[plot_name].get("density"):
         filename += "_normalized"

@@ -17,7 +17,7 @@ from  fsspec_xrootd import XRootDFileSystem
 import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-cfg.set({'distributed.scheduler.allowed-failures': 20}) # Check if this solves some dask issues
+#cfg.set({'distributed.scheduler.allowed-failures': 30}) # Check if this solves some dask issues
 cfg.set({"distributed.logging.distributed": "debug"})
 from dask.distributed import Client, LocalCluster, wait, progress, performance_report
 #from dask_lxplus import CernCluster
@@ -42,7 +42,7 @@ parser.add_argument("-m"    , "--muon"    , dest = "leading_muon_type"   , help 
 parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "pt")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -106,7 +106,7 @@ out_folder = f'root://cmseos.fnal.gov//store/user/dally/displacedTaus/skim/{args
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/{args.skimversion}/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -250,7 +250,8 @@ class SelectionProcessor(processor.ProcessorABC):
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
             events = ak.with_field(events, mT, "mT")
-            
+            events = events[ak.ravel(events.mT < 65)]            
+ 
             mutau_cand = taus + muons
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
@@ -325,14 +326,14 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=2,
-                memory='4000MB',
+                cores=4,
+                memory='8000MB',
                 #disk='1000MB',
                 #death_timeout = '600',
                 #lcg = True,
                 #nanny = False,
                 #container_runtime = "none",
-                log_directory = "/uscms/home/dally/condor/logi/selected/v0",
+#                log_directory = "/uscms/home/dally/condor/log/selected/v1",
                 transfer_input_files = ["selection_function.py", "utils.py"],
                 #scheduler_options={
                 #    'port': n_port,
