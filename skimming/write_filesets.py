@@ -28,6 +28,7 @@ BASE_DIRS = [
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
 #   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
+    "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_data/"
 ]
 custom_nano_v = 'Summer22_CHS_v10'
 
@@ -45,7 +46,7 @@ if args.skim != '':
     
     XROOTD_PREFIX = "root://cmseos.fnal.gov/"
     EOS_LOC = 'root://cmseos.fnal.gov/'
-    outdir = f'samples/{custom_nano_v}/{skim_folder}/'
+    outdir = f'samples/{custom_nano_v}/{skim_folder}/{skim_version}/'
     
 outfolder = Path(f'{outdir}')
 if not outfolder.exists():
@@ -66,6 +67,7 @@ GROUPS = {
     "TTto"         : f"{outdir}fileset_TT.py",
     "T"            : f"{outdir}fileset_singleT.py",  ## more on this later
     "JetMET"       : f"{outdir}fileset_JetMET_2022.py",  ## more on this later
+    "Muon"       : f"{outdir}fileset_Muon_2022.py",  ## more on this later
 }
 
 

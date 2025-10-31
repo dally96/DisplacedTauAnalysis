@@ -18,7 +18,7 @@ parser.add_argument(
 	help='Specify input skim, which objects, and selections (Muon and HPSTau, or DisMuon and Jet)')
 parser.add_argument(
 	"--skimversion",
-	default='v0',
+	default='v1',
 	required=False,
 	help='If listing skimmed files, select which version of the inputs')
 
@@ -26,7 +26,7 @@ args = parser.parse_args()
 
 processed_json_folder = f'/eos/uscms/store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/{args.skim}/{args.skimversion}/'
 print(f"Processed fileset: {processed_json_folder}")
-outdir = Path(f'plots_config/{args.nanov}')
+outdir = Path(f'plots_config/{args.nanov}/{args.skimversion}')
 if not outdir.exists():
     outdir.mkdir(parents=True, exist_ok=True)
     print(f"Folder '{outdir}' created.")
@@ -41,6 +41,7 @@ for filepath in glob.glob(os.path.join(processed_json_folder, "processed*.json")
     filename = os.path.basename(filepath)  
     print(f"Filename: {filename}")
     if "JetMET" in filename: continue
+    if "Muon" in filename: continue
     if "_" in filename:
         subsample = filename.split("_", 2)[2].replace(".json", "")
         print(f"subsample: {subsample}")
