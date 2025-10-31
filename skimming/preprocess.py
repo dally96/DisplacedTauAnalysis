@@ -18,7 +18,7 @@ from dask.distributed import Client, wait, progress, LocalCluster
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT', 'JetMET_2022'],
+	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -38,6 +38,11 @@ parser.add_argument(
 	required=False,
 	help='Specify, if working on the skimmed samples, the skim name (name of the folder inside samples)')
 parser.add_argument(
+	"--skimversion",
+	default='',
+	required=True,
+	help='Specify, if working on the skimmed samples, the skim name (name of the folder inside samples)')
+parser.add_argument(
 	"--nanov",
 	choices=['Summer22_CHS_v10', 'Summer22_CHS_v7'],
 	default='Summer22_CHS_v10',
@@ -48,8 +53,13 @@ args = parser.parse_args()
 outdir_p = f'{args.nanov}.'
 outdir_s = f'{args.nanov}/'
 if args.skim != '':
-    outdir_p += f'{args.skim}.'
-    outdir_s += f'{args.skim}/'
+    if args.skimversion != '':
+        outdir_p += f'{args.skim}.{args.skimversion}.'
+        outdir_s += f'{args.skim}/{args.skimversion}/'
+    else:
+        outdir_p += f'{args.skim}.'
+        outdir_s += f'{args.skim}/'
+
   
 samples = {
     "Wto2Q"  : f"samples.{outdir_p}fileset_Wto2Q",
@@ -59,7 +69,8 @@ samples = {
     "signal" : f"samples.{outdir_p}fileset_signal",
     "TT"     : f"samples.{outdir_p}fileset_TT",
     "singleT": f"samples.{outdir_p}fileset_singleT",  ## more on this later
-    "JetMET_2022": f"samples.{outdir_p}fileset_JetMET_2022"
+    "JetMET_2022": f"samples.{outdir_p}fileset_JetMET_2022",
+    "Muon": f"samples.{outdir_p}fileset_Muon_2022",
 }
 
 module = importlib.import_module(samples[args.sample])
@@ -88,6 +99,7 @@ pars_per_sample = {
     "singleT": [20_000, 1000],  
     "data"   : [20_000, 100], 
     "JetMET_2022": [20_000, 1000],
+    "Muon": [20_000, 1000],
 }
 
 
