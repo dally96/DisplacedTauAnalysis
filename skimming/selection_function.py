@@ -75,7 +75,7 @@ HPSTauMu = {
               "tau_pt_min":                 32.,  ##GeV
               "tau_eta_max":                2.1, 
               "tau_dm":                     0, ## > 0 -> pass new DM 
-              "tau_vs_e_wp":                5, ## medium WP
+              "tau_vs_e_wp":                2, ## VVloose WP
               "tau_vs_jet_wp":              5, ## medium WP
               "tau_vs_mu_wp":               3, ## medium WP
 

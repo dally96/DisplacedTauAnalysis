@@ -65,7 +65,7 @@ args = parser.parse_args()
 
 
 
-out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v0/'
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v4/'
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -140,19 +140,19 @@ include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsM
 
 
 good_hlts = [
-   "PFMET120_PFMHT120_IDTight",                  
-   "PFMET130_PFMHT130_IDTight",
-   "PFMET140_PFMHT140_IDTight",
-   "PFMETNoMu120_PFMHTNoMu120_IDTight",
-   "PFMETNoMu130_PFMHTNoMu130_IDTight",
-   "PFMETNoMu140_PFMHTNoMu140_IDTight",
-   "PFMET120_PFMHT120_IDTight_PFHT60",
-   "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
-   "PFMETTypeOne140_PFMHT140_IDTight",
-   "MET105_IsoTrk50",
-   "MET120_IsoTrk50",
-  #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
-  #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
+   #"PFMET120_PFMHT120_IDTight",                  
+   #"PFMET130_PFMHT130_IDTight",
+   #"PFMET140_PFMHT140_IDTight",
+   #"PFMETNoMu120_PFMHTNoMu120_IDTight",
+   #"PFMETNoMu130_PFMHTNoMu130_IDTight",
+   #"PFMETNoMu140_PFMHTNoMu140_IDTight",
+   #"PFMET120_PFMHT120_IDTight_PFHT60",
+   #"PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
+   #"PFMETTypeOne140_PFMHT140_IDTight",
+   #"MET105_IsoTrk50",
+   #"MET120_IsoTrk50",
+  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
+  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
 #   "Ele30_WPTight_Gsf",                                         
 #   "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
 #   "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
@@ -304,8 +304,8 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=4,
-                memory='8000MB',
+                cores=6,
+                memory='12000MB',
 #                disk='4000MB',
                 #death_timeout = '240',
                 #nanny=True,

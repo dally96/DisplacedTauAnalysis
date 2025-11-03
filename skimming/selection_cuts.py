@@ -106,7 +106,7 @@ out_folder = f'root://cmseos.fnal.gov//store/user/dally/displacedTaus/skim/{args
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/{args.skimversion}/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/v4/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -250,12 +250,14 @@ class SelectionProcessor(processor.ProcessorABC):
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
             events = ak.with_field(events, mT, "mT")
-            events = events[ak.ravel(events.mT < 65)]            
+            #events = events[ak.ravel(events.mT < 65)]            
+            #taus = taus[ak.ravel(events.mT < 65)]
+            #muons = muons[ak.ravel(events.mT < 65)]
  
             mutau_cand = taus + muons
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
-            events = events[ak.ravel(mutau_cand.charge == 0)]
+            #events = events[ak.ravel(mutau_cand.charge == 0)]
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
@@ -333,8 +335,8 @@ if __name__ == "__main__":
                 #lcg = True,
                 #nanny = False,
                 #container_runtime = "none",
-#                log_directory = "/uscms/home/dally/condor/log/selected/v1",
-                transfer_input_files = ["selection_function.py", "utils.py"],
+                log_directory = "/uscmst1b_scratch/lpc1/3DayLifetime/condor/log/selected/v1",
+                transfer_input_files = ["selection_function.py", "utils.py", "Cert_Collisions2022_355100_362760_Golden.json"],
                 #scheduler_options={
                 #    'port': n_port,
                 #    'host': socket.gethostname(),
