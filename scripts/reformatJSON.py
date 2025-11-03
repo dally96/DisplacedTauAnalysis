@@ -25,7 +25,7 @@ for run in compactList.keys():
     for lumi in sorted(compactList[run]):
         if tmp:
             if newNewLumis:
-                if lumi == newNewLumis[-1][1] + 1:
+                if lumi <= newNewLumis[-1][1] + 1:
                     newNewLumis[-1][1] = lumi
                     if lumi == sorted(compactList[run])[-1]:
                         newLumis.append(newNewLumis[-1])

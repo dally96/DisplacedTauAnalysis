@@ -22,7 +22,7 @@
     "mutau_mass": {
         "field": "mutau",
         "variable": "mass",
-        "binning_linspace": [0, 300, 61],
+        "binning_linspace": [0, 200, 41],
         "density": false,
         "ylabel": "Events / 5 GeV",
         "xlabel": "mass(mutau) in GeV",
