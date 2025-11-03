@@ -18,6 +18,7 @@ from collections import defaultdict
 import json
 
 from utils import process_n_files, is_rootcompat, is_good_hlt, is_included, uproot_writeable
+from selections.lumi_selections import select_lumis
 
 PFNanoAODSchema.warn_missing_crossrefs = False
 PFNanoAODSchema.mixins["DisMuon"] = "Muon"
@@ -25,7 +26,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all', 'JetMET'],
 	nargs='*',
 	required=True,
 	help='Specify the sample you want to process')
@@ -70,6 +71,7 @@ samples = {
     "signal": f"samples.{custom_nano_v_p}fileset_signal",
     "TT": f"samples.{custom_nano_v_p}fileset_TT",
     "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+    "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
 }
 
 all_samples = args.sample
@@ -136,6 +138,10 @@ class SkimProcessor(processor.ProcessorABC):
 
     def process(self, events):
         
+        import sys
+        sys.path.append('.')
+        from lumi_selections import select_lumis
+
         if events is None: 
             return {
                 "entries_written": 0,
@@ -270,7 +276,7 @@ if __name__ == "__main__":
                     },
                 job_extra={
                     '+JobFlavour': '"workday"',
-                    'transfer_input_files': 'utils.py',
+                    'transfer_input_files': 'utils.py,selections/lumi_selections.py',
                     'should_transfer_files': 'YES',
                     },
                 job_script_prologue=[
@@ -286,6 +292,8 @@ if __name__ == "__main__":
         cluster = LocalCluster(n_workers=8, threads_per_worker=1)
     
     client = Client(cluster)
+    client.upload_file('selections/lumi_selections.py')
+
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=50_000,
