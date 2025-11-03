@@ -69,8 +69,8 @@ all_samples_dict = {
       "TWminustoLNu2Q",
       "TbarBQ_t-channel_4FS",
       ],  
-    #"JetMET": [
-    #  "JetMET_Run2022E",
+    "JetMET": [
+      "JetMET_Run2022E",
     #  "JetMET_Run2022F",
     #  "JetMET_Run2022G",
     #  ], 
@@ -269,7 +269,7 @@ for plot_name, histograms in histogram_dict.items():
             #    hist_Data_F += histogram
             #eliif process in all_samples_dict["JetMET_Run2022G"]:
             #    hist_Data_G += histogram
-            if process in all_samples_dict['Muon']:
+            if process in all_samples_dict['JetMET']:
                 hist_Data += histogram
             #if process in all_samples_dict['JetMET_Muon']:
             #    hist_Data_Muon += histogram
@@ -335,9 +335,9 @@ for plot_name, histograms in histogram_dict.items():
     
     fig, (ax_main, ax_ratio) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
     fig.subplots_adjust(hspace=0.0)
-    hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
-                 label=labels, #sort='label_r', color=colours,
-                 density=plot_settings[plot_name].get("density"), ax=ax_main)
+    #hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
+    #             label=labels, #sort='label_r', color=colours,
+    #             density=plot_settings[plot_name].get("density"), ax=ax_main)
     hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
                   color='black', label='data', density=plot_settings[plot_name].get("density"), ax=ax_main)
     #hep.histplot(data_muon_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 

@@ -110,7 +110,7 @@ out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/{args.skimversion}/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/v4/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -398,7 +398,7 @@ class SelectionProcessor(processor.ProcessorABC):
             mutau_cand = mutau_cand[ak.ravel(mutau_cand.charge == 0)]
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
-            events = events[ak.ravel(mutau_cand.charge == 0)]
+            #events = events[ak.ravel(mutau_cand.charge == 0)]
 
             events = events[ak.ravel(mutau_mass > 40)]
 
