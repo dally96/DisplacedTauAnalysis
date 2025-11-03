@@ -30,7 +30,9 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all', 'JetMET'],
+	nargs='*',
+>>>>>>> b33f513903e (update reading of DC json in mutau skim, add option for data)
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -74,6 +76,7 @@ samples = {
     "signal": f"samples.{custom_nano_v_p}fileset_signal",
 #    "TT": f"samples.{custom_nano_v_p}fileset_TT",
     "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+    "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
 }
 
 all_fileset = {}
@@ -336,6 +339,7 @@ if __name__ == "__main__":
     
     client = Client(cluster)
     client.upload_file('selections/lumi_selections.py')
+
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
         chunksize=50_000,
