@@ -28,7 +28,8 @@ BASE_DIRS = [
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
 #   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
-    "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_data/"
+    "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_data/",
+    "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data/"
 ]
 custom_nano_v = 'Summer22_CHS_v10'
 
@@ -95,7 +96,7 @@ def make_key(dirname):
         elif "SMS-TStauStau" in dirname:
             part = 'Stau_'+dirname.split('_')[1].split('-')[1]+'_'+dirname.split('_')[2].split('-')[1]
             return part
-        elif "Stau_" in dirname or 'JetMET' in dirname:
+        elif "Stau_" in dirname or 'JetMET' in dirname or  'Muon' in dirname:
             return dirname
         else:    
             return dirname.split("Tune")[0][:-1]

@@ -1,4 +1,5 @@
 import awkward as ak
+import numpy as np
 import uproot, sys, os
 from coffea import processor
 from coffea.nanoevents.methods import candidate
@@ -65,7 +66,7 @@ args = parser.parse_args()
 
 
 
-out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v4/'
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v6/'
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -151,8 +152,9 @@ good_hlts = [
    #"PFMETTypeOne140_PFMHT140_IDTight",
    #"MET105_IsoTrk50",
    #"MET120_IsoTrk50",
-  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
-  "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
+  #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
+  #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
+  "IsoMu24_eta2p1"
 #   "Ele30_WPTight_Gsf",                                         
 #   "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
 #   "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
@@ -205,32 +207,76 @@ class SkimProcessor(processor.ProcessorABC):
             run_dict[str(int(run))].append(int(lumi))
         dataset_run_dict[dataset] = dict(run_dict)
 
+        ## To reject bad crystal in ECAL 
+        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
+        bad_jet_mask = (
+                        (events.Jet.pt > 50)
+                        & ((events.Jet.eta > -0.5) & (events.Jet.eta < -0.1))
+                        & ((events.Jet.phi > -2.1) & (events.Jet.phi < -1.8))
+                        & ((events.Jet.chEmEF > 0.9) | (events.Jet.neEmEF > 0.9))
+                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.PFMET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
+        )
+        
+        num_bad_jets = ak.count_nonzero(bad_jet_mask, axis = 1)
+        events = events[(~bad_event_mask) & (num_bad_jets < 1)]
+
         ## Trigger mask
         trigger_mask = (
-                       events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
-                       events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1  
+                       #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
+                       #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1  
+                       events.HLT.IsoMu24_eta2p1
         )
         events = events[trigger_mask]
 
+        # Define loose muons and electrons for Extra Lepton Veto
+        loose_electron_mask = (
+            (events.Electron.pt > 10)
+            & (abs(events.Electron.eta) < 2.5)
+            & (events.Electron.mvaIso_WP90 > 0)
+            & (events.Electron.pfRelIso03_all < 0.3)
+            & (abs(events.Electron.dz) < 0.2)
+            & (abs(events.Electron.dxy) < 0.045)
+        )
+        
+        loose_electrons = events.Electron[loose_electron_mask]
+        events = ak.with_field(events, loose_electrons, where="CandidateElectron")
+
+        loose_muon_mask = (
+            (events.Muon.pt > 10)
+            & (abs(events.Muon.eta) < 2.4)
+            & (events.Muon.mediumId > 0)
+            & (events.Muon.pfRelIso04_all < 0.5)
+            & (abs(events.Muon.dz) < 0.2)
+            & (abs(events.Muon.dxy) < 0.045)
+        )
+        
+        loose_muons = events.Muon[loose_muon_mask]
+        events = ak.with_field(events, loose_muons, where="CandidateMuon")
+
+
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
-             (events.Muon.pt > 22)
-            & (abs(events.Muon.eta) < 2.1) 
-            & (events.Muon.tightId > 0)
-            & (events.Muon.pfIsoId >= 4)
+             (events.Muon.pt > 26)
+            & (abs(events.Muon.eta) < 2.4) 
+            & (events.Muon.mediumId > 0)
+            & (events.Muon.pfRelIso04_all < 0.15)
+            & (abs(events.Muon.dz) < 0.2)
+            & (abs(events.Muon.dxy) < 0.045)
         )
         num_good_muons = ak.count_nonzero(good_prompt_muon_mask, axis=1)
         sel_muons = events.Muon[good_prompt_muon_mask]
         events['Muon'] = sel_muons
-        events = events[num_good_muons >= 1]
+        events = events[num_good_muons >= 1 ]
 
         good_tau_mask = (
-            (events.Tau.pt > 28)
-            & (abs(events.Tau.eta) < 2.1)
+            (events.Tau.pt > 20)
+            & (abs(events.Tau.eta) < 2.5)
+            & (abs(events.Tau.dz) < 0.2)
             & (events.Tau.idDecayModeNewDMs)
-            & (events.Tau.idDeepTau2018v2p5VSe >= 4)     ## Loose 
+            & (events.Tau.idDeepTau2018v2p5VSe >= 2)     ## VVLoose 
             & (events.Tau.idDeepTau2018v2p5VSjet >= 5)   ## Medium
-            & (events.Tau.idDeepTau2018v2p5VSmu >= 3)    ## Medium
+            & (events.Tau.idDeepTau2018v2p5VSmu >= 4)    ## Tight
+            & ((events.Tau.decayModePNet == 0) | (events.Tau.decayModePNet == 1) | (events.Tau.decayModePNet == 10) | (events.Tau.decayModePNet == 11))
         )
         num_good_taus = ak.count_nonzero(good_tau_mask, axis=1)
         sel_taus = events.Tau[good_tau_mask]
@@ -253,7 +299,7 @@ class SkimProcessor(processor.ProcessorABC):
                      & (events.Flag.BadPFMuonDzFilter == 1)
                      & (events.Flag.hfNoisyHitsFilter == 1)
                      & (events.Flag.eeBadScFilter == 1)
-                     & (events.Flag.ecalBadCalibFilter == 1)
+                     #& (events.Flag.ecalBadCalibFilter == 1)
                          )
         events = events[noise_mask] 
 
@@ -304,13 +350,13 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=6,
-                memory='12000MB',
+                cores=8,
+                memory='16000MB',
 #                disk='4000MB',
                 #death_timeout = '240',
                 #nanny=True,
 #                container_runtime = "none",
-                log_directory = "/uscms/home/dally/condor/log/prompt_skim/v10",
+                log_directory = "/uscmst1b_scratch/lpc1/3DayLifetime/condor/log/prompt_skim/v10",
 #                scheduler_options={
 #                    'port': n_port,
 #                    'host': socket.gethostname(),

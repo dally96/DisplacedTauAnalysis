@@ -106,7 +106,7 @@ out_folder = f'root://cmseos.fnal.gov//store/user/dally/displacedTaus/skim/{args
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/v4/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/v5/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -235,13 +235,36 @@ class SelectionProcessor(processor.ProcessorABC):
         ## do we need to add selections before choosing the leading obj?
         if self._mode == "hpstau_mu":
             muons = events.Muon
-            muons = muons[ak.argsort(muons[leading_muon_var], ascending=False, axis=1)]
+            muons = muons[ak.argsort(muons["pfRelIso04_all"], ascending=True, axis=1)]
+            muon_iso_run_lengths = ak.run_lengths(muons.pfRelIso04_all)
+            muon_iso_run_lengths_first = ak.firsts(muon_iso_run_lengths)
+            muon_same_leadingIso_mask = ak.where(ak.local_index(muons.pfRelIso04_all) < muon_iso_run_lengths_first, True, False)
+            muons = muons[muon_same_leadingIso_mask]
+            muons = muons[ak.argsort(muons.pt, ascending = False, axis =1)]
             muons = ak.singletons(ak.firsts(muons))
             events["Muon"] = muons
+
             taus = events.Tau
-            taus = events.Tau[ak.argsort(taus[leading_jet_var], ascending=False, axis = 1)]
+            taus = events.Tau[ak.argsort(taus["rawIso"], ascending=True, axis = 1)]
+            tau_iso_run_lengths = ak.run_lengths(taus.rawIso)
+            tau_iso_run_lengths_first = ak.firsts(tau_iso_run_lengths)
+            tau_same_leadingIso_mask = ak.where(ak.local_index(taus.rawIso) < tau_iso_run_lengths_first, True, False)
+            taus = taus[tau_same_leadingIso_mask]
+            taus = taus[ak.argsort(taus.pt, ascending = False, axis =1)]
             taus = ak.singletons(ak.firsts(taus))
             events["Tau"] = taus
+
+            extra_electron_veto = (
+                (ak.flatten(events.CandidateElectron.metric_table(events.Muon), axis = 2) <= 0.5)
+                | (ak.flatten(events.CandidateElectron.metric_table(events.Tau), axis = 2)  <= 0.5)
+            )
+ 
+            extra_muon_veto = (
+                ((ak.flatten(events.CandidateMuon.metric_table(events.Muon), axis = 2) > 0)
+                & (ak.flatten(events.CandidateMuon.metric_table(events.Muon), axis = 2) <= 0.5))
+                | (ak.flatten(events.CandidateMuon.metric_table(events.Tau), axis = 2)  <= 0.5)
+            )
+                                    
             
             ## add transverse mass and mu+tau mass vars
             met = events.PFMET.pt            
@@ -250,14 +273,17 @@ class SelectionProcessor(processor.ProcessorABC):
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
             events = ak.with_field(events, mT, "mT")
-            #events = events[ak.ravel(events.mT < 65)]            
-            #taus = taus[ak.ravel(events.mT < 65)]
-            #muons = muons[ak.ravel(events.mT < 65)]
+            dR = muons.metric_table(taus)
+
+            events = events[ak.ravel(events.mT < 65) & ak.ravel(dR > 0.5)]
+            taus = taus[ak.ravel(events.mT < 65) &  ak.ravel(dR > 0.5)]
+            muons = muons[ak.ravel(events.mT < 65) & ak.ravel(dR > 0.5)]
  
             mutau_cand = taus + muons
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
-            #events = events[ak.ravel(mutau_cand.charge == 0)]
+            events = events[ak.ravel(mutau_cand.charge == 0)]
+            events = events[ak.ravel(mutau_mass > 40)]
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
