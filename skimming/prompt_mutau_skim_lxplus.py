@@ -1,6 +1,5 @@
 import awkward as ak
 import numpy as np
->>>>>>> f1212d22669 (Pushing changes for the rest of the workflow to work on LPC)
 import uproot, sys, os
 from coffea import processor
 from coffea.nanoevents.methods import candidate
@@ -239,6 +238,18 @@ class SkimProcessor(processor.ProcessorABC):
             mask_zll = ~mask_ztautau
             events = events[mask_zll]
 #             print (f" Removed non zll events from {dataset}")
+        ## To reject bad crystal in ECAL 
+        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
+        bad_jet_mask = (
+                        (events.Jet.pt > 50)
+                        & ((events.Jet.eta > -0.5) & (events.Jet.eta < -0.1))
+                        & ((events.Jet.phi > -2.1) & (events.Jet.phi < -1.8))
+                        & ((events.Jet.chEmEF > 0.9) | (events.Jet.neEmEF > 0.9))
+                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.PFMET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
+        )
+        
+        num_bad_jets = ak.count_nonzero(bad_jet_mask, axis = 1)
+        events = events[(~bad_event_mask) & (num_bad_jets < 1)]
 
         # Define loose muons and electrons for Extra Lepton Veto
         loose_electron_mask = (
@@ -288,6 +299,32 @@ class SkimProcessor(processor.ProcessorABC):
         
         double_muons = events.Muon[double_muon_mask]
         events = ak.with_field(events, double_muons, where="DoubleMuon")
+
+        # Define loose muons and electrons for Extra Lepton Veto
+        loose_electron_mask = (
+            (events.Electron.pt > 10)
+            & (abs(events.Electron.eta) < 2.5)
+            & (events.Electron.mvaIso_WP90 > 0)
+            & (events.Electron.pfRelIso03_all < 0.3)
+            & (abs(events.Electron.dz) < 0.2)
+            & (abs(events.Electron.dxy) < 0.045)
+        )
+        
+        loose_electrons = events.Electron[loose_electron_mask]
+        events = ak.with_field(events, loose_electrons, where="CandidateElectron")
+
+        loose_muon_mask = (
+            (events.Muon.pt > 10)
+            & (abs(events.Muon.eta) < 2.4)
+            & (events.Muon.mediumId > 0)
+            & (events.Muon.pfRelIso04_all < 0.5)
+            & (abs(events.Muon.dz) < 0.2)
+            & (abs(events.Muon.dxy) < 0.045)
+        )
+        
+        loose_muons = events.Muon[loose_muon_mask]
+        events = ak.with_field(events, loose_muons, where="CandidateMuon")
+
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
