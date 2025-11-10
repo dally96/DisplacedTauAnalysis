@@ -325,6 +325,21 @@ class SkimProcessor(processor.ProcessorABC):
         loose_muons = events.Muon[loose_muon_mask]
         events = ak.with_field(events, loose_muons, where="CandidateMuon")
 
+        loose_jet_mask = (
+                    (events.Jet.pt > 15)
+                    & (
+                        ((abs(events.Jet.eta) <= 2.6) & (events.Jet.neHEF < 0.99) & (events.Jet.neEmEF < 0.9) & ((events.Jet.chMultiplicity + events.Jet.neMultiplicity) > 1) & (events.Jet.chHEF> 0.01) & (events.Jet.chMultiplicity > 0))
+                        | ((abs(events.Jet.eta) > 2.6) & (abs(events.Jet.eta) <= 2.7) & (events.Jet.neHEF < 0.90) & (events.Jet.neEmEF < 0.99))
+                        | ((abs(events.Jet.eta) > 2.7) & (abs(events.Jet.eta) <= 3.0) & (events.Jet.neHEF < 0.99))
+                        | ((abs(events.Jet.eta) > 3.0) & (events.Jet.neMultiplicity >= 2) & (events.Jet.neEmEF < 0.4))
+                      )
+                    & ((events.Jet.chEmEF + events.Jet.neEmEF) < 0.9)
+                    & ak.where(ak.count_nonzero(events.Jet.metric_table(events.PFCands[(abs(events.PFCands.pdgId) == 13)]) <= 0.2, axis = 2) < 1, True, False)
+        )
+
+        loose_jets = events.Jet[loose_jet_mask] 
+        events = ak.with_field(events, loose_jets, where="LooseJet")
+
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (

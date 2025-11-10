@@ -110,7 +110,7 @@ out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/v5/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/v6/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -398,13 +398,15 @@ class SelectionProcessor(processor.ProcessorABC):
             mutau_cand = mutau_cand[ak.ravel(mutau_cand.charge == 0)]
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
-            events = events[ak.ravel(mutau_cand.charge == 0)]
+
             events = events[ak.ravel(mutau_mass > 40)]
+            print("mutau mass veto", ak.num(events, axis = 0))
 
             events = events[ak.ravel(mutau_mass > 40)]
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
+            print("function veto", ak.num(events, axis = 0))
         else:
             dismuons = events.DisMuon
             dismuons = dismuons[ak.argsort(dismuons[leading_muon_var], ascending=False, axis=1)]
