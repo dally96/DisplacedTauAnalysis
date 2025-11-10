@@ -18,7 +18,7 @@ hep.style.use("CMS")
 
 nanov = 'Summer22_CHS_v10/'
 # nanov = ''
-sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v0/selected/faster_trial/"
+sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v6/selected/faster_trial/"
 
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
@@ -26,64 +26,66 @@ all_samples_dict = {
         "DYJetsToLL_M-50",
       ],
     "QCD" : [
-#       "QCD_PT-50to80",
-        "QCD_PT-80to120",
-#        "QCD_PT-120to170",
-        "QCD_PT-170to300",
-        "QCD_PT-300to470",
-        "QCD_PT-470to600",
-        "QCD_PT-600to800",
-        "QCD_PT-800to1000",
-#        "QCD_PT-1000to1400",
-#        "QCD_PT-1400to1800",
-#        "QCD_PT-1800to2400",
-#        "QCD_PT-3200",
+##       "QCD_PT-50to80",
+#        "QCD_PT-80to120",
+##        "QCD_PT-120to170",
+#        "QCD_PT-170to300",
+#        "QCD_PT-300to470",
+#        "QCD_PT-470to600",
+#        "QCD_PT-600to800",
+#        "QCD_PT-800to1000",
+##        "QCD_PT-1000to1400",
+##        "QCD_PT-1400to1800",
+##        "QCD_PT-1800to2400",
+##        "QCD_PT-3200",
      ],
     "Wto2Q" : [
-        "Wto2Q-2Jets_PTQQ-100to200_1J",
-#        "Wto2Q-2Jets_PTQQ-100to200_2J",
-        "Wto2Q-2Jets_PTQQ-200to400_1J",
-        "Wto2Q-2Jets_PTQQ-200to400_2J",
-#        "Wto2Q-2Jets_PTQQ-400to600_1J",
-        "Wto2Q-2Jets_PTQQ-400to600_2J",
-#        "Wto2Q-2Jets_PTQQ-600_1J",
-#        "Wto2Q-2Jets_PTQQ-600_2J",
+#        "Wto2Q-2Jets_PTQQ-100to200_1J",
+##        "Wto2Q-2Jets_PTQQ-100to200_2J",
+#        "Wto2Q-2Jets_PTQQ-200to400_1J",
+#        "Wto2Q-2Jets_PTQQ-200to400_2J",
+##        "Wto2Q-2Jets_PTQQ-400to600_1J",
+##        "Wto2Q-2Jets_PTQQ-400to600_2J",
+##        "Wto2Q-2Jets_PTQQ-600_1J",
+##        "Wto2Q-2Jets_PTQQ-600_2J",
      ],
     "WtoLNu" : [
-        "WtoLNu-4Jets",
+#        "WtoLNu-4Jets",
       ],
     "TT" : [
       "TTto2L2Nu", 
-      "TTtoLNu2Q", 
-      "TTto4Q"
+#      "TTtoLNu2Q", 
+#      "TTto4Q"
       ],
     "singleT": [
-      "TbarWplustoLNu2Q",
+#      "TbarWplustoLNu2Q",
       "TbarWplusto2L2Nu",
       "TWminusto2L2Nu",
-      "TBbarQ_t-channel_4FS",
-      "TWminustoLNu2Q",
-      "TbarBQ_t-channel_4FS",
+#      "TBbarQ_t-channel_4FS",
+#      "TWminustoLNu2Q",
+#      "TbarBQ_t-channel_4FS",
       ],  
-    "JetMET": [
-      "JetMET_Run2022E",
+    #"JetMET": [
+    #  "JetMET_Run2022E",
     #  "JetMET_Run2022F",
     #  "JetMET_Run2022G",
-      ], 
-    "JetMET_Muon": [
-      "JetMET_Muon_Run2022E",
+    #  ], 
+    #"JetMET_Muon": [
+    #  "JetMET_Muon_Run2022E",
     #  "JetMET_Muon_Run2022F",
     #  "JetMET_Muon_Run2022G",
-      ], 
-    "JetMET_None": [
+    #  ], 
+    #"JetMET_None": [
     #  "JetMET_Run2022E_NewTriggers",
     #  "JetMET_Muon_Run2022F",
     #  "JetMET_Muon_Run2022G",
-      ], 
-    #"Muon": [
-        #"Muon_Run2022",
+    #  ], 
+    "Muon": [
+        "Muon_Run2022E",
+        "Muon_Run2022F",
+        "Muon_Run2022G",
     #    "Muon_Run2022_VVLooseDeepTauVsE",
-    #],
+    ],
     #"JetMET_Run2022E": [
     #  "JetMET_Run2022E",
     #],
@@ -154,10 +156,10 @@ for process in available_processes:
     ## disable for now
 #     print ('need to put back weights')
     weights = events.run / events.run
-    if "jetmet" in process.lower():
-        weights = weights
-#    if "muon" in process.lower():
+#    if "jetmet" in process.lower():
 #        weights = weights
+    if "muon" in process.lower():
+        weights = weights
     else:
         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
 #         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
@@ -218,8 +220,8 @@ for plot_name, histograms in histogram_dict.items():
         hist_WJets   = np.zeros(len(binning)-1)
         hist_QCD       = np.zeros(len(binning)-1)
         hist_Data      = np.zeros(len(binning)-1)
-        hist_Data_Muon      = np.zeros(len(binning)-1)
-        hist_Data_None      = np.zeros(len(binning)-1)
+        #hist_Data_Muon      = np.zeros(len(binning)-1)
+        #hist_Data_None      = np.zeros(len(binning)-1)
         #hist_Data_E      = np.zeros(len(binning)-1)
         #hist_Data_F      = np.zeros(len(binning)-1)
         #hist_Data_G      = np.zeros(len(binning)-1)
@@ -244,10 +246,10 @@ for plot_name, histograms in histogram_dict.items():
             #    hist_Data_F += histogram
             #eliif process in all_samples_dict["JetMET_Run2022G"]:
             #    hist_Data_G += histogram
-            if process in all_samples_dict['JetMET']:
+            if process in all_samples_dict['Muon']:
                 hist_Data += histogram
-            if process in all_samples_dict['JetMET_Muon']:
-                hist_Data_Muon += histogram
+            #if process in all_samples_dict['JetMET_Muon']:
+            #    hist_Data_Muon += histogram
             elif process in all_samples_dict['TT']:
                 hist_TT += histogram
                 hist_Top += histogram
@@ -279,26 +281,26 @@ for plot_name, histograms in histogram_dict.items():
     # print (hist_EWK)
     if groupProcesses:
      #if args.groupProcesses:
-        #hists_to_plot.append(hist_QCD)
-        #labels.append('QCD')
+        hists_to_plot.append(hist_QCD)
+        labels.append('QCD')
         #hists_to_plot.append(hist_Top)
         #labels.append('tt + singlet')
         #hists_to_plot.append(hist_WJets)
         #labels.append('W to jets')
-        #hists_to_plot.append(hist_EWK)
-        #labels.append('DY')
-        #hists_to_plot.append(hist_TT)
-        #labels.append('TT')
-        #hists_to_plot.append(hist_singleT)
-        #labels.append('singleT')
-        #hists_to_plot.append(hist_Wto2Q)
-        #labels.append('Wto2Q')
-        #hists_to_plot.append(hist_WtoLNu)
-        #labels.append('WtoLNu')
+        hists_to_plot.append(hist_EWK)
+        labels.append('DY')
+        hists_to_plot.append(hist_TT)
+        labels.append('TT')
+        hists_to_plot.append(hist_singleT)
+        labels.append('singleT')
+        hists_to_plot.append(hist_Wto2Q)
+        labels.append('Wto2Q')
+        hists_to_plot.append(hist_WtoLNu)
+        labels.append('WtoLNu')
         #hists_to_plot.append(hist_Sig)
         #labels.append('signal')
         data_hists.append(hist_Data)
-        data_muon_hists.append(hist_Data_Muon)
+        #data_muon_hists.append(hist_Data_Muon)
         #data_hists.append(hist_Data_E)
         #data_labels.append('E')
         #data_hists.append(hist_Data_F)
@@ -310,13 +312,13 @@ for plot_name, histograms in histogram_dict.items():
     
     fig, (ax_main, ax_ratio) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
     fig.subplots_adjust(hspace=0.0)
-    #hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
-    #             label=labels, #sort='label_r', color=colours,
-    #             density=plot_settings[plot_name].get("density"), ax=ax_main)
+    hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
+                 label=labels, #sort='label_r', color=colours,
+                 density=plot_settings[plot_name].get("density"), ax=ax_main)
     hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
-                  color='black', label='JetMET MET Triggers Only', density=plot_settings[plot_name].get("density"), ax=ax_main)
-    hep.histplot(data_muon_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
-                  color='red', label='JetMET Muon Triggers Only', density=plot_settings[plot_name].get("density"), ax=ax_main)
+                  color='black', label='data', density=plot_settings[plot_name].get("density"), ax=ax_main)
+    #hep.histplot(data_muon_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
+    #              color='red', label='JetMET Muon Triggers Only', density=plot_settings[plot_name].get("density"), ax=ax_main)
     #hep.histplot(data_hists, bins=binning, stack=do_stack, histtype='fill', 
     #              label=data_labels, density=plot_settings[plot_name].get("density"), ax=ax_main)
     ax_main.set_ylabel(plot_settings[plot_name].get("ylabel"))
@@ -349,7 +351,10 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filename = f"./plots/HPSMuTau_JetMET_Comparison/{dataset_name}_{plot_name}"
+    filedir = "Zpeak_Run2022EE"
+    if filedir not in os.listdir('plots/'):
+        os.mkdir(f'plots/{filedir}')
+    filename = f"./plots/{filedir}/{dataset_name}_{plot_name}"
     # #if args.groupProcesses:
     if plot_settings[plot_name].get("density"):
         filename += "_normalized"

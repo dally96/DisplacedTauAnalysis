@@ -106,7 +106,7 @@ out_folder = f'root://cmseos.fnal.gov//store/user/dally/displacedTaus/skim/{args
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/v5/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/v6/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -152,7 +152,6 @@ include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',
               ]
 
 ### FIXME: need to add Lxy and IP at GEN level                             
-
 
 class SelectionProcessor(processor.ProcessorABC):
     def __init__(self, leading_muon_var, leading_jet_var, mode="jet_dmu"):
@@ -203,6 +202,11 @@ class SelectionProcessor(processor.ProcessorABC):
 
 
     def process(self, events):
+
+        PFNanoAODSchema.mixins["CandidateMuon"] = "Muon"
+        PFNanoAODSchema.mixins["CandidateElectron"] = "Electron"
+        PFNanoAODSchema.mixins["PFCand"] = "Muon"
+
         n_evts = len(events)  
         logger.info(f"starting process")
         if n_evts == 0: 
@@ -255,38 +259,68 @@ class SelectionProcessor(processor.ProcessorABC):
             events["Tau"] = taus
 
             extra_electron_veto = (
-                (ak.flatten(events.CandidateElectron.metric_table(events.Muon), axis = 2) <= 0.5)
-                | (ak.flatten(events.CandidateElectron.metric_table(events.Tau), axis = 2)  <= 0.5)
+                (ak.flatten(events.CandidateElectron.metric_table(muons), axis = 2) <= 0.5)
+                | (ak.flatten(events.CandidateElectron.metric_table(taus), axis = 2)  <= 0.5)
             )
+            num_extra_electron = ak.count_nonzero(extra_electron_veto, axis = 1)
+            events = events[num_extra_electron == 0]
+            muons  = muons[num_extra_electron == 0]
+            taus   = taus[num_extra_electron == 0]
+            print("Extra electron veto", ak.num(events, axis = 0))
  
             extra_muon_veto = (
-                ((ak.flatten(events.CandidateMuon.metric_table(events.Muon), axis = 2) > 0)
-                & (ak.flatten(events.CandidateMuon.metric_table(events.Muon), axis = 2) <= 0.5))
-                | (ak.flatten(events.CandidateMuon.metric_table(events.Tau), axis = 2)  <= 0.5)
+                ((ak.flatten(events.CandidateMuon.metric_table(muons), axis = 2) > 0)
+                & (ak.flatten(events.CandidateMuon.metric_table(muons), axis = 2) <= 0.5))
+                | (ak.flatten(events.CandidateMuon.metric_table(taus), axis = 2)  <= 0.5)
             )
-                                    
+            num_extra_muon = ak.count_nonzero(extra_muon_veto, axis = 1)
+            events = events[num_extra_muon == 0]
+            muons = muons[num_extra_muon == 0]
+            taus = taus[num_extra_muon == 0]
+            print("Extra  muon veto", ak.num(events, axis = 0))
+
+
+            bjets = events.LooseJet[(events.LooseJet.btagDeepFlavB < 0.0614)]
+            bjet_veto = (
+                        (ak.flatten(bjets.metric_table(muons), axis = 2) <= 0.5)
+                        | (ak.flatten(bjets.metric_table(taus), axis =2) <= 0.5)
+            )
+            num_bjet = ak.count_nonzero(bjet_veto, axis = 1)
+            events = events[num_bjet == 0]
+            muons = muons[num_bjet == 0]
+            taus = taus[num_bjet == 0]
+            print("b-jet veto", ak.num(events, axis = 0)) 
             
             ## add transverse mass and mu+tau mass vars
             met = events.PFMET.pt            
-            met_phi =  events.PFMET.phi        
+            met_phi =  events.PFMET.phi     
             dphi = abs(muons.phi - met_phi)
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
             events = ak.with_field(events, mT, "mT")
             dR = muons.metric_table(taus)
 
-            events = events[ak.ravel(events.mT < 65) & ak.ravel(dR > 0.5)]
-            taus = taus[ak.ravel(events.mT < 65) &  ak.ravel(dR > 0.5)]
-            muons = muons[ak.ravel(events.mT < 65) & ak.ravel(dR > 0.5)]
+            events = events[ak.ravel(dR > 0.5)]
+            taus = taus[ak.ravel(dR > 0.5)]
+            muons = muons[ak.ravel(dR > 0.5)]
+            print("dR veto", ak.num(events, axis = 0))
  
             mutau_cand = taus + muons
+            events = events[ak.ravel(mutau_cand.charge == 0)]
+            muons = muons[ak.ravel(mutau_cand.charge == 0)]
+            taus = taus[ak.ravel(mutau_cand.charge == 0)]
+            print("opposite charge veto", ak.num(events, axis = 0))
+
+            mutau_cand = mutau_cand[ak.ravel(mutau_cand.charge == 0)]
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
-            events = events[ak.ravel(mutau_cand.charge == 0)]
+
             events = events[ak.ravel(mutau_mass > 40)]
+            print("mutau mass veto", ak.num(events, axis = 0))
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
+            print("function veto", ak.num(events, axis = 0))
         else:
             dismuons = events.DisMuon
             dismuons = dismuons[ak.argsort(dismuons[leading_muon_var], ascending=False, axis=1)]

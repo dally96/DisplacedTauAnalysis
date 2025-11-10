@@ -62,22 +62,27 @@ QCD_CR["jet_score_min"] =  0.7
 QCD_CR["jet_dxy_min"] =  -999
 
 HPSTauMu = {
-              "muon_pt_min":                22, ##GeV
-              "muon_eta_max":               2.1, 
-              "muon_medium_ID_min":         -999., ## > min and < max -> [0,2] to select mediumID, [-1,1] to select not-medium, [-999,999] to select any 
-              "muon_medium_ID_max":         999, ## 1 is passing, 0 if not 
-              "muon_tight_ID_min":          0, ## > min and < max -> [0,2] to select tightID, [-1,1] to select not-tight, [-999,999] to select any 
-              "muon_tight_ID_max":          2,  ## 
+              "muon_pt_min":                26, ##GeV
+              "muon_eta_max":               2.4, 
+              "muon_medium_ID_min":         0., ## > min and < max -> [0,2] to select mediumID, [-1,1] to select not-medium, [-999,999] to select any 
+              "muon_medium_ID_max":         2, ## 1 is passing, 0 if not 
+              "muon_tight_ID_min":          -999, ## > min and < max -> [0,2] to select tightID, [-1,1] to select not-tight, [-999,999] to select any 
+              "muon_tight_ID_max":          999,  ## 
               "muon_dxy_min":               -999, ##cm
-              "muon_dxy_max":               100.,  ##cm
+              "muon_dxy_max":               0.045,  ##cm
+              "muon_dz_min":                -999,
+              "muon_dz_max":                0.2,
               "muon_isoid_min":             3, 
+              "muon_iso_max":               0.15, 
 
-              "tau_pt_min":                 32.,  ##GeV
-              "tau_eta_max":                2.1, 
+              "tau_pt_min":                 20.,  ##GeV
+              "tau_eta_max":                2.5, 
+              "tau_dz_min":                -999,
+              "tau_dz_max":                0.2,
               "tau_dm":                     0, ## > 0 -> pass new DM 
               "tau_vs_e_wp":                2, ## VVloose WP
               "tau_vs_jet_wp":              5, ## medium WP
-              "tau_vs_mu_wp":               3, ## medium WP
+              "tau_vs_mu_wp":               4, ## tight WP
 
              }
 
@@ -132,7 +137,10 @@ def event_selection_hpstau_mu(events, selection):
                      (abs(events.Muon.eta) < selections["muon_eta_max"]) &\
                      (abs(events.Muon.dxy) > selections["muon_dxy_min"]) &\
                      (abs(events.Muon.dxy) < selections["muon_dxy_max"]) &\
-                     (events.Muon.pfIsoId > selections["muon_isoid_min"]) &\
+                     (abs(events.Muon.dz)  > selections["muon_dz_min"]) & \
+                     (abs(events.Muon.dz)  < selections["muon_dz_max"]) & \
+                     #(events.Muon.pfIsoId > selections["muon_isoid_min"]) &\
+                     (events.Muon.pfRelIso04_all < selections["muon_iso_max"]) &\
                      (events.Muon.mediumId > selections["muon_medium_ID_min"]) &\
                      (events.Muon.mediumId < selections["muon_medium_ID_max"]) &\
                      (events.Muon.tightId > selections["muon_tight_ID_min"]) &\
@@ -142,7 +150,8 @@ def event_selection_hpstau_mu(events, selection):
     good_taus   = ak.flatten(
                     (events.Tau.pt > selections["tau_pt_min"]) &\
                     (abs(events.Tau.eta) < selections["tau_eta_max"]) &\
-                    (events.Tau.idDecayModeNewDMs > selections["tau_dm"]) &\
+                    (abs(events.Tau.dz)  > selections["tau_dz_min"]) & \
+                    (abs(events.Tau.dz)  < selections["tau_dz_max"]) & \
                     (events.Tau.idDeepTau2018v2p5VSe >= selections["tau_vs_e_wp"]) &\
                     (events.Tau.idDeepTau2018v2p5VSjet >= selections["tau_vs_jet_wp"]) &\
                     (events.Tau.idDeepTau2018v2p5VSmu >= selections["tau_vs_mu_wp"]) 

@@ -26,7 +26,7 @@ treeName = "Events"
 
 # Source directory
 # sourceDir = "/eos/cms/store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/daniel/selected/"
-sourceDir = "/eos/uscms/store/user/dally/displacedTaus/skim/Summer22_CHS_v10/prompt_mutau/v4/selected/"
+sourceDir = "/eos/uscms/store/user/dally/displacedTaus/skim/Summer22_CHS_v10/prompt_mutau/v6/selected/"
 sampleDir = sourceDir
 
 ## create merged directory if missing

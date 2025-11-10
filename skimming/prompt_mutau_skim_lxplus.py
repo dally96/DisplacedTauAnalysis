@@ -136,7 +136,7 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
 
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
-                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'
+                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight', 'CandidateElectron', 'CandidateMuon', 'LooseJet'
                    ]
 
 
@@ -253,6 +253,21 @@ class SkimProcessor(processor.ProcessorABC):
         loose_muons = events.Muon[loose_muon_mask]
         events = ak.with_field(events, loose_muons, where="CandidateMuon")
 
+        loose_jet_mask = (
+                    (events.Jet.pt > 15)
+                    & (
+                        ((abs(events.Jet.eta) <= 2.6) & (events.Jet.neHEF < 0.99) & (events.Jet.neEmEF < 0.9) & ((events.Jet.chMultiplicity + events.Jet.neMultiplicity) > 1) & (events.Jet.chHEF> 0.01) & (events.Jet.chMultiplicity > 0))
+                        | ((abs(events.Jet.eta) > 2.6) & (abs(events.Jet.eta) <= 2.7) & (events.Jet.neHEF < 0.90) & (events.Jet.neEmEF < 0.99))
+                        | ((abs(events.Jet.eta) > 2.7) & (abs(events.Jet.eta) <= 3.0) & (events.Jet.neHEF < 0.99))
+                        | ((abs(events.Jet.eta) > 3.0) & (events.Jet.neMultiplicity >= 2) & (events.Jet.neEmEF < 0.4))
+                      )
+                    & ((events.Jet.chEmEF + events.Jet.neEmEF) < 0.9)
+                    & ak.where(ak.count_nonzero(events.Jet.metric_table(events.PFCands[(abs(events.PFCands.pdgId) == 13)]) <= 0.2, axis = 2) < 1, True, False)
+        )
+
+        loose_jets = events.Jet[loose_jet_mask] 
+        events = ak.with_field(events, loose_jets, where="LooseJet")
+
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
@@ -276,12 +291,13 @@ class SkimProcessor(processor.ProcessorABC):
             & (events.Tau.idDeepTau2018v2p5VSe >= 2)     ## VVLoose 
             & (events.Tau.idDeepTau2018v2p5VSjet >= 5)   ## Medium
             & (events.Tau.idDeepTau2018v2p5VSmu >= 4)    ## Tight
-            & ((events.Tau.decayModePNet == 0) | (events.Tau.decayModePNet == 1) | (events.Tau.decayModePNet == 10) | (events.Tau.decayModePNet == 11))
+            & ((events.Tau.decayMode == 0) | (events.Tau.decayMode == 1) | (events.Tau.decayMode == 10) | (events.Tau.decayMode == 11))
         )
         num_good_taus = ak.count_nonzero(good_tau_mask, axis=1)
         sel_taus = events.Tau[good_tau_mask]
         events['Tau'] = sel_taus
         events = events[num_good_taus >= 1]
+
         ## add mT cut to remove W contamination
         ## veto other leptons
         ## QCD from MC will not pass the selection
@@ -307,7 +323,6 @@ class SkimProcessor(processor.ProcessorABC):
         dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
         dxy = ak.fill_none(dxy, -999)
         events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
-
         ## prevent writing out files with empty trees
         if not len(events) > 0:
             return {
