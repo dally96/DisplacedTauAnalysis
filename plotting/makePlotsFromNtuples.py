@@ -18,7 +18,7 @@ hep.style.use("CMS")
 
 nanov = 'Summer22_CHS_v10/'
 # nanov = ''
-sample_folder = f"/eos/uscms/store/user/dally/displacedTaus/skim/{nanov}prompt_mutau/v6/selected/faster_trial/"
+sample_folder = f"/eos/uscms/store/group/lpcdisptau/dally/displacedTaus/skim/{nanov}prompt_mutau/v7/selected/faster_trial/"
 
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
@@ -27,12 +27,12 @@ all_samples_dict = {
       ],
     "QCD" : [
 ##       "QCD_PT-50to80",
-#        "QCD_PT-80to120",
+        "QCD_PT-80to120",
 ##        "QCD_PT-120to170",
 #        "QCD_PT-170to300",
-#        "QCD_PT-300to470",
-#        "QCD_PT-470to600",
-#        "QCD_PT-600to800",
+        "QCD_PT-300to470",
+        "QCD_PT-470to600",
+        "QCD_PT-600to800",
 #        "QCD_PT-800to1000",
 ##        "QCD_PT-1000to1400",
 ##        "QCD_PT-1400to1800",
@@ -40,30 +40,30 @@ all_samples_dict = {
 ##        "QCD_PT-3200",
      ],
     "Wto2Q" : [
-#        "Wto2Q-2Jets_PTQQ-100to200_1J",
+        "Wto2Q-2Jets_PTQQ-100to200_1J",
 ##        "Wto2Q-2Jets_PTQQ-100to200_2J",
-#        "Wto2Q-2Jets_PTQQ-200to400_1J",
-#        "Wto2Q-2Jets_PTQQ-200to400_2J",
+        "Wto2Q-2Jets_PTQQ-200to400_1J",
+        "Wto2Q-2Jets_PTQQ-200to400_2J",
 ##        "Wto2Q-2Jets_PTQQ-400to600_1J",
 ##        "Wto2Q-2Jets_PTQQ-400to600_2J",
 ##        "Wto2Q-2Jets_PTQQ-600_1J",
 ##        "Wto2Q-2Jets_PTQQ-600_2J",
      ],
     "WtoLNu" : [
-#        "WtoLNu-4Jets",
+        "WtoLNu-4Jets",
       ],
     "TT" : [
       "TTto2L2Nu", 
-#      "TTtoLNu2Q", 
-#      "TTto4Q"
+      "TTtoLNu2Q", 
+      "TTto4Q"
       ],
     "singleT": [
-#      "TbarWplustoLNu2Q",
+      "TbarWplustoLNu2Q",
       "TbarWplusto2L2Nu",
       "TWminusto2L2Nu",
-#      "TBbarQ_t-channel_4FS",
-#      "TWminustoLNu2Q",
-#      "TbarBQ_t-channel_4FS",
+      "TBbarQ_t-channel_4FS",
+      "TWminustoLNu2Q",
+      "TbarBQ_t-channel_4FS",
       ],  
     #"JetMET": [
     #  "JetMET_Run2022E",
@@ -152,6 +152,20 @@ for process in available_processes:
     tmp_string = f"faster_trial_{process}/faster_trial_{process}.root"
     tmp_file = sample_folder +  tmp_string
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
+    events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
+    
+    mutau_dr = events.Muon.metric_table(events.Tau)
+    mutau_pt = events.Muon.pt + events.Tau.pt
+
+    met = events.PuppiMET.pt
+    met_phi = events.PuppiMET.phi
+    dphi = abs(events.Tau.phi - met_phi)
+    dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)
+    mT = np.sqrt(2 * events.Muon.pt * met * (1 - np.cos(dphi)))
+    events = ak.with_field(events, mT, "Puppi_mT")
+
+    events["mutau"] = ak.with_field(events.mutau, mutau_dr, where = 'dR')
+    events["mutau"] = ak.with_field(events.mutau, mutau_pt, where = 'pt') 
 
     ## disable for now
 #     print ('need to put back weights')
@@ -283,20 +297,20 @@ for plot_name, histograms in histogram_dict.items():
      #if args.groupProcesses:
         hists_to_plot.append(hist_QCD)
         labels.append('QCD')
-        #hists_to_plot.append(hist_Top)
-        #labels.append('tt + singlet')
-        #hists_to_plot.append(hist_WJets)
-        #labels.append('W to jets')
-        hists_to_plot.append(hist_EWK)
-        labels.append('DY')
-        hists_to_plot.append(hist_TT)
-        labels.append('TT')
-        hists_to_plot.append(hist_singleT)
-        labels.append('singleT')
         hists_to_plot.append(hist_Wto2Q)
         labels.append('Wto2Q')
         hists_to_plot.append(hist_WtoLNu)
         labels.append('WtoLNu')
+        hists_to_plot.append(hist_singleT)
+        labels.append('singleT')
+        hists_to_plot.append(hist_TT)
+        labels.append('TT')
+        hists_to_plot.append(hist_EWK)
+        labels.append('DY')
+        #hists_to_plot.append(hist_Top)
+        #labels.append('tt + singlet')
+        #hists_to_plot.append(hist_WJets)
+        #labels.append('W to jets')
         #hists_to_plot.append(hist_Sig)
         #labels.append('signal')
         data_hists.append(hist_Data)
@@ -336,22 +350,21 @@ for plot_name, histograms in histogram_dict.items():
     # #     hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
     # #     ax_ratio.axhline(1, color='gray', linestyle='--')
     ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
-    ### For mutau mass plot only
-    #ax_main.xaxis.set_major_locator(MultipleLocator(20))
-    #ax_main.xaxis.set_minor_locator(MultipleLocator(5))
-    #ax_ratio.xaxis.set_major_locator(MultipleLocator(20))
-    #ax_ratio.xaxis.set_minor_locator(MultipleLocator(5))
-    ###
+    ax_main.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
+    ax_main.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
+    ax_ratio.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
+    ax_ratio.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
     # #     ax_ratio.set_ylabel('Data / MC')
     # #     ax_ratio.set_xlim(binning[0], binning[-1])
     # #     ax_ratio.set_ylim(0.6, 1.4)
     
     # Decorating with CMS label
     hep.cms.label(data=True, loc=0, label="Private Work", com=13.6, lumi=round(target_lumi, 1), ax=ax_main)
+    #hep.cms.add_text(r'$|\eta|$ > 1.2', loc = 'upper left')
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filedir = "Zpeak_Run2022EE"
+    filedir = "Zpeak_Run2022EE_v2"
     if filedir not in os.listdir('plots/'):
         os.mkdir(f'plots/{filedir}')
     filename = f"./plots/{filedir}/{dataset_name}_{plot_name}"
@@ -360,11 +373,15 @@ for plot_name, histograms in histogram_dict.items():
         filename += "_normalized"
     else: 
         filename += "_stacked"
-    filename += ".pdf"
+    #filename += "_etaleq1p2.pdf"
+    filename += "_etag1p2.pdf"
+    #filename += ".pdf"
     print(filename)
     plt.savefig(filename)
     plt.savefig(filename.replace('.pdf', '.png'))
+    plt.savefig(filename.replace('.pdf', '.eps'))
     ax_main.set_yscale('log')
     plt.savefig(filename.replace('.pdf', '_log.pdf'))
     plt.savefig(filename.replace('.pdf', '_log.png'))
+    plt.savefig(filename.replace('.pdf', '_log.eps'))
     plt.clf()

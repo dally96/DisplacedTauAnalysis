@@ -11,6 +11,10 @@ from coffea import processor
 from coffea.nanoevents import PFNanoAODSchema
 from coffea.lumi_tools import LumiData, LumiList, LumiMask
 
+from coffea.jetmet_tools import FactorizedJetCorrector, JetCorrectionUncertainty
+from coffea.jetmet_tools import JECStack, CorrectedJetsFactory
+from coffea.lookup_tools import extractor
+
 import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
@@ -99,14 +103,14 @@ else:
     exit(0)
     
 
-out_folder = f'root://cmseos.fnal.gov//store/user/dally/displacedTaus/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
 
 
 ## define input samples
 all_fileset = {}
 if args.usePkl==True:
     ## to be made configurable
-    with open(f"samples/{args.nanov}/{skim_folder}/v6/{args.sample}_preprocessed.pkl", "rb") as  f:
+    with open(f"samples/{args.nanov}/{skim_folder}/{args.skimversion}/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
         print(input_dataset.keys())
 else:
@@ -205,7 +209,11 @@ class SelectionProcessor(processor.ProcessorABC):
 
         PFNanoAODSchema.mixins["CandidateMuon"] = "Muon"
         PFNanoAODSchema.mixins["CandidateElectron"] = "Electron"
-        PFNanoAODSchema.mixins["PFCand"] = "Muon"
+        PFNanoAODSchema.mixins["DoubleMuon"] = "Muon"
+        PFNanoAODSchema.mixins["DoubleElectron"] = "Electron"
+
+
+        
 
         n_evts = len(events)  
         logger.info(f"starting process")
@@ -279,11 +287,32 @@ class SelectionProcessor(processor.ProcessorABC):
             taus = taus[num_extra_muon == 0]
             print("Extra  muon veto", ak.num(events, axis = 0))
 
+            ### Dilepton Veto
+            mu_pair = ak.combinations(events.DoubleMuon, 2, axis = 1)
+            el_pair = ak.combinations(events.DoubleElectron, 2, axis = 1)
 
-            bjets = events.LooseJet[(events.LooseJet.btagDeepFlavB < 0.0614)]
+            mu1,mu2 = ak.unzip(mu_pair)
+            el1,el2 = ak.unzip(el_pair)
+
+            presel_mask = lambda leps1, leps2: ((leps1.charge * leps2.charge < 0) & (leps1.delta_r(leps2) > 0.15))
+
+            dlveto_mu_mask = presel_mask(mu1,mu2)
+            dlveto_el_mask = presel_mask(el1,el2)
+        
+            dl_mu_veto = ak.sum(dlveto_mu_mask, axis=1) == 0
+            dl_el_veto = ak.sum(dlveto_el_mask, axis=1) == 0
+
+            dl_veto    = dl_mu_veto & dl_el_veto
+
+            events = events[dl_veto]    
+            print("DL Veto", ak.num(events, axis = 0)) 
+            ###
+
+            #bjets = events.LooseJet[(events.LooseJet.btagDeepFlavB < 0.0614)]
             bjet_veto = (
-                        (ak.flatten(bjets.metric_table(muons), axis = 2) <= 0.5)
-                        | (ak.flatten(bjets.metric_table(taus), axis =2) <= 0.5)
+                (events.Jet.pt > 30)
+                & (abs(events.Jet.eta) < 2.4)
+                & (events.Jet.btagDeepFlavB >= 0.3196)
             )
             num_bjet = ak.count_nonzero(bjet_veto, axis = 1)
             events = events[num_bjet == 0]
@@ -354,6 +383,59 @@ class SelectionProcessor(processor.ProcessorABC):
         logger.info("all weights")
         events = ak.with_field(events, weight_branches["weight"], "weight")
 
+        # JEC/JERC
+        if is_MC:
+        ext = extractor()
+        ext.add_weight_sets([
+            "* * ./Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
+            "* * ./Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
+            "* * ./Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
+            "* * ./Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
+            "* * ./Summer22EE_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
+            "* * ./Summer22EE_22Sep2023_JRV1_MC_SF_AK4PFPuppi.jer.txt",
+        ])
+        ext.finalize()
+
+        jet_stack_names = [
+            "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
+            "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
+            "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
+            "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
+            "Summer22EE_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi",
+            "Summer22EE_22Sep2023_JRV1_MC_SF_AK4PFPuppi"
+        ]
+
+        evaluator = ext.make_evaluator()
+        jec_inputs = {name: evaluator[name] for name in jec_stack_names}
+        jec_stack = JECStack(jec_inputs)
+
+        name_map = jec_stack.blank_name_map
+        name_map['JetPt'] = 'pt'
+        name_map['JetMass'] = 'mass'
+        name_map['JetEta'] = 'eta'
+        name_map['JetA'] = 'area'
+
+        jets = events.Jet
+        jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
+        jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
+        jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
+        jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
+
+        name_map['ptGenJet'] = 'pt_gen'
+        name_map['ptRaw'] = 'pt_raw'
+        name_map['massRaw'] = 'mass_raw'
+        name_map['Rho'] = 'rho'
+
+        jet_factory = CorrectedJetsFactory(name_map, jec_stack)
+        corrected_jets = jet_factory.build(jets)
+
+        met_name_map = {}
+        met_name_map['METpt'] = 'pt'
+        met_name_map['METphi'] = 'phi'
+        met_name_map['JetPt'] = 'pt'
+        met_name_map['JetPhi'] = 'phi'
+        
+
         ## prevent writing out files with empty trees
         if not len(events) > 0:
             return {
@@ -388,8 +470,8 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=4,
-                memory='8000MB',
+                cores=6,
+                memory='12000MB',
                 #disk='1000MB',
                 #death_timeout = '600',
                 #lcg = True,

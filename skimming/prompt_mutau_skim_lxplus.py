@@ -66,7 +66,7 @@ args = parser.parse_args()
 
 
 
-out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v6/'
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v8/'
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -129,14 +129,15 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     'Puppi', 'OtherPV', 'GenJetCands',
                     'FsrPhoton', ''
                     ## tmp
-                    'diele', 'LHE', 'dimuon', 'Rho', 'JetPFCands', 'GenJet', 'GenCands', 
+                    'diele', 'LHE', 'dimuon', 'JetPFCands', 'GenJet', 'GenCands', 
                     'Electron'
                     ]
                     
 
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
-                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight', 'CandidateElectron', 'CandidateMuon', 'LooseJet'
+                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'Rho', 'weight', 'genWeight', 'CandidateElectron', 'CandidateMuon', 'LooseJet',
+                    'DoubleMuon', 'DoubleElectron', 'RawPuppiMET'
                    ]
 
 
@@ -154,7 +155,7 @@ good_hlts = [
    #"MET120_IsoTrk50",
   #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
   #"IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
-  "IsoMu24_eta2p1"
+  "IsoMu24"
 #   "Ele30_WPTight_Gsf",                                         
 #   "DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
 #   "DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
@@ -224,7 +225,7 @@ class SkimProcessor(processor.ProcessorABC):
         trigger_mask = (
                        #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
                        #events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1  
-                       events.HLT.IsoMu24_eta2p1
+                       events.HLT.IsoMu24
         )
         events = events[trigger_mask]
 
@@ -241,6 +242,17 @@ class SkimProcessor(processor.ProcessorABC):
         loose_electrons = events.Electron[loose_electron_mask]
         events = ak.with_field(events, loose_electrons, where="CandidateElectron")
 
+        double_electron_mask = (
+            (events.Electron.pt > 15)
+            & (abs(events.Electron.eta) < 2.5)
+            & (abs(events.Electron.dxy) < 0.045)
+            & (abs(events.Electron.dz)  < 0.2)
+            & (events.Electron.cutBased == 1)
+            & (events.Electron.pfRelIso03_all < 0.3)
+        )
+        double_electrons = events.Electron[double_electron_mask]
+        events = ak.with_field(events, double_electrons, where="DoubleElectron")
+
         loose_muon_mask = (
             (events.Muon.pt > 10)
             & (abs(events.Muon.eta) < 2.4)
@@ -253,21 +265,18 @@ class SkimProcessor(processor.ProcessorABC):
         loose_muons = events.Muon[loose_muon_mask]
         events = ak.with_field(events, loose_muons, where="CandidateMuon")
 
-        loose_jet_mask = (
-                    (events.Jet.pt > 15)
-                    & (
-                        ((abs(events.Jet.eta) <= 2.6) & (events.Jet.neHEF < 0.99) & (events.Jet.neEmEF < 0.9) & ((events.Jet.chMultiplicity + events.Jet.neMultiplicity) > 1) & (events.Jet.chHEF> 0.01) & (events.Jet.chMultiplicity > 0))
-                        | ((abs(events.Jet.eta) > 2.6) & (abs(events.Jet.eta) <= 2.7) & (events.Jet.neHEF < 0.90) & (events.Jet.neEmEF < 0.99))
-                        | ((abs(events.Jet.eta) > 2.7) & (abs(events.Jet.eta) <= 3.0) & (events.Jet.neHEF < 0.99))
-                        | ((abs(events.Jet.eta) > 3.0) & (events.Jet.neMultiplicity >= 2) & (events.Jet.neEmEF < 0.4))
-                      )
-                    & ((events.Jet.chEmEF + events.Jet.neEmEF) < 0.9)
-                    & ak.where(ak.count_nonzero(events.Jet.metric_table(events.PFCands[(abs(events.PFCands.pdgId) == 13)]) <= 0.2, axis = 2) < 1, True, False)
+        double_muon_mask = (
+            (events.Muon.pt > 15)
+            & (abs(events.Muon.eta) < 2.4)
+            & (events.Muon.isGlobal == True)
+            & (events.Muon.isPFcand == True)
+            & (abs(events.Muon.dz) < 0.2)
+            & (abs(events.Muon.dxy) < 0.045)
+            & (events.Muon.pfRelIso04_all < 0.3)
         )
-
-        loose_jets = events.Jet[loose_jet_mask] 
-        events = ak.with_field(events, loose_jets, where="LooseJet")
-
+        
+        double_muons = events.Muon[double_muon_mask]
+        events = ak.with_field(events, double_muons, where="DoubleMuon")
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
@@ -365,8 +374,8 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=8,
-                memory='16000MB',
+                cores=10,
+                memory='20000MB',
 #                disk='4000MB',
                 #death_timeout = '240',
                 #nanny=True,

@@ -7,17 +7,45 @@
         "ylabel": "Events / 2 GeV",
         "xlabel": "PFMET in GeV",
         "color": "palegreen",
-        "per_event": true
+        "per_event": true,
+        "x_major_ticks": 25,
+        "x_minor_ticks": 5
+    },
+    "PuppiMET_pT": {
+        "field": "PuppiMET",
+        "variable": "pt",
+        "binning_linspace": [0, 100, 51],
+        "density": false,
+        "ylabel": "Events / 2 GeV",
+        "xlabel": "PUPPI MET pT in GeV",
+        "color": "palegreen",
+        "per_event": true,
+        "x_major_ticks": 20,
+        "x_minor_ticks": 5
     },
     "mT": {
         "field": "mT",
         "variable": "",
-        "binning_linspace": [0, 300, 301],
+        "binning_linspace": [0, 200, 41],
         "density": false,
-        "ylabel": "Events / 1 GeV",
-        "xlabel": "mT in GeV",
+        "ylabel": "Events / 5 GeV",
+        "xlabel": "mT(muon, PFMET) in GeV",
         "color": "palegreen",
-        "per_event": true
+        "per_event": true,
+        "x_major_ticks": 25,
+        "x_minor_ticks": 5
+    },
+    "Puppi_mT": {
+        "field": "Puppi_mT",
+        "variable": "",
+        "binning_linspace": [0, 200, 41],
+        "density": false,
+        "ylabel": "Events / 5 GeV",
+        "xlabel": "mT(tau, PuppiMET) in GeV",
+        "color": "palegreen",
+        "per_event": true,
+        "x_major_ticks": 25,
+        "x_minor_ticks": 5
     },
     "mutau_mass": {
         "field": "mutau",
@@ -27,47 +55,105 @@
         "ylabel": "Events / 5 GeV",
         "xlabel": "mass(mutau) in GeV",
         "color": "palegreen",
-        "per_event": true
+        "per_event": true,
+        "x_major_ticks": 25,
+        "x_minor_ticks": 5
+    },
+    "mutau_pt": {
+        "field": "mutau",
+        "variable": "pt",
+        "binning_linspace": [0, 200, 41],
+        "density": false,
+        "ylabel": "Events / 5 GeV",
+        "xlabel": "pT (mutau) in GeV",
+        "color": "palegreen",
+        "per_event": true,
+        "x_major_ticks": 25,
+        "x_minor_ticks": 5
+    },
+    "mutau_dR": {
+        "field": "mutau",
+        "variable": "dR",
+        "binning_linspace": [0, 4, 41],
+        "density": false,
+        "ylabel": "Events / 0.1",
+        "xlabel": "dR(mu, tau)",
+        "color": "palegreen",
+        "per_event": true,
+        "x_major_ticks": 0.5,
+        "x_minor_ticks": 0.1
+    },
+    "Tau_mass": {
+        "field": "Tau",
+        "variable": "mass",
+        "binning_linspace": [0, 3, 31],
+        "density": false,
+        "ylabel": "Events / 0.1 GeV",
+        "xlabel": "tau mass [GeV]",
+        "color": "red",
+        "per_event": false,
+        "x_major_ticks": 0.5,
+        "x_minor_ticks": 0.1
+    },
+    "Tau_decayMode": {
+        "field": "Tau",
+        "variable": "decayMode",
+        "binning_linspace": [0, 12, 13],
+        "density": false,
+        "ylabel": "Events / 1",
+        "xlabel": "tau HPS decay mode",
+        "color": "red",
+        "per_event": false,
+        "x_major_ticks": 2,
+        "x_minor_ticks": 0.5
     },
     "Muon_pt": {
         "field": "Muon",
         "variable": "pt",
-        "binning_linspace": [20, 175, 151],
+        "binning_linspace": [20, 80, 31],
         "density": false,
-        "ylabel": "Events / 1 GeV",
+        "ylabel": "Events / 2 GeV",
         "xlabel": "leading muon pT in GeV",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 10,
+        "x_minor_ticks": 2
     },
     "Tau_pt": {
         "field": "Tau",
         "variable": "pt",
-        "binning_linspace": [20, 125, 101],
+        "binning_linspace": [20, 80, 31],
         "density": false,
-        "ylabel": "Events / 1 GeV",
+        "ylabel": "Events / 2 GeV",
         "xlabel": "tau pt",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 10,
+        "x_minor_ticks": 2
     },
     "Tau_eta": {
         "field": "Tau",
         "variable": "eta",
-        "binning_linspace": [-2.4, 2.4, 101],
+        "binning_linspace": [-3.2, 3.2, 33],
         "density": false,
         "ylabel": "Events ",
         "xlabel": "tau eta",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 1,
+        "x_minor_ticks": 0.2
     },
     "Muon_eta": {
         "field": "Muon",
         "variable": "eta",
-        "binning_linspace": [-2.4, 2.4, 101],
+        "binning_linspace": [-3.2, 3.2, 33],
         "density": false,
         "ylabel": "Events ",
         "xlabel": "muon eta",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 1,
+        "x_minor_ticks": 0.2
     },
     "Tau_dxy": {
         "field": "Tau",
@@ -77,7 +163,9 @@
         "ylabel": "Events ",
         "xlabel": "tau dxy (cm)",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 0.5,
+        "x_minor_ticks": 0.1
     },
     "Muon_dxy": {
         "field": "Muon",
@@ -87,7 +175,9 @@
         "ylabel": "Events ",
         "xlabel": "muon dxy (cm)",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 0.5,
+        "x_minor_ticks": 0.1
     },
     "Tau_dz": {
         "field": "Tau",
@@ -97,7 +187,9 @@
         "ylabel": "Events ",
         "xlabel": "tau dz (cm)",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 1,
+        "x_minor_ticks": 0.2
     },
     "Muon_dz": {
         "field": "Muon",
@@ -107,7 +199,9 @@
         "ylabel": "Events ",
         "xlabel": "muon dz (cm)",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 1,
+        "x_minor_ticks": 0.2
     },
     "Tau_rawDeepTau2018v2p5VSe": {
         "field": "Tau",
@@ -117,7 +211,9 @@
         "ylabel": "Events ",
         "xlabel": "rawDeepTau2018v2p5VSe",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 0.1,
+        "x_minor_ticks": 0.02
     },
     "Tau_rawDeepTau2018v2p5VSmu": {
         "field": "Tau",
@@ -127,7 +223,9 @@
         "ylabel": "Events ",
         "xlabel": "rawDeepTau2018v2p5VSmu",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 0.1,
+        "x_minor_ticks": 0.02
     },
     "Tau_rTau_rawDeepTau2018v2p5VSjet": {
         "field": "Tau",
@@ -137,7 +235,9 @@
         "ylabel": "Events ",
         "xlabel": "Tau_rawDeepTau2018v2p5VSjet",
         "color": "red",
-        "per_event": false
+        "per_event": false,
+        "x_major_ticks": 0.1,
+        "x_minor_ticks": 0.02
     },
     "PV_npvs": {
         "field": "PV",
@@ -147,6 +247,8 @@
         "ylabel": "Events ",
         "xlabel": "npvs",
         "color": "red",
-        "per_event": true
+        "per_event": true,
+        "x_major_ticks": 10,
+        "x_minor_ticks": 2
     }
 }

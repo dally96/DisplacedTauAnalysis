@@ -37,7 +37,7 @@ final_number_gen = {}
 ## find the JSON files with processed lumis in the given directory
 subsamples_list = []
 for filepath in glob.glob(os.path.join(processed_json_folder, "processed*.json")):
-    print(f"Filesets: {glob.glob(os.path.join(processed_json_folder, 'processed*.json'))}")
+    #print(f"Filesets: {glob.glob(os.path.join(processed_json_folder, 'processed*.json'))}")
     filename = os.path.basename(filepath)  
     print(f"Filename: {filename}")
     if "JetMET" in filename: continue
@@ -70,7 +70,7 @@ for isample in subsamples_list:
                 sumgenw_dict = json.load(sumw_file)
                 #print(sumgenw_dict)
                 ## this one above is a list of dictionaries with keys lumisections, sumgenw, ngen
-                processed_lumis = set(processed_dict[isubsample]['1'])  # make a set for O(1) lookups
+                processed_lumis = set(processed_dict[isubsample][1])  # make a set for O(1) lookups
             
                 for i, ibunch in enumerate(sumgenw_dict):
                     ## do not sum if this lumiblock was already accounted before
