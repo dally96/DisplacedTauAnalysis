@@ -58,16 +58,16 @@ all_samples_dict = {
       ],
     "TT" : [
       "TTto2L2Nu", 
-#      "TTtoLNu2Q", 
-#      "TTto4Q"
+      "TTtoLNu2Q", 
+      "TTto4Q"
       ],
     "singleT": [
-#      "TbarWplustoLNu2Q",
+      "TbarWplustoLNu2Q",
       "TbarWplusto2L2Nu",
       "TWminusto2L2Nu",
-#      "TBbarQ_t-channel_4FS",
-#      "TWminustoLNu2Q",
-#      "TbarBQ_t-channel_4FS",
+      "TBbarQ_t-channel_4FS",
+      "TWminustoLNu2Q",
+      "TbarBQ_t-channel_4FS",
       ],  
     #"JetMET": [
     #  "JetMET_Run2022E",
