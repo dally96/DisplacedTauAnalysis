@@ -64,8 +64,6 @@ parser.add_argument(
         help="Run a test job locally")
 args = parser.parse_args()
 
-
-
 out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/prompt_mutau/v8/'
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
@@ -228,6 +226,18 @@ class SkimProcessor(processor.ProcessorABC):
                        events.HLT.IsoMu24
         )
         events = events[trigger_mask]
+
+        ## NB: to be double checked if the string identifying the buggy DY dataset is correct
+        if is_MC and dataset == 'DYJetsToLL_M-50': 
+            lhe_part = events.LHEPart
+            outcoming = lhe_part[lhe_part.status > 0]
+            lhe_z = outcoming[(outcoming.status == 2) & (outcoming.pdgId==23)]
+            out_tau_tau = outcoming[(abs(outcoming.pdgId)==15)]
+            counts_tautau = ak.num(out_tau_tau, axis=1)  
+            mask_ztautau = (counts_tautau == 2)
+            mask_zll = ~mask_ztautau
+            events = events[mask_zll]
+#             print (f" Removed non zll events from {dataset}")
 
         # Define loose muons and electrons for Extra Lepton Veto
         loose_electron_mask = (
@@ -398,7 +408,7 @@ if __name__ == "__main__":
 #                ],
                 #worker_extra_args = ['--worker-port 10000:10100']
                )
-        cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
+        cluster.adapt(minimum=1, maximum=200)#, wait_count=3)
         print(cluster.job_script())
     else:    
         cluster = LocalCluster(n_workers=4, threads_per_worker=1)
@@ -415,6 +425,11 @@ if __name__ == "__main__":
     )
     
 #     myfileset = {
+#       "DYJetsToLL_M-50": {
+#         "files": {
+#           "root://cms-xrd-global.cern.ch///store/mc/Run3Summer22EENanoAODv12/DYto2L-4Jets_MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8/NANOAODSIM/JMENano12p5_132X_mcRun3_2022_realistic_postEE_v4_ext1-v2/2560000/0028c834-ec9c-4daf-9860-372f66ad035e.root" : "Events",
+#         }
+#       },  
 #       "WLNu1J": {
 #         "files": {
 #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_9_0.root" : "Events",

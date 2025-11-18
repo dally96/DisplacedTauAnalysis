@@ -32,7 +32,6 @@ parser.add_argument(
 	"--sample",
 	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all', 'JetMET'],
 	nargs='*',
->>>>>>> b33f513903e (update reading of DC json in mutau skim, add option for data)
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
