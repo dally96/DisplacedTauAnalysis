@@ -63,7 +63,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 
-out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/prompt_mutau/v3/'
+out_folder = f'root://eoscms.cern.ch//store/user/fiorendi/displacedTaus/skim/{args.nanov}/prompt_mutau/v5/'
 out_folder_json = out_folder.replace('root://eoscms.cern.ch/','/eos/cms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -123,22 +123,22 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
 
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
-                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'
+                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight', 'Rho', 'LHE'
                    ]
 
 
 good_hlts = [
-#   "PFMET120_PFMHT120_IDTight",                  
-#   "PFMET130_PFMHT130_IDTight",
-#   "PFMET140_PFMHT140_IDTight",
-#   "PFMETNoMu120_PFMHTNoMu120_IDTight",
-#   "PFMETNoMu130_PFMHTNoMu130_IDTight",
-#   "PFMETNoMu140_PFMHTNoMu140_IDTight",
-#   "PFMET120_PFMHT120_IDTight_PFHT60",
-#   "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
-#   "PFMETTypeOne140_PFMHT140_IDTight",
-#   "MET105_IsoTrk50",
-#   "MET120_IsoTrk50",
+  "PFMET120_PFMHT120_IDTight",                  
+  "PFMET130_PFMHT130_IDTight",
+  "PFMET140_PFMHT140_IDTight",
+  "PFMETNoMu120_PFMHTNoMu120_IDTight",
+  "PFMETNoMu130_PFMHTNoMu130_IDTight",
+  "PFMETNoMu140_PFMHTNoMu140_IDTight",
+  "PFMET120_PFMHT120_IDTight_PFHT60",
+  "PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF",
+  "PFMETTypeOne140_PFMHT140_IDTight",
+  "MET105_IsoTrk50",
+  "MET120_IsoTrk50",
   "IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
   "IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1",
 #   "Ele30_WPTight_Gsf",                                         
@@ -177,7 +177,7 @@ class SkimProcessor(processor.ProcessorABC):
                 lumimask = select_lumis('2022', events)
                 events = events[lumimask]
             except:
-                print (f"[ lumimask ] Skip now! Unable to find year info of {dataset_name}")
+                print (f"[ lumimask ] Skip now! Unable to find year info of {dataset}")
 
         ## retrieve the list of run/lumi being processed        
         run_dict = defaultdict(list)
@@ -187,16 +187,39 @@ class SkimProcessor(processor.ProcessorABC):
             run_dict[str(int(run))].append(int(lumi))
         dataset_run_dict[dataset] = dict(run_dict)
 
+        ## NB: to be double checked if the string identifying the buggy DY dataset is correct
+        if is_MC and dataset == 'DYJetsToLL_M-50': 
+            lhe_part = events.LHEPart
+            outcoming = lhe_part[lhe_part.status > 0]
+            lhe_z = outcoming[(outcoming.status == 2) & (outcoming.pdgId==23)]
+            out_tau_tau = outcoming[(abs(outcoming.pdgId)==15)]
+            counts_tautau = ak.num(out_tau_tau, axis=1)  
+            mask_ztautau = (counts_tautau == 2)
+            mask_zll = ~mask_ztautau
+            events = events[mask_zll]
+#             print (f" Removed non zll events from {dataset}")
+
         ## Trigger mask
         trigger_mask = (
-                       events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
-                       events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1  
+#                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1   |\
+#                        events.HLT.IsoMu24_eta2p1_MediumDeepTauPFTauHPS30_L2NN_eta2p1_CrossL1  
+                       events.HLT.PFMET120_PFMHT120_IDTight   |\
+                       events.HLT.PFMET130_PFMHT130_IDTight   |\
+                       events.HLT.PFMET140_PFMHT140_IDTight   |\
+                       events.HLT.PFMETNoMu120_PFMHTNoMu120_IDTight   |\
+                       events.HLT.PFMETNoMu130_PFMHTNoMu130_IDTight   |\
+                       events.HLT.PFMETNoMu140_PFMHTNoMu140_IDTight   |\
+                       events.HLT.PFMET120_PFMHT120_IDTight_PFHT60   |\
+                       events.HLT.PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF   |\
+                       events.HLT.PFMETTypeOne140_PFMHT140_IDTight   |\
+                       events.HLT.MET105_IsoTrk50   |\
+                       events.HLT.MET120_IsoTrk50
         )
         events = events[trigger_mask]
 
         # Define the "good muon" condition for each muon per event
         good_prompt_muon_mask = (
-             (events.Muon.pt > 22)
+             (events.Muon.pt > 24)
             & (abs(events.Muon.eta) < 2.1) 
             & (events.Muon.tightId > 0)
             & (events.Muon.pfIsoId >= 4)
@@ -210,9 +233,9 @@ class SkimProcessor(processor.ProcessorABC):
             (events.Tau.pt > 28)
             & (abs(events.Tau.eta) < 2.1)
             & (events.Tau.idDecayModeNewDMs)
-            & (events.Tau.idDeepTau2018v2p5VSe >= 4)     ## Loose 
+            & (events.Tau.idDeepTau2018v2p5VSe >= 2)     ## VVLoose 
             & (events.Tau.idDeepTau2018v2p5VSjet >= 5)   ## Medium
-            & (events.Tau.idDeepTau2018v2p5VSmu >= 3)    ## Medium
+            & (events.Tau.idDeepTau2018v2p5VSmu >= 4)    ## Tight
         )
         num_good_taus = ak.count_nonzero(good_tau_mask, axis=1)
         sel_taus = events.Tau[good_tau_mask]
@@ -286,13 +309,13 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = CernCluster(
-                cores=1,
-                memory='4000MB',
+                cores=1,  ## increase to 8
+                memory='16000MB', ## increase to 16
                 disk='1000MB',
                 death_timeout = '240',
                 nanny=False,
                 container_runtime = "none",
-                log_directory = "root://eosuser.cern.ch//eos/user/f/fiorendi/condor/log/prompt_skim/v3",
+                log_directory = "/eos/user/f/fiorendi/condor/log/prompt_skim/v5",
                 scheduler_options={
                     'port': n_port,
                     'host': socket.gethostname(),
@@ -309,7 +332,7 @@ if __name__ == "__main__":
                 ],
                 extra = ['--worker-port 10000:10100']
                )
-        cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
+        cluster.adapt(minimum=1, maximum=200)#, wait_count=3)
         print(cluster.job_script())
     else:    
         cluster = LocalCluster(n_workers=4, threads_per_worker=1)
@@ -327,6 +350,11 @@ if __name__ == "__main__":
     )
     
 #     myfileset = {
+#       "DYJetsToLL_M-50": {
+#         "files": {
+#           "root://cms-xrd-global.cern.ch///store/mc/Run3Summer22EENanoAODv12/DYto2L-4Jets_MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8/NANOAODSIM/JMENano12p5_132X_mcRun3_2022_realistic_postEE_v4_ext1-v2/2560000/0028c834-ec9c-4daf-9860-372f66ad035e.root" : "Events",
+#         }
+#       },  
 #       "WLNu1J": {
 #         "files": {
 #           "root://cmsxrootd.fnal.gov//store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/WtoLNu-4Jets_2J_TuneCP5_13p6TeV_madgraphMLM-pythia8/nano_9_0.root" : "Events",
