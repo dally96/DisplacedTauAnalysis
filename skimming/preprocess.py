@@ -40,7 +40,7 @@ parser.add_argument(
 parser.add_argument(
 	"--skimversion",
 	default='',
-	required=True,
+	required=False,
 	help='Specify, if working on the skimmed samples, the skim name (name of the folder inside samples)')
 parser.add_argument(
 	"--nanov",
