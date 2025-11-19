@@ -12,7 +12,7 @@ from coffea.nanoevents import PFNanoAODSchema
 from coffea.lumi_tools import LumiData, LumiList, LumiMask
 
 from coffea.jetmet_tools import FactorizedJetCorrector, JetCorrectionUncertainty
-from coffea.jetmet_tools import JECStack, CorrectedJetsFactory
+from coffea.jetmet_tools import JECStack, CorrectedJetsFactory, CorrectedMETFactory
 from coffea.lookup_tools import extractor
 
 import fsspec_xrootd
@@ -152,7 +152,8 @@ include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass
 include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 'HLT',
-               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau'
+               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau',
+               'CorrectedPuppiMET'
               ]
 
 ### FIXME: need to add Lxy and IP at GEN level                             
@@ -212,10 +213,8 @@ class SelectionProcessor(processor.ProcessorABC):
         PFNanoAODSchema.mixins["DoubleMuon"] = "Muon"
         PFNanoAODSchema.mixins["DoubleElectron"] = "Electron"
 
-
-        
-
         n_evts = len(events)  
+        print("Before any selections, the number of events is", n_evts)
         logger.info(f"starting process")
         if n_evts == 0: 
             logger.info(f"no input events")
@@ -382,59 +381,84 @@ class SelectionProcessor(processor.ProcessorABC):
             weight_branches = {'weight': weights}
         logger.info("all weights")
         events = ak.with_field(events, weight_branches["weight"], "weight")
+        print("Weights have been added to event fields")
 
         # JEC/JERC
         if is_MC:
-        ext = extractor()
-        ext.add_weight_sets([
-            "* * ./Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
-            "* * ./Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
-            "* * ./Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
-            "* * ./Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
-            "* * ./Summer22EE_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
-            "* * ./Summer22EE_22Sep2023_JRV1_MC_SF_AK4PFPuppi.jer.txt",
-        ])
-        ext.finalize()
+            print("For JEC JERC, is MC")
+            ext = extractor()
+            print("Extractor initialized")
+            ext.add_weight_sets([
+                "* * Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
+                "* * Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
+                "* * Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
+                "* * Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
+                "* * Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
+                "* * Summer22EE_JRV1_MC_SF_AK4PFPuppi.jer.txt",
+            ])
+            print("Added weight sets")
+            ext.finalize()
 
-        jet_stack_names = [
-            "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
-            "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
-            "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
-            "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
-            "Summer22EE_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi",
-            "Summer22EE_22Sep2023_JRV1_MC_SF_AK4PFPuppi"
-        ]
+            jet_stack_names = [
+                "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
+                "Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi",
+                "Summer22EE_JRV1_MC_SF_AK4PFPuppi"
+            ]
+            print(x for x in jet_stack_names)
 
-        evaluator = ext.make_evaluator()
-        jec_inputs = {name: evaluator[name] for name in jec_stack_names}
-        jec_stack = JECStack(jec_inputs)
+            evaluator = ext.make_evaluator()
+            jec_inputs = {name: evaluator[name] for name in jet_stack_names}
+            jec_stack = JECStack(jec_inputs)
 
-        name_map = jec_stack.blank_name_map
-        name_map['JetPt'] = 'pt'
-        name_map['JetMass'] = 'mass'
-        name_map['JetEta'] = 'eta'
-        name_map['JetA'] = 'area'
+            name_map = jec_stack.blank_name_map
+            name_map['JetPt'] = 'pt'
+            name_map['JetMass'] = 'mass'
+            name_map['JetEta'] = 'eta'
+            name_map['JetA'] = 'area'
+            print("Created Jet name map")
 
-        jets = events.Jet
-        jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
-        jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
-        jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
-        jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
+            jets = events.Jet
+            jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
+            jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
+            jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
+            jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
 
-        name_map['ptGenJet'] = 'pt_gen'
-        name_map['ptRaw'] = 'pt_raw'
-        name_map['massRaw'] = 'mass_raw'
-        name_map['Rho'] = 'rho'
+            name_map['ptGenJet'] = 'pt_gen'
+            name_map['ptRaw'] = 'pt_raw'
+            name_map['massRaw'] = 'mass_raw'
+            name_map['Rho'] = 'rho'
 
-        jet_factory = CorrectedJetsFactory(name_map, jec_stack)
-        corrected_jets = jet_factory.build(jets)
+            jet_factory = CorrectedJetsFactory(name_map, jec_stack)
+            corrected_jets = jet_factory.build(jets)
+            print("Corrected jets done")
 
-        met_name_map = {}
-        met_name_map['METpt'] = 'pt'
-        met_name_map['METphi'] = 'phi'
-        met_name_map['JetPt'] = 'pt'
-        met_name_map['JetPhi'] = 'phi'
-        
+            met = events.PuppiMET
+            met['pt_raw'] = events.RawPuppiMET.pt
+            met['unclustEDeltaX'] = met.ptUnclusteredUp * np.cos(met.phiUnclusteredUp)
+            met['unclustEDeltaY'] = met.ptUnclusteredUp * np.sin(met.phiUnclusteredUp)
+
+            met_name_map = {}
+            print("MET name map created")
+            met_name_map['METpt'] = 'pt'
+            met_name_map['METphi'] = 'phi'
+            met_name_map['JetPt'] = 'pt'
+            met_name_map['JetPhi'] = 'phi'
+            met_name_map['ptRaw'] = 'pt_raw'
+            met_name_map['UnClusteredEnergyDeltaX'] = 'unclustEDeltaX'
+            met_name_map['UnClusteredEnergyDeltaY'] = 'unclustEDeltaY'
+
+            met_factory = CorrectedMETFactory(met_name_map)
+            CorrectedPuppiMET = met_factory.build(met, corrected_jets) 
+            print("Corrected PuppiMET", CorrectedPuppiMET.fields)
+            print("Events", type(events))
+            print("CPM", type(CorrectedPuppiMET.pt.compute()))
+            print("Events npartitions", events.npartitions)
+            events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
+            #events["CorrectedPuppiMET"] = CorrectedPuppiMET
+            print("Adding CorrectedPuppiMET to events", events.CorrectedPuppiMET.pt.compute())
 
         ## prevent writing out files with empty trees
         if not len(events) > 0:

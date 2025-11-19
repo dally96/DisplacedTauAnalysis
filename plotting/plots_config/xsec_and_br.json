@@ -68,7 +68,7 @@
         "TbarBQ_t-channel_4FS" : 7.547E1
     },
     "br": {
-        "DYJetsToLL_M-50": 0.333333, 
+        "DYJetsToLL_M-50": 1, 
         "TTto2L2Nu": 0.1111,
         "TTtoLNu2Q": 0.444,
         "TTto4Q": 0.444,

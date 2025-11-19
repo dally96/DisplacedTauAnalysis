@@ -152,7 +152,7 @@ for process in available_processes:
     tmp_string = f"faster_trial_{process}/faster_trial_{process}.root"
     tmp_file = sample_folder +  tmp_string
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
-    events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
+    #events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
     
     mutau_dr = events.Muon.metric_table(events.Tau)
     mutau_pt = events.Muon.pt + events.Tau.pt
@@ -364,7 +364,7 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filedir = "Zpeak_Run2022EE_v2"
+    filedir = "Zpeak_Run2022EE_v3"
     if filedir not in os.listdir('plots/'):
         os.mkdir(f'plots/{filedir}')
     filename = f"./plots/{filedir}/{dataset_name}_{plot_name}"
@@ -374,8 +374,8 @@ for plot_name, histograms in histogram_dict.items():
     else: 
         filename += "_stacked"
     #filename += "_etaleq1p2.pdf"
-    filename += "_etag1p2.pdf"
-    #filename += ".pdf"
+    #filename += "_etag1p2.pdf"
+    filename += ".pdf"
     print(filename)
     plt.savefig(filename)
     plt.savefig(filename.replace('.pdf', '.png'))
