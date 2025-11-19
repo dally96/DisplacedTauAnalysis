@@ -129,7 +129,7 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     'Puppi', 'OtherPV', 'GenJetCands',
                     'FsrPhoton', ''
                     ## tmp
-                    'diele', 'LHE', 'dimuon', 'JetPFCands', 'GenJet', 'GenCands', 
+                    'diele', 'LHE', 'dimuon', 'JetPFCands', 'GenCands', 
                     'Electron'
                     ]
                     
@@ -137,7 +137,7 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
                     'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'Rho', 'weight', 'genWeight', 'CandidateElectron', 'CandidateMuon', 'LooseJet',
-                    'DoubleMuon', 'DoubleElectron', 'RawPuppiMET'
+                    'DoubleMuon', 'DoubleElectron', 'RawPuppiMET', 'GenJet'
                    ]
 
 

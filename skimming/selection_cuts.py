@@ -455,8 +455,7 @@ class SelectionProcessor(processor.ProcessorABC):
             print("Corrected PuppiMET", CorrectedPuppiMET.fields)
             print("Events", type(events))
             print("CPM", type(CorrectedPuppiMET.pt.compute()))
-            print("Events npartitions", events.npartitions)
-            events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
+            #events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
             #events["CorrectedPuppiMET"] = CorrectedPuppiMET
             print("Adding CorrectedPuppiMET to events", events.CorrectedPuppiMET.pt.compute())
 
