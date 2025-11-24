@@ -400,13 +400,11 @@ class SelectionProcessor(processor.ProcessorABC):
             events = ak.with_field(events, mutau_mass, "mutau_mass")
 
             events = events[ak.ravel(mutau_mass > 40)]
-            print("mutau mass veto", ak.num(events, axis = 0))
 
             events = events[ak.ravel(mutau_mass > 40)]
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
-            print("function veto", ak.num(events, axis = 0))
         else:
             dismuons = events.DisMuon
             dismuons = dismuons[ak.argsort(dismuons[leading_muon_var], ascending=False, axis=1)]
