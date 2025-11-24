@@ -29,7 +29,7 @@ from lpcjobqueue import LPCCondorCluster, schedd
 from dask import config as cfg
 from dask_jobqueue import HTCondorCluster
 import socket, time
-
+import dask_awkward as dak
 import warnings
 warnings.filterwarnings("ignore", module="coffea") # Suppress annoying deprecation warnings for coffea vector, c.f. https://github.com/CoffeaTeam/coffea/blob/master/src/coffea/nanoevents/methods/candidate.py
 import logging
@@ -103,7 +103,7 @@ else:
     exit(0)
     
 
-out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
+out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
 
 
 ## define input samples
@@ -152,7 +152,7 @@ include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass
 include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 'HLT',
-               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau',
+               'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau_mass',
                'CorrectedPuppiMET'
               ]
 
@@ -214,7 +214,6 @@ class SelectionProcessor(processor.ProcessorABC):
         PFNanoAODSchema.mixins["DoubleElectron"] = "Electron"
 
         n_evts = len(events)  
-        print("Before any selections, the number of events is", n_evts)
         logger.info(f"starting process")
         if n_evts == 0: 
             logger.info(f"no input events")
@@ -241,6 +240,69 @@ class SelectionProcessor(processor.ProcessorABC):
             events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
             events["StauTau"] = ak.flatten(ak.drop_none(events["StauTau"]), axis=0)
 
+       # JEC/JERC
+        if is_MC:
+            ext = extractor()
+            ext.add_weight_sets([
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
+                "* * ./jec/Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
+                "* * ./jec/Summer22EE_JRV1_MC_SF_AK4PFPuppi.jer.txt",
+            ])
+            ext.finalize()
+
+            jet_stack_names = [
+                "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
+                "Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi",
+                "Summer22EE_JRV1_MC_SF_AK4PFPuppi"
+            ]
+
+            evaluator = ext.make_evaluator()
+            jec_inputs = {name: evaluator[name] for name in jet_stack_names}
+            jec_stack = JECStack(jec_inputs)
+
+            name_map = jec_stack.blank_name_map
+            name_map['JetPt'] = 'pt'
+            name_map['JetMass'] = 'mass'
+            name_map['JetEta'] = 'eta'
+            name_map['JetA'] = 'area'
+
+            jets = events.Jet
+            jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
+            jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
+            jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
+            jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
+
+            name_map['ptGenJet'] = 'pt_gen'
+            name_map['ptRaw'] = 'pt_raw'
+            name_map['massRaw'] = 'mass_raw'
+            name_map['Rho'] = 'rho'
+
+            jet_factory = CorrectedJetsFactory(name_map, jec_stack)
+            corrected_jets = jet_factory.build(jets)
+
+            puppi_met = events.PuppiMET
+            puppi_met['pt_raw'] = events.RawPuppiMET.pt
+            puppi_met['unclustEDeltaX'] = puppi_met.ptUnclusteredUp * np.cos(puppi_met.phiUnclusteredUp)
+            puppi_met['unclustEDeltaY'] = puppi_met.ptUnclusteredUp * np.sin(puppi_met.phiUnclusteredUp)
+
+            met_name_map = {}
+            met_name_map['METpt'] = 'pt'
+            met_name_map['METphi'] = 'phi'
+            met_name_map['JetPt'] = 'pt'
+            met_name_map['JetPhi'] = 'phi'
+            met_name_map['ptRaw'] = 'pt_raw'
+            met_name_map['UnClusteredEnergyDeltaX'] = 'unclustEDeltaX'
+            met_name_map['UnClusteredEnergyDeltaY'] = 'unclustEDeltaY'
+
+            met_factory = CorrectedMETFactory(met_name_map)
+            CorrectedPuppiMET = met_factory.build(puppi_met, corrected_jets)
+            events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
 
         ## IMPORTANT
         ## do we need to add selections before choosing the leading obj?
@@ -273,7 +335,6 @@ class SelectionProcessor(processor.ProcessorABC):
             events = events[num_extra_electron == 0]
             muons  = muons[num_extra_electron == 0]
             taus   = taus[num_extra_electron == 0]
-            print("Extra electron veto", ak.num(events, axis = 0))
  
             extra_muon_veto = (
                 ((ak.flatten(events.CandidateMuon.metric_table(muons), axis = 2) > 0)
@@ -284,7 +345,6 @@ class SelectionProcessor(processor.ProcessorABC):
             events = events[num_extra_muon == 0]
             muons = muons[num_extra_muon == 0]
             taus = taus[num_extra_muon == 0]
-            print("Extra  muon veto", ak.num(events, axis = 0))
 
             ### Dilepton Veto
             mu_pair = ak.combinations(events.DoubleMuon, 2, axis = 1)
@@ -304,7 +364,6 @@ class SelectionProcessor(processor.ProcessorABC):
             dl_veto    = dl_mu_veto & dl_el_veto
 
             events = events[dl_veto]    
-            print("DL Veto", ak.num(events, axis = 0)) 
             ###
 
             #bjets = events.LooseJet[(events.LooseJet.btagDeepFlavB < 0.0614)]
@@ -317,7 +376,6 @@ class SelectionProcessor(processor.ProcessorABC):
             events = events[num_bjet == 0]
             muons = muons[num_bjet == 0]
             taus = taus[num_bjet == 0]
-            print("b-jet veto", ak.num(events, axis = 0)) 
             
             ## add transverse mass and mu+tau mass vars
             met = events.PFMET.pt            
@@ -331,24 +389,20 @@ class SelectionProcessor(processor.ProcessorABC):
             events = events[ak.ravel(dR > 0.5)]
             taus = taus[ak.ravel(dR > 0.5)]
             muons = muons[ak.ravel(dR > 0.5)]
-            print("dR veto", ak.num(events, axis = 0))
  
             mutau_cand = taus + muons
             events = events[ak.ravel(mutau_cand.charge == 0)]
             muons = muons[ak.ravel(mutau_cand.charge == 0)]
             taus = taus[ak.ravel(mutau_cand.charge == 0)]
-            print("opposite charge veto", ak.num(events, axis = 0))
 
             mutau_cand = mutau_cand[ak.ravel(mutau_cand.charge == 0)]
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
 
             events = events[ak.ravel(mutau_mass > 40)]
-            print("mutau mass veto", ak.num(events, axis = 0))
 
             ## apply selections
             events = event_selection_hpstau_mu(events, selection_string)
-            print("function veto", ak.num(events, axis = 0))
         else:
             dismuons = events.DisMuon
             dismuons = dismuons[ak.argsort(dismuons[leading_muon_var], ascending=False, axis=1)]
@@ -381,83 +435,7 @@ class SelectionProcessor(processor.ProcessorABC):
             weight_branches = {'weight': weights}
         logger.info("all weights")
         events = ak.with_field(events, weight_branches["weight"], "weight")
-        print("Weights have been added to event fields")
 
-        # JEC/JERC
-        if is_MC:
-            print("For JEC JERC, is MC")
-            ext = extractor()
-            print("Extractor initialized")
-            ext.add_weight_sets([
-                "* * Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
-                "* * Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
-                "* * Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
-                "* * Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
-                "* * Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
-                "* * Summer22EE_JRV1_MC_SF_AK4PFPuppi.jer.txt",
-            ])
-            print("Added weight sets")
-            ext.finalize()
-
-            jet_stack_names = [
-                "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
-                "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
-                "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
-                "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
-                "Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi",
-                "Summer22EE_JRV1_MC_SF_AK4PFPuppi"
-            ]
-            print(x for x in jet_stack_names)
-
-            evaluator = ext.make_evaluator()
-            jec_inputs = {name: evaluator[name] for name in jet_stack_names}
-            jec_stack = JECStack(jec_inputs)
-
-            name_map = jec_stack.blank_name_map
-            name_map['JetPt'] = 'pt'
-            name_map['JetMass'] = 'mass'
-            name_map['JetEta'] = 'eta'
-            name_map['JetA'] = 'area'
-            print("Created Jet name map")
-
-            jets = events.Jet
-            jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
-            jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
-            jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
-            jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
-
-            name_map['ptGenJet'] = 'pt_gen'
-            name_map['ptRaw'] = 'pt_raw'
-            name_map['massRaw'] = 'mass_raw'
-            name_map['Rho'] = 'rho'
-
-            jet_factory = CorrectedJetsFactory(name_map, jec_stack)
-            corrected_jets = jet_factory.build(jets)
-            print("Corrected jets done")
-
-            met = events.PuppiMET
-            met['pt_raw'] = events.RawPuppiMET.pt
-            met['unclustEDeltaX'] = met.ptUnclusteredUp * np.cos(met.phiUnclusteredUp)
-            met['unclustEDeltaY'] = met.ptUnclusteredUp * np.sin(met.phiUnclusteredUp)
-
-            met_name_map = {}
-            print("MET name map created")
-            met_name_map['METpt'] = 'pt'
-            met_name_map['METphi'] = 'phi'
-            met_name_map['JetPt'] = 'pt'
-            met_name_map['JetPhi'] = 'phi'
-            met_name_map['ptRaw'] = 'pt_raw'
-            met_name_map['UnClusteredEnergyDeltaX'] = 'unclustEDeltaX'
-            met_name_map['UnClusteredEnergyDeltaY'] = 'unclustEDeltaY'
-
-            met_factory = CorrectedMETFactory(met_name_map)
-            CorrectedPuppiMET = met_factory.build(met, corrected_jets) 
-            print("Corrected PuppiMET", CorrectedPuppiMET.fields)
-            print("Events", type(events))
-            print("CPM", type(CorrectedPuppiMET.pt.compute()))
-            #events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
-            #events["CorrectedPuppiMET"] = CorrectedPuppiMET
-            print("Adding CorrectedPuppiMET to events", events.CorrectedPuppiMET.pt.compute())
 
         ## prevent writing out files with empty trees
         if not len(events) > 0:
@@ -493,25 +471,25 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=6,
-                memory='12000MB',
+                cores=16,
+                memory='32000MB',
                 #disk='1000MB',
                 #death_timeout = '600',
                 #lcg = True,
                 #nanny = False,
                 #container_runtime = "none",
-                log_directory = "/uscmst1b_scratch/lpc1/3DayLifetime/condor/log/selected/v1",
-                transfer_input_files = ["selection_function.py", "utils.py", "Cert_Collisions2022_355100_362760_Golden.json"],
+                log_directory = f"/uscmst1b_scratch/lpc1/3DayLifetime/condor/log/selected/{args.skimversion}",
+                transfer_input_files = ["selection_function.py", "utils.py", "Cert_Collisions2022_355100_362760_Golden.json", "jec/"],
                 #scheduler_options={
                 #    'port': n_port,
                 #    'host': socket.gethostname(),
                 #    },
-                #job_extra_directives={
-                #    "should_transfer_files": "YES",
-                #    '+JobFlavour': '"longlunch"',
-                #    },
+                job_extra_directives={
+                    "should_transfer_files": "YES",
+                    '+JobFlavour': '"longlunch"',
+                    },
                 job_script_prologue=[
-                    #"export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
+                    "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
                     f"export X509_USER_PROXY=$HOME/x509up_u57864",
                     "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
                 ],

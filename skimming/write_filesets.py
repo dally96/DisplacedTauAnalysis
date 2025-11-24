@@ -20,10 +20,10 @@ args = parser.parse_args()
 # directory on EOS with input files
 ## to replace with v8 once available
 BASE_DIRS = [
-#  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10/",
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10/",
 #  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2",
 #  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2",
-#  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10/",
+  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10/",
 #  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data",
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
 #   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
@@ -130,6 +130,9 @@ def write_filesets(grouped):
                 match = False
                 if key == "T":  ## special case for single tops, as don't want to include TT into them
                     if dirname.startswith(("TB", "Tb", "TW")):
+                        match = True
+                if key == "DYJetsToLL":
+                    if dirname.startswith("DY"):
                         match = True
                 elif dirname.startswith(key):
                     match = True

@@ -18,7 +18,7 @@ hep.style.use("CMS")
 
 nanov = 'Summer22_CHS_v10/'
 # nanov = ''
-sample_folder = f"/eos/uscms/store/group/lpcdisptau/dally/displacedTaus/skim/{nanov}prompt_mutau/v7/selected/faster_trial/"
+sample_folder = f"/eos/uscms/store/user/dally/skim/{nanov}prompt_mutau/v8/selected/faster_trial/"
 
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
@@ -152,13 +152,16 @@ for process in available_processes:
     tmp_string = f"faster_trial_{process}/faster_trial_{process}.root"
     tmp_file = sample_folder +  tmp_string
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
-    #events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
+    events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
     
     mutau_dr = events.Muon.metric_table(events.Tau)
     mutau_pt = events.Muon.pt + events.Tau.pt
 
     met = events.PuppiMET.pt
     met_phi = events.PuppiMET.phi
+    if "Muon" not in process:
+        met = events.CorrectedPuppiMET.pt
+        met_phi = events.CorrectedPuppiMET.phi
     dphi = abs(events.Tau.phi - met_phi)
     dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)
     mT = np.sqrt(2 * events.Muon.pt * met * (1 - np.cos(dphi)))
@@ -174,6 +177,8 @@ for process in available_processes:
 #        weights = weights
     if "muon" in process.lower():
         weights = weights
+    if "muon" not in process.lower():
+        events["PuppiMET"] = events.CorrectedPuppiMET
     else:
         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
 #         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
@@ -342,21 +347,22 @@ for plot_name, histograms in histogram_dict.items():
     if groupProcesses:
     # # # if args.groupProcesses:
         sum_histogram = np.sum(np.asarray(hists_to_plot), axis=0)
-        # ratio_hist = np.asarray(histogram_dict[plot_name]["Data2018C"]).flatten() / (sum_histogram + np.finfo(float).eps)
+        sum_data_histogram = np.sum(np.asarray(data_hists), axis=0)
+        ratio_hist = sum_data_histogram / (sum_histogram + np.finfo(float).eps)
     # #     # Adding relative sqrtN Poisson uncertainty for now, should be improved when using the hist package
-    # #     rel_unc = np.sqrt(np.asarray(histogram_dict[plot_name]["Data2018C"]).flatten()) / np.asarray(histogram_dict[plot_name]["Data2018C"]).flatten()
-    # #     rel_unc *= ratio_hist
-    # #     rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
-    # #     hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
-    # #     ax_ratio.axhline(1, color='gray', linestyle='--')
+        rel_unc = np.sqrt(sum_data_histogram) / sum_data_histogram
+        rel_unc *= ratio_hist
+        rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
+        hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
+        ax_ratio.axhline(1, color='gray', linestyle='--')
     ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
     ax_main.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
     ax_main.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
     ax_ratio.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
     ax_ratio.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
-    # #     ax_ratio.set_ylabel('Data / MC')
-    # #     ax_ratio.set_xlim(binning[0], binning[-1])
-    # #     ax_ratio.set_ylim(0.6, 1.4)
+    ax_ratio.set_ylabel('Data / MC')
+    ax_ratio.set_xlim(binning[0], binning[-1])
+    ax_ratio.set_ylim(0.6, 1.4)
     
     # Decorating with CMS label
     hep.cms.label(data=True, loc=0, label="Private Work", com=13.6, lumi=round(target_lumi, 1), ax=ax_main)
@@ -364,7 +370,7 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filedir = "Zpeak_Run2022EE_v3"
+    filedir = "Zpeak_Run2022EE_v4"
     if filedir not in os.listdir('plots/'):
         os.mkdir(f'plots/{filedir}')
     filename = f"./plots/{filedir}/{dataset_name}_{plot_name}"
@@ -374,8 +380,8 @@ for plot_name, histograms in histogram_dict.items():
     else: 
         filename += "_stacked"
     #filename += "_etaleq1p2.pdf"
-    #filename += "_etag1p2.pdf"
-    filename += ".pdf"
+    filename += "_etag1p2.pdf"
+    #filename += ".pdf"
     print(filename)
     plt.savefig(filename)
     plt.savefig(filename.replace('.pdf', '.png'))

@@ -1,4 +1,5 @@
 import awkward as ak
+import numpy as np
 import uproot
 from coffea import processor
 from coffea.nanoevents import NanoEventsFactory, PFNanoAODSchema
@@ -15,9 +16,6 @@ import fsspec_xrootd
 from  fsspec_xrootd import XRootDFileSystem
 
 import os, argparse, importlib, pdb, socket, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "./")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 import time
 from datetime import datetime
 
@@ -33,7 +31,6 @@ parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
 	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'all'],
-	nargs='*',
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -64,7 +61,7 @@ parser.add_argument(
         help="Run a test job locally")
 args = parser.parse_args()
 
-out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/test/skim/{args.nanov}/mutau/v_all_samples/'
+out_folder = f'root://cmseos.fnal.gov//store/group/lpcdisptau/dally/displacedTaus/skim/{args.nanov}/mutau/v2/'
 out_folder_json = out_folder.replace('root://cmseos.fnal.gov/','/eos/uscms')
 custom_nano_v = args.nanov + '/'
 custom_nano_v_p = args.nanov + '.'
@@ -79,23 +76,33 @@ samples = {
     "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
 }
 
-all_samples = args.sample
-if args.sample[0] == 'all':
-    all_samples = [k for k in samples.keys()]
+all_fileset = {}
+if args.usePkl == True:
+    import pickle 
+    with open(f"samples/{custom_nano_v}{args.sample}_preprocessed.pkl", "rb") as  f:
+        input_dataset = pickle.load(f)
+else:
+    samples = {
+        "Wto2Q": f"samples.{custom_nano_v_p}fileset_Wto2Q",
+        "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
+        "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
+        "DY": f"samples.{custom_nano_v_p}fileset_DY",
+        "signal": f"samples.{custom_nano_v_p}fileset_signal",
+        "TT": f"samples.{custom_nano_v_p}fileset_TT",
+        "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
+        "JetMET": f"samples.{custom_nano_v_p}fileset_JetMET_2022",
+        "Muon": f"samples.{custom_nano_v_p}fileset_Muon_2022",
+    }
+  
+    module = importlib.import_module(samples[args.sample])
+    input_dataset = module.fileset   
 
-fileset = {}
-for isample in all_samples:
-    if args.usePkl == True:
-        import pickle 
-        with open(f"samples/{custom_nano_v}{isample}_preprocessed.pkl", "rb") as  f:
-            input_dataset = pickle.load(f)
-    else:
-        try:
-            module = importlib.import_module(samples[isample])
-            input_dataset = module.fileset   
-        except:
-            print ('file:', samples[isample], ' does not exists, skipping it' )    
-            continue
+    ## restrict to specific sub-samples
+if args.subsample == 'all':
+    fileset = input_dataset
+    print(fileset.keys())
+else:  
+    fileset = {k: input_dataset[k] for k in args.subsample}
 
     ## restrict to specific sub-samples
     if args.subsample == 'all':
@@ -103,15 +110,24 @@ for isample in all_samples:
     else:  
         fileset_tmp = {k: input_dataset[k] for k in args.subsample}
         fileset.update(fileset_tmp)
-     
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
 print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
 
+exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet', 
+                    'Photon', 'TrigObj', 'TrkMET', 'HLT',
+                    'Puppi', 'OtherPV', 'GenJetCands',
+                    'FsrPhoton', ''
+                    ## tmp
+                    'diele', 'LHE', 'dimuon', 'GenCands', 
+                    'Electron'
+                    ]
+
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
-                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight'#, 'HLT'
+                    'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weight', 'genWeight', 'HLT', 'RawPuppiMET',  'Rho', 'GenJet', 'nGenJet',
+                    'JetPFCands', 'PFCands', 
                    ]
 
 
@@ -127,7 +143,7 @@ good_hlts = [
   "PFMETTypeOne140_PFMHT140_IDTight",
   "MET105_IsoTrk50",
   "MET120_IsoTrk50",
-#   "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
+  "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",                 
 #   "HLT_DoubleMediumChargedIsoDisplacedPFTauHPS32_Trk1_eta2p1",     
 #   "HLT_DoubleMediumChargedIsoPFTauHPS40_Trk1_eta2p1"
 ]
@@ -143,6 +159,10 @@ class SkimProcessor(processor.ProcessorABC):
 
     def process(self, events):
         
+        import sys
+        sys.path.append('.')
+        from lumi_selections import select_lumis
+
         if events is None: 
             return {
                 "entries_written": 0,
@@ -158,7 +178,7 @@ class SkimProcessor(processor.ProcessorABC):
                 lumimask = select_lumis('2022', events)
                 events = events[lumimask]
             except:
-                print (f"[ lumimask ] Skip now! Unable to find year info of {dataset_name}")
+                print (f"[ lumimask ] Skip now! Unable to find year info of {args.sample}")
 
         ## retrieve the list of run/lumi being processed        
         run_dict = defaultdict(list)
@@ -167,6 +187,20 @@ class SkimProcessor(processor.ProcessorABC):
         for run, lumi in sorted(run_lumi_list):
             run_dict[str(int(run))].append(int(lumi))
         dataset_run_dict[dataset] = dict(run_dict)
+
+        ## To reject bad crystal in ECAL 
+        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
+        bad_jet_mask = (
+                        (events.Jet.pt > 50)
+                        & ((events.Jet.eta > -0.5) & (events.Jet.eta < -0.1))
+                        & ((events.Jet.phi > -2.1) & (events.Jet.phi < -1.8))
+                        & ((events.Jet.chEmEF > 0.9) | (events.Jet.neEmEF > 0.9))
+                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.PFMET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
+        )
+        
+        num_bad_jets = ak.count_nonzero(bad_jet_mask, axis = 1)
+        events = events[(~bad_event_mask) & (num_bad_jets < 1)]
+        print("Applied veto for bad crystal")
 
         ## Trigger mask
         trigger_mask = (
@@ -180,9 +214,11 @@ class SkimProcessor(processor.ProcessorABC):
                        events.HLT.PFMETTypeOne140_PFMHT140_IDTight                             |\
                        events.HLT.PFMETNoMu110_PFMHTNoMu110_IDTight_FilterHF                   |\
                        events.HLT.MET105_IsoTrk50                                              |\
-                       events.HLT.MET120_IsoTrk50                                              #|\
+                       events.HLT.MET120_IsoTrk50                                              |\
+                       events.HLT.DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1
         )
         events = events[trigger_mask]
+        print("Apply trigger mask")
 
         # Define the "good muon" condition for each muon per event
         good_muon_mask = (
@@ -193,6 +229,7 @@ class SkimProcessor(processor.ProcessorABC):
         sel_muons = events.DisMuon[good_muon_mask]
         events['DisMuon'] = sel_muons
         events = events[num_good_muons >= 1]
+        print("Apply muon mask")
 
         good_jet_mask = (
             (events.Jet.pt > 20)
@@ -203,6 +240,7 @@ class SkimProcessor(processor.ProcessorABC):
         sel_jets = events.Jet[good_jet_mask]
         events['Jet'] = sel_jets
         events = events[num_good_jets >= 1]
+        print("Apply jet mask")
 
         #Noise filter
         noise_mask = (
@@ -216,11 +254,13 @@ class SkimProcessor(processor.ProcessorABC):
                      & (events.Flag.ecalBadCalibFilter == 1)
                          )
         events = events[noise_mask] 
+        print("Apply noise mask")
 
         charged_sel = events.Jet.constituents.pf.charge != 0
         dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
         dxy = ak.fill_none(dxy, -999)
         events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
+        print("Apply dxy")
 
         ## prevent writing out files with empty trees
         if not len(events) > 0:
@@ -265,40 +305,40 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=4,
-                memory='12000MB',
-                disk='4000MB',
-                death_timeout = '180',
-                nanny=True,
+                cores=12,
+                memory='24000MB',
+                #disk='4000MB',
+                #death_timeout = '180',
+                #nanny=True,
                 #container_runtime = "none",
                 log_directory = "/uscms/home/dally/condor/log/mutau_skim/v3",
                 #ship_env=True,
-                transfer_input_files='utils.py',
+                transfer_input_files=['utils.py', './selections/lumi_selections.py'],
                 #scheduler_options={
                 #    'port': n_port,
                 #    'host': socket.gethostname(),
                 #    },
-                job_extra={
-                    'should_transfer_files': 'YES',
-                    '+JobFlavour': '"workday"',
-                    },
-                job_script_prologue=[
-                    "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
-                    f"export X509_USER_PROXY=$HOME/x509up_u57864",
-                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
-                ],
+                #job_extra={
+                #    'should_transfer_files': 'YES',
+                #    '+JobFlavour': '"workday"',
+                #    },
+                #job_script_prologue=[
+                #    "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
+                #    f"export X509_USER_PROXY=$HOME/x509up_u57864",
+                #    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
+                #],
                 #worker_extra_args = ['--worker-port 10000:10100']
                )
-        cluster.adapt(minimum=1, maximum=300)#, wait_count=3)
+        cluster.adapt(minimum=1, maximum=500)#, wait_count=3)
         print(cluster.job_script())
     else:    
-        cluster = LocalCluster(n_workers=8, threads_per_worker=1)
+        cluster = LocalCluster(n_workers=8, threads_per_worker=2)
     
     client = Client(cluster)
-    client.run(lambda: __import__('os').system('ls -l $_CONDOR_SCRATCH_DIR'))
+    client.upload_file('selections/lumi_selections.py')
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
-        chunksize=100_000,
+        chunksize=50_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
         savemetrics=True,
