@@ -24,6 +24,15 @@ sample_folder = f"/eos/uscms/store/user/dally/skim/{nanov}prompt_mutau/v8/select
 all_samples_dict = {
     "DY" : [
         "DYJetsToLL_M-50",
+    ],
+    "DYTau_0": [
+        "DYto2Tau-2Jets_MLL-50_0J",
+    ],
+    "DYTau_1": [
+        "DYto2Tau-2Jets_MLL-50_1J",
+    ],
+    "DYTau_2": [
+        "DYto2Tau-2Jets_MLL-50_2J",
       ],
     "QCD" : [
 ##       "QCD_PT-50to80",
@@ -118,7 +127,7 @@ xsec = xsec_and_br['xsec']
 br = xsec_and_br['br']
 
 ## load sum_gen_w from another JSON file
-with open(f"./plots_config/{nanov}/all_total_sumw.json", "r") as file:
+with open(f"./plots_config/{nanov}/v8/all_total_sumw.json", "r") as file:
     sum_gen_w = json.load(file)
     
 ## target lumi, for now fixed value
@@ -156,7 +165,7 @@ for process in available_processes:
     tmp_string = f"faster_trial_{process}/faster_trial_{process}.root"
     tmp_file = sample_folder +  tmp_string
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
-    events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
+    #events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
     
     mutau_dr = events.Muon.metric_table(events.Tau)
     mutau_pt = events.Muon.pt + events.Tau.pt
@@ -174,6 +183,8 @@ for process in available_processes:
     events["mutau"] = ak.with_field(events.mutau, mutau_dr, where = 'dR')
     events["mutau"] = ak.with_field(events.mutau, mutau_pt, where = 'pt') 
 
+    if "muon" not in process.lower():
+        events["PuppiMET"] = events.CorrectedPuppiMET
     ## disable for now
 #     print ('need to put back weights')
     weights = events.run / events.run
@@ -181,8 +192,6 @@ for process in available_processes:
 #        weights = weights
     if "muon" in process.lower():
         weights = weights
-    if "muon" not in process.lower():
-        events["PuppiMET"] = events.CorrectedPuppiMET
     else:
         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
 #         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
@@ -237,6 +246,9 @@ for plot_name, histograms in histogram_dict.items():
         hist_Wto2Q     = np.zeros(len(binning)-1)
         hist_WtoLNu    = np.zeros(len(binning)-1)
         hist_EWK       = np.zeros(len(binning)-1)
+        hist_DYTau_0       = np.zeros(len(binning)-1)
+        hist_DYTau_1       = np.zeros(len(binning)-1)
+        hist_DYTau_2       = np.zeros(len(binning)-1)
         hist_TT        = np.zeros(len(binning)-1)
         hist_singleT   = np.zeros(len(binning)-1)
         hist_Top   = np.zeros(len(binning)-1)
@@ -281,6 +293,12 @@ for plot_name, histograms in histogram_dict.items():
                 hist_Top += histogram
             elif process in all_samples_dict['DY']:
                 hist_EWK += histogram
+            elif process in all_samples_dict['DYTau_0']:
+                hist_DYTau_0 += histogram
+            elif process in all_samples_dict['DYTau_1']:
+                hist_DYTau_1 += histogram
+            elif process in all_samples_dict['DYTau_2']:
+                hist_DYTau_2 += histogram
             elif process in all_samples_dict['WtoLNu']:
                 hist_WtoLNu += histogram
                 hist_WJets += histogram
@@ -316,6 +334,12 @@ for plot_name, histograms in histogram_dict.items():
         labels.append('TT')
         hists_to_plot.append(hist_EWK)
         labels.append('DY')
+        hists_to_plot.append(hist_DYTau_0)
+        labels.append('DYtoTauTau_0Jets')
+        hists_to_plot.append(hist_DYTau_1)
+        labels.append('DYtoTauTau_1Jets')
+        hists_to_plot.append(hist_DYTau_2)
+        labels.append('DYtoTauTau_2Jets')
         #hists_to_plot.append(hist_Top)
         #labels.append('tt + singlet')
         #hists_to_plot.append(hist_WJets)
@@ -384,8 +408,8 @@ for plot_name, histograms in histogram_dict.items():
     else: 
         filename += "_stacked"
     #filename += "_etaleq1p2.pdf"
-    filename += "_etag1p2.pdf"
-    #filename += ".pdf"
+    #filename += "_etag1p2.pdf"
+    filename += ".pdf"
     print(filename)
     plt.savefig(filename)
     plt.savefig(filename.replace('.pdf', '.png'))

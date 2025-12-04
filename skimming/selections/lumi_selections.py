@@ -10,14 +10,10 @@ def select_lumis(
 #     logger: logging.Logger,
 ) -> ak.highlevel.Array:
     goldenJson_dict = {
-        "2022": os.path.join(
-            os.path.dirname(__file__),
-            "root://eosuser.cern.ch//eos/user/c/cmsdqm/www/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json",
-        ),
-        "2023": os.path.join(
-            os.path.dirname(__file__),
-            "root://eosuser.cern.ch//eos/user/c/cmsdqm/www/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json",
-        ),
+        "2022":
+            "Cert_Collisions2022_355100_362760_Golden.json",
+        "2023":
+            "Cert_Collisions2023_366442_370790_Golden.json",
 #         "2024": os.path.join(
 #             os.path.dirname(__file__),
 #             "../metaconditions/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json",

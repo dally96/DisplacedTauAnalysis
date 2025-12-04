@@ -114,12 +114,11 @@ else:
     else:  
         fileset_tmp = {k: input_dataset[k] for k in args.subsample}
         fileset.update(fileset_tmp)
-     
+
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
 print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
-
 
 ## exclude not used
 exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet', 
@@ -127,7 +126,6 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
                     'Puppi', 'OtherPV', 'GenJetCands',
                     'FsrPhoton', ''
                     ## tmp
-                    'diele', 'LHE', 'dimuon', 'JetPFCands', 'GenCands', 
                     'diele', 'LHE', 'dimuon', 'JetPFCands', 'GenJet', 'GenCands', 
                     'Electron'
                     ]
@@ -136,7 +134,7 @@ exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet',
 include_prefixes = ['DisMuon',  'Muon',  'Jet',  'Tau',   'PFMET', 'MET' , 'ChsMET', 'PuppiMET',   'PV', 'GenPart',   'GenVisTau', 'GenVtx',
                     'nDisMuon', 'nMuon', 'nJet', 'nTau', 'nPFMET', 'nMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenPart', 'nGenVisTau', 'nGenVtx',
                     'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'Rho', 'weight', 'genWeight', 'CandidateElectron', 'CandidateMuon', 'LooseJet',
-                    'DoubleMuon', 'DoubleElectron', 'RawPuppiMET', 'GenJet'
+                    'DoubleMuon', 'DoubleElectron', 'RawPuppiMET', 'GenJet', 'dimuon'
                    ]
 
 
@@ -171,13 +169,6 @@ class SkimProcessor(processor.ProcessorABC):
 #             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
     def process(self, events):
-
-        import sys
-
-        sys.path.append('.')
-
-        from lumi_selections import select_lumis
-        
         import sys
         sys.path.append('.')
         from lumi_selections import select_lumis
@@ -458,7 +449,6 @@ if __name__ == "__main__":
 #                    'host': socket.gethostname(),
 #                    },
                 transfer_input_files=['utils.py', './selections/lumi_selections.py'],
-                #transfer_input_files=['utils.py'],
                 #job_extra={
                 #    '+JobFlavour': '"workday"',
                 #    'should_transfer_files': 'YES',
@@ -482,7 +472,7 @@ if __name__ == "__main__":
         chunksize=50_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
-      savemetrics=True,
+        savemetrics=True,
 #         maxchunks=4,
     )
     
