@@ -18,7 +18,7 @@ from dask.distributed import Client, wait, progress, LocalCluster
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
+	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT', 'JetMET_2022', 'Muon', 'DYto2L-2Jets'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -71,6 +71,7 @@ samples = {
     "singleT": f"samples.{outdir_p}fileset_singleT",  ## more on this later
     "JetMET_2022": f"samples.{outdir_p}fileset_JetMET_2022",
     "Muon": f"samples.{outdir_p}fileset_Muon_2022",
+    "DYto2L-2Jets": f"samples.{outdir_p}fileset_DYto2L-2Jets",
 }
 
 module = importlib.import_module(samples[args.sample])
@@ -94,6 +95,7 @@ pars_per_sample = {
     "WtoLNu" : [20_000, 100],  
     "QCD"    : [20_000, 1],  
     "DY"     : [10_000, 1000],  
+    "DYto2L-2Jets"     : [10_000, 1000],  
     "signal" : [20_000, 1],  
     "TT"     : [20_000, 1000],  
     "singleT": [20_000, 1000],  

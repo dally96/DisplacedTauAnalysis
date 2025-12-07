@@ -33,7 +33,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
+	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon', 'DYto2L-2Jets'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -199,13 +199,13 @@ class SkimProcessor(processor.ProcessorABC):
         dataset_run_dict[dataset] = dict(run_dict)
 
         ## To reject bad crystal in ECAL 
-        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
+        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.MET.pt > 100))
         bad_jet_mask = (
                         (events.Jet.pt > 50)
                         & ((events.Jet.eta > -0.5) & (events.Jet.eta < -0.1))
                         & ((events.Jet.phi > -2.1) & (events.Jet.phi < -1.8))
                         & ((events.Jet.chEmEF > 0.9) | (events.Jet.neEmEF > 0.9))
-                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.PFMET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
+                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.MET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
         )
         
         num_bad_jets = ak.count_nonzero(bad_jet_mask, axis = 1)
@@ -230,20 +230,7 @@ class SkimProcessor(processor.ProcessorABC):
             mask_zll = ~mask_ztautau
             events = events[mask_zll]
 #             print (f" Removed non zll events from {dataset}")
-        ## To reject bad crystal in ECAL 
-        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
-        bad_jet_mask = (
-                        (events.Jet.pt > 50)
-                        & ((events.Jet.eta > -0.5) & (events.Jet.eta < -0.1))
-                        & ((events.Jet.phi > -2.1) & (events.Jet.phi < -1.8))
-                        & ((events.Jet.chEmEF > 0.9) | (events.Jet.neEmEF > 0.9))
-                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.PFMET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
-        )
-        
-        num_bad_jets = ak.count_nonzero(bad_jet_mask, axis = 1)
-        events = events[(~bad_event_mask) & (num_bad_jets < 1)]
 
-        # Define loose muons and electrons for Extra Lepton Veto
         loose_electron_mask = (
             (events.Electron.pt > 10)
             & (abs(events.Electron.eta) < 2.5)
@@ -391,10 +378,10 @@ class SkimProcessor(processor.ProcessorABC):
                          )
         events = events[noise_mask] 
 
-        charged_sel = events.Jet.constituents.pf.charge != 0
-        dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
-        dxy = ak.fill_none(dxy, -999)
-        events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
+        #charged_sel = events.Jet.constituents.pf.charge != 0
+        #dxy = ak.where(ak.all(events.Jet.constituents.pf.charge == 0, axis = -1), -999, ak.flatten(events.Jet.constituents.pf[ak.argmax(events.Jet.constituents.pf[charged_sel].pt, axis=2, keepdims=True)].d0, axis = -1))
+        #dxy = ak.fill_none(dxy, -999)
+        #events["Jet"] = ak.with_field(events.Jet, dxy, where = "dxy")
         ## prevent writing out files with empty trees
         if not len(events) > 0:
             return {

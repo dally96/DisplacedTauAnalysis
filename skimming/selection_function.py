@@ -49,6 +49,8 @@ TT_CR = {j:k for j,k in SR.items()}
 TT_CR["jet_score_min"] =  0.
 TT_CR["jet_score_max"] =  0.7
 TT_CR["jet_dxy_min"] =  -999
+TT_CR["muon_dxy_min"] = 0
+TT_CR["muon_dxy_max"] = 50E-4
 
 ## there was a tight_TT_CR where muon had tight ID
 ## to be fixed, need Daniel

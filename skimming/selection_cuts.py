@@ -46,7 +46,7 @@ parser.add_argument("-m"    , "--muon"    , dest = "leading_muon_type"   , help 
 parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "pt")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
+	choices=['QCD','DY', 'DYto2L-2Jets', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -65,6 +65,11 @@ parser.add_argument(
 	default=True,
 	required=False,
 	help='Turn it to false to use the non-preprocessed samples')
+parser.add_argument(
+	"--selection",
+	default='',
+	required=False,
+	help='Specify which CR to use')
 parser.add_argument(
 	"--skim",
 	default='prompt_mutau',
@@ -91,13 +96,15 @@ args = parser.parse_args()
 
 ## define the folder where the input .pkl files are defined, as well as the output folder on eos for the final events
 skim_folder = args.skim
+selection_string = args.selection
 ## will change once "region" will become a flag
 if skim_folder == 'prompt_mutau':
     mode_string = 'hpstau_mu' 
     selection_string = 'HPSTauMu'
 elif skim_folder == 'mutau':
     mode_string = 'jet_dmu' 
-    selection_string = 'validation_daniel'  ## FIXME
+    if selection_string == '':
+        selection_string = 'validation_daniel'  ## FIXME
 else:
     print ('make sure using the correct folder/selections')
     exit(0)
@@ -119,6 +126,7 @@ else:
         "WtoLNu": f"samples.{args.nanov}.{skim_folder}.fileset_WtoLNu",
         "QCD": f"samples.{args.nanov}.{skim_folder}.fileset_QCD",
         "DY": f"samples.{args.nanov}.{skim_folder}.fileset_DY",
+        "DYto2L-2Jets": f"samples.{args.nanov}.{skim_folder}.fileset_DYto2L-2Jets",
         "signal": f"samples.{args.nanov}.{skim_folder}.fileset_signal",
         "TT": f"samples.{args.nanov}.{skim_folder}.fileset_TT",
         "singleT": f"samples.{args.nanov}.{skim_folder}.fileset_singleT",
@@ -378,8 +386,8 @@ class SelectionProcessor(processor.ProcessorABC):
             taus = taus[num_bjet == 0]
             
             ## add transverse mass and mu+tau mass vars
-            met = events.PFMET.pt            
-            met_phi =  events.PFMET.phi     
+            met = events.MET.pt            
+            met_phi =  events.MET.phi     
             dphi = abs(muons.phi - met_phi)
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
@@ -398,8 +406,6 @@ class SelectionProcessor(processor.ProcessorABC):
             mutau_cand = mutau_cand[ak.ravel(mutau_cand.charge == 0)]
             mutau_mass = mutau_cand.mass 
             events = ak.with_field(events, mutau_mass, "mutau_mass")
-
-            events = events[ak.ravel(mutau_mass > 40)]
 
             events = events[ak.ravel(mutau_mass > 40)]
 
@@ -473,8 +479,8 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=16,
-                memory='32000MB',
+                cores=24,
+                memory='48000MB',
                 #disk='1000MB',
                 #death_timeout = '600',
                 #lcg = True,

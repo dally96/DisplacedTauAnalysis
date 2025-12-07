@@ -26,7 +26,7 @@ treeName = "Events"
 
 # Source directory
 # sourceDir = "/eos/cms/store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/daniel/selected/"
-sourceDir = "/eos/uscms/store/user/dally/skim/Summer22_CHS_v10/mutau/v3/material_veto/"
+sourceDir = "/eos/uscms/store/user/dally/skim/Summer22_CHS_v10/prompt_mutau/v8/selected/"
 sampleDir = sourceDir
 
 ## create merged directory if missing
@@ -52,7 +52,7 @@ if doMerge:
         if mergeDir in folder:
             continue
         folderPath = os.path.join(sampleDir, folder)
-        folderPath = os.path.join(folderPath, "jet_dmu")
+        folderPath = os.path.join(folderPath, "TT_CR")
         if not os.path.isdir(folderPath):
             continue
 

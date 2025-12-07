@@ -23,7 +23,8 @@ sample_folder = f"/eos/uscms/store/user/dally/skim/{nanov}prompt_mutau/v8/select
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
     "DY" : [
-        "DYJetsToLL_M-50",
+        #"DYJetsToLL_M-50",
+        'DYto2L-2Jets_MLL-50',
     ],
     "DYTau_0": [
         "DYto2Tau-2Jets_MLL-50_0J",
@@ -147,7 +148,7 @@ target_lumi = 26.7
 dataset_name = 'all'
 
 # Load plot settings from JSON file
-with open("./plots_config/plot_settings.json", "r") as file:
+with open("./plots_config/mutau_mass_plot_settings.json", "r") as file:
     plot_settings = json.load(file)
 
 # Directory creation for plots (directory_path = "plots/" + args.process)
@@ -167,24 +168,24 @@ for process in available_processes:
     events = NanoEventsFactory.from_root({tmp_file:"Events"}, schemaclass= PFNanoAODSchema).events()
     #events = events[ak.ravel(abs(events.Tau.eta) > 1.2)]
     
-    mutau_dr = events.Muon.metric_table(events.Tau)
-    mutau_pt = events.Muon.pt + events.Tau.pt
+    #mutau_dr = events.Muon.metric_table(events.Tau)
+    #mutau_pt = events.Muon.pt + events.Tau.pt
 
-    met = events.PuppiMET.pt
-    met_phi = events.PuppiMET.phi
-    if "Muon" not in process:
-        met = events.CorrectedPuppiMET.pt
-        met_phi = events.CorrectedPuppiMET.phi
-    dphi = abs(events.Tau.phi - met_phi)
-    dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)
-    mT = np.sqrt(2 * events.Muon.pt * met * (1 - np.cos(dphi)))
-    events = ak.with_field(events, mT, "Puppi_mT")
+    #met = events.PuppiMET.pt
+    #met_phi = events.PuppiMET.phi
+    #if "Muon" not in process:
+    #    met = events.CorrectedPuppiMET.pt
+    #    met_phi = events.CorrectedPuppiMET.phi
+    #dphi = abs(events.Tau.phi - met_phi)
+    #dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)
+    #mT = np.sqrt(2 * events.Muon.pt * met * (1 - np.cos(dphi)))
+    #events = ak.with_field(events, mT, "Puppi_mT")
 
-    events["mutau"] = ak.with_field(events.mutau, mutau_dr, where = 'dR')
-    events["mutau"] = ak.with_field(events.mutau, mutau_pt, where = 'pt') 
+    #events["mutau"] = ak.with_field(events.mutau, mutau_dr, where = 'dR')
+    #events["mutau"] = ak.with_field(events.mutau, mutau_pt, where = 'pt') 
 
-    if "muon" not in process.lower():
-        events["PuppiMET"] = events.CorrectedPuppiMET
+    #if "muon" not in process.lower():
+    #    events["PuppiMET"] = events.CorrectedPuppiMET
     ## disable for now
 #     print ('need to put back weights')
     weights = events.run / events.run
@@ -333,13 +334,13 @@ for plot_name, histograms in histogram_dict.items():
         hists_to_plot.append(hist_TT)
         labels.append('TT')
         hists_to_plot.append(hist_EWK)
-        labels.append('DY')
-        hists_to_plot.append(hist_DYTau_0)
-        labels.append('DYtoTauTau_0Jets')
-        hists_to_plot.append(hist_DYTau_1)
-        labels.append('DYtoTauTau_1Jets')
-        hists_to_plot.append(hist_DYTau_2)
-        labels.append('DYtoTauTau_2Jets')
+        labels.append('DYto2L-2Jets')
+        #hists_to_plot.append(hist_DYTau_0)
+        #labels.append('DYtoTauTau_0Jets')
+        #hists_to_plot.append(hist_DYTau_1)
+        #labels.append('DYtoTauTau_1Jets')
+        #hists_to_plot.append(hist_DYTau_2)
+        #labels.append('DYtoTauTau_2Jets')
         #hists_to_plot.append(hist_Top)
         #labels.append('tt + singlet')
         #hists_to_plot.append(hist_WJets)
@@ -355,12 +356,12 @@ for plot_name, histograms in histogram_dict.items():
         #data_hists.append(hist_Data_G)
         #data_labels.append('G')
 
-    colours = hep.style.cms.cmap_petroff
+    colours = ["#5790fc", "#f89c20", "#e42536", "#964a8b", "#9c9ca1", "#7a21dd", "#FF99C9", "#C8E9A0", "#6DD3CE",] #"#127475", "#FF99C9"]
     
     fig, (ax_main, ax_ratio) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
     fig.subplots_adjust(hspace=0.0)
     hep.histplot(hists_to_plot, bins=binning, stack=do_stack, histtype='fill', 
-                 label=labels, #sort='label_r', color=colours,
+                 label=labels, #color=colours, #sort='label_r', 
                  density=plot_settings[plot_name].get("density"), ax=ax_main)
     hep.histplot(data_hists, xerr=True, bins=binning, stack=False, histtype='errorbar', 
                   color='black', label='data', density=plot_settings[plot_name].get("density"), ax=ax_main)
@@ -372,25 +373,25 @@ for plot_name, histograms in histogram_dict.items():
     ax_main.legend()
     
     ## this part is still to be done 
-    if groupProcesses:
-    # # # if args.groupProcesses:
-        sum_histogram = np.sum(np.asarray(hists_to_plot), axis=0)
-        sum_data_histogram = np.sum(np.asarray(data_hists), axis=0)
-        ratio_hist = sum_data_histogram / (sum_histogram + np.finfo(float).eps)
-    # #     # Adding relative sqrtN Poisson uncertainty for now, should be improved when using the hist package
-        rel_unc = np.sqrt(sum_data_histogram) / sum_data_histogram
-        rel_unc *= ratio_hist
-        rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
-        hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
-        ax_ratio.axhline(1, color='gray', linestyle='--')
-    ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
-    ax_main.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
-    ax_main.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
-    ax_ratio.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
-    ax_ratio.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
-    ax_ratio.set_ylabel('Data / MC')
-    ax_ratio.set_xlim(binning[0], binning[-1])
-    ax_ratio.set_ylim(0.6, 1.4)
+    #if groupProcesses:
+    ## # # if args.groupProcesses:
+    #    sum_histogram = np.sum(np.asarray(hists_to_plot), axis=0)
+    #    sum_data_histogram = np.sum(np.asarray(data_hists), axis=0)
+    #    ratio_hist = sum_data_histogram / (sum_histogram + np.finfo(float).eps)
+    ## #     # Adding relative sqrtN Poisson uncertainty for now, should be improved when using the hist package
+    #    rel_unc = np.sqrt(sum_data_histogram) / sum_data_histogram
+    #    rel_unc *= ratio_hist
+    #    rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
+    #    hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
+    #    ax_ratio.axhline(1, color='gray', linestyle='--')
+    #ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
+    #ax_main.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
+    #ax_main.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
+    #ax_ratio.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
+    #ax_ratio.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
+    #ax_ratio.set_ylabel('Data / MC')
+    #ax_ratio.set_xlim(binning[0], binning[-1])
+    #ax_ratio.set_ylim(0.6, 1.4)
     
     # Decorating with CMS label
     hep.cms.label(data=True, loc=0, label="Private Work", com=13.6, lumi=round(target_lumi, 1), ax=ax_main)
@@ -398,7 +399,7 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filedir = "Zpeak_Run2022EE_v4"
+    filedir = "Zpeak_Run2022EE_v5"
     if filedir not in os.listdir('plots/'):
         os.mkdir(f'plots/{filedir}')
     filename = f"./plots/{filedir}/{dataset_name}_{plot_name}"

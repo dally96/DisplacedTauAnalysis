@@ -20,20 +20,22 @@ args = parser.parse_args()
 # directory on EOS with input files
 ## to replace with v8 once available
 BASE_DIRS = [
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10/",
+#  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10/",
 #  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2",
 #  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_resubmit_v2",
-  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10/",
+#  "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10/",
 #  "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data",
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/",
 #   "/store/user/fiorendi/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7/", 
 #   "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v7_v2/",
-    "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_data/",
-    "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data/"
+#    "/store/group/lpcdisptau/displacedTaus/nanoprod/Run3_Summer22_chs_AK4PFCands_v10_data/",
+#    "/store/group/lpcdisptau/displacedTaus/nanoprod/summary/Run3_Summer22_chs_AK4PFCands_v10_data/"
+    "/store/mc/Run3Summer22EENanoAODv12/"
 ]
 custom_nano_v = 'Summer22_CHS_v10'
 
-XROOTD_PREFIX = "root://cmseos.fnal.gov/"
+XROOTD_PREFIX = "root://cms-xrd-global.cern.ch/"
+#XROOTD_PREFIX = "root://cmseos.fnal.gov/"
 EOS_LOC = 'root://cmseos.fnal.gov'
 outdir = 'samples/' + custom_nano_v + '/'
 
@@ -64,7 +66,8 @@ GROUPS = {
     "Wto2Q"        : f"{outdir}fileset_Wto2Q.py",
     "WtoLNu"       : f"{outdir}fileset_WtoLNu.py",
     "QCD_PT"       : f"{outdir}fileset_QCD.py",
-    "DYJetsToLL"   : f"{outdir}fileset_DY.py",
+    "DY"           : f"{outdir}fileset_DY.py",
+    "DYto2L-2Jets"   : f"{outdir}fileset_DYto2L-2Jets.py",
     "TTto"         : f"{outdir}fileset_TT.py",
     "T"            : f"{outdir}fileset_singleT.py",  ## more on this later
     "JetMET"       : f"{outdir}fileset_JetMET_2022.py",  ## more on this later
@@ -80,11 +83,11 @@ def run_cmd(cmd):
     return result.stdout.strip().split("\n")
 
 def list_dirs(base):
-    cmd = f"xrdfs {EOS_LOC} ls {base}"
+    cmd = f"xrdfs {XROOTD_PREFIX} ls {base}"
     return run_cmd(cmd)
 
 def list_root_files(path):
-    cmd = f"xrdfs {EOS_LOC} ls {path}"
+    cmd = f"xrdfs {XROOTD_PREFIX} ls {path}"
     files = run_cmd(cmd)
     return [f for f in files if f.endswith(".root")]
 
@@ -112,7 +115,7 @@ def count_events(outfile, total_events):
     for isample in all_fileset.keys():
         total_events[isample] = 0
         for ifile in all_fileset[isample]['files'].keys():
-            n_ev_this_file = int(ifile.split('/nano_')[1].replace('.root','').split('_')[-1]) - int(ifile.split('/nano_')[1].replace('.root','').split('_')[-2])
+            n_ev_this_file = int(ifile.split('.')[-2].split('_')[-1]) - int(ifile.split('.')[-2].split('_')[-2])
             total_events[isample] += n_ev_this_file
     return total_events
 
@@ -132,6 +135,9 @@ def write_filesets(grouped):
                     if dirname.startswith(("TB", "Tb", "TW")):
                         match = True
                 if key == "DYJetsToLL":
+                    if dirname.startswith("DYto2L-2Jets"):
+                        match = True
+                if key == "DY":
                     if dirname.startswith("DY"):
                         match = True
                 elif dirname.startswith(key):
