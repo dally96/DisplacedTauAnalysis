@@ -256,7 +256,7 @@ class SelectionProcessor(processor.ProcessorABC):
             ext.add_weight_sets([
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
-                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
+            #    "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
                 "* * ./jec/Summer22EE_JRV1_MC_SF_AK4PFPuppi.jer.txt",
@@ -266,7 +266,7 @@ class SelectionProcessor(processor.ProcessorABC):
             jet_stack_names = [
                 "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
                 "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
-                "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
+             #   "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
                 "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
                 "Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi",
                 "Summer22EE_JRV1_MC_SF_AK4PFPuppi"
@@ -282,21 +282,20 @@ class SelectionProcessor(processor.ProcessorABC):
             name_map['JetEta'] = 'eta'
             name_map['JetA'] = 'area'
 
-            jets = events.Jet
+            jets = events['Jet']
             jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
             jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
             jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
-            jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
+            jets['Rho'] = ak.broadcast_arrays(events['Rho']['fixedGridRhoFastjetAll'], jets['pt'])[0]
 
             name_map['ptGenJet'] = 'pt_gen'
             name_map['ptRaw'] = 'pt_raw'
             name_map['massRaw'] = 'mass_raw'
-            name_map['Rho'] = 'rho'
-
+            name_map['Rho'] = 'Rho'
+            
             jet_factory = CorrectedJetsFactory(name_map, jec_stack)
             corrected_jets = jet_factory.build(jets)
             events = ak.with_field(events, corrected_jets, "CorrectedJet")
-            print(events.fields)
 
             puppi_met = events.PuppiMET
             puppi_met['pt_raw'] = events.RawPuppiMET.pt
@@ -317,6 +316,7 @@ class SelectionProcessor(processor.ProcessorABC):
             events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
 
         else:
+            print("Are we going through the data correction loop?")
             ext = extractor()
             ext.add_weight_sets([
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
@@ -341,12 +341,12 @@ class SelectionProcessor(processor.ProcessorABC):
             jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
             jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
             #jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
-            jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
+            jets['Rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
 
             #name_map['ptGenJet'] = 'pt_gen'
             name_map['ptRaw'] = 'pt_raw'
             name_map['massRaw'] = 'mass_raw'
-            name_map['Rho'] = 'rho'
+            name_map['Rho'] = 'Rho'
 
             jet_factory = CorrectedJetsFactory(name_map, jec_stack)
             corrected_jets = jet_factory.build(jets)
@@ -476,15 +476,10 @@ class SelectionProcessor(processor.ProcessorABC):
             dismuons = dismuons[ak.argsort(dismuons[leading_muon_var], ascending=False, axis=1)]
             dismuons = ak.singletons(ak.firsts(dismuons))
             events["DisMuon"] = dismuons
-            print(f"Printing regular jet pt before choosing leading based on score {events.Jet.pt}")
-            print(f"Printing corrected jet pt before choosing leading based on score {events.CorrectedJet.pt}")
-            print(f"Printing corrected jet score before choosing leading based on score {events.CorrectedJet.disTauTag_score1}")
             correctedjets = events["CorrectedJet"]
             correctedjets =  correctedjets[ak.argsort(correctedjets[leading_jet_var], ascending=False, axis = 1)]
             correctedjets = ak.singletons(ak.firsts(correctedjets))
             events["CorrectedJet"] = correctedjets
-            print(f"Printing corrected jet pt after choosing leading based on score {events.CorrectedJet.pt}")
-            print(f"Printing corrected jet score after choosing leading based on score {events.CorrectedJet.disTauTag_score1}")
 
             jets = events["Jet"]
             jets =  jets[ak.argsort(jets[leading_jet_var], ascending=False, axis = 1)]
@@ -501,8 +496,6 @@ class SelectionProcessor(processor.ProcessorABC):
             
             ## apply selections
             events = event_selection(events, selection_string)  
-            print(f"Printing corrected jet pt after TT_CR selections {events.CorrectedJet.pt}")
-            print(f"Printing corrected jet score after TT_CR selections {events.CorrectedJet.disTauTag_score1}")
 
         logger.info(f"Chose leading objects & filtered events")
 
