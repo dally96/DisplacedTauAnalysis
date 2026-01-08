@@ -102,6 +102,7 @@ selections_dict = {
 def event_selection(events, selection):
 
     selections = selections_dict[selection]
+    print(selections)
 
     print ('in function selections: \n', selections)
     good_muons  =  ak.flatten(
@@ -117,14 +118,20 @@ def event_selection(events, selection):
                    ) 
     
     good_jets   = ak.flatten(
-                    (events.Jet.pt > selections["jet_pt_min"]) &\
-                    (events.Jet.disTauTag_score1 > selections["jet_score_min"]) &\
-                    (events.Jet.disTauTag_score1 < selections["jet_score_max"]) &\
-                    (abs(events.Jet.dxy) > selections["jet_dxy_min"]) &\
-                    (abs(events.Jet.dxy) < selections["jet_dxy_max"])   
+                    (events.CorrectedJet.pt > selections["jet_pt_min"]) &\
+                    (events.CorrectedJet.disTauTag_score1 > selections["jet_score_min"]) &\
+                    (events.CorrectedJet.disTauTag_score1 < selections["jet_score_max"]) &\
+                    (abs(events.CorrectedJet.dxy) > selections["jet_dxy_min"]) &\
+                    (abs(events.CorrectedJet.dxy) < selections["jet_dxy_max"])   
                   )
     
     good_MET = (events.PFMET.pt > selections["MET_pt"])
+
+    print(f"Good muons {good_muons}")
+    print(f"Good jets {good_jets}")
+    print(f"Good MET {good_MET}")
+    print(f"Good events {good_muons & good_jets & good_MET}")
+
     events = events[good_muons & good_jets & good_MET]
 
     return events
@@ -174,9 +181,9 @@ def Zpeak_selection(events, selections):
                    (events.DisMuon.pfRelIso03_all < selections["muon_iso_max"])
                   
 
-    good_jets   = (events.Jet.disTauTag_score1 > selections["jet_score"])   &\
-                   (events.Jet.pt > selections["jet_pt"])                               &\
-                   (abs(events.Jet.dxy) > selections["jet_dxy_displaced_min"])            #&\
+    good_jets   = (events.CorrectedJet.disTauTag_score1 > selections["jet_score"])   &\
+                   (events.CorrectedJet.pt > selections["jet_pt"])                               &\
+                   (abs(events.CorrectedJet.dxy) > selections["jet_dxy_displaced_min"])            #&\
                    #(abs(events.Jet.dxy) < selections["muon_dxy_prompt_max"])
                   
     events['DisMuon'] = ak.drop_none(events.DisMuon[good_muons])

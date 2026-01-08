@@ -21,7 +21,7 @@ from  fsspec_xrootd import XRootDFileSystem
 import dask
 from dask import config as cfg
 cfg.set({'distributed.scheduler.worker-ttl': None}) # Check if this solves some dask issues
-#cfg.set({'distributed.scheduler.allowed-failures': 30}) # Check if this solves some dask issues
+cfg.set({'distributed.scheduler.allowed-failures': 30}) # Check if this solves some dask issues
 cfg.set({"distributed.logging.distributed": "debug"})
 from dask.distributed import Client, LocalCluster, wait, progress, performance_report
 #from dask_lxplus import CernCluster
@@ -43,10 +43,10 @@ from utils import process_n_files, is_rootcompat, uproot_writeable_selected
 from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument("-m"    , "--muon"    , dest = "leading_muon_type"   , help = "Leading muon variable"    , default = "pt")
-parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "pt")
+parser.add_argument("-j"    , "--jet"     , dest = "leading_jet_type"    , help = "Leading jet variable"     , default = "disTauTag_score1")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'DYto2L-2Jets', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
+	choices=['QCD','DY', 'DYto2L-2Jets', 'DYto2Tau-2Jets_0J_custom', 'DYto2Tau-2Jets_0J', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -110,7 +110,7 @@ else:
     exit(0)
     
 
-out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/'
+out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_folder}/{args.skimversion}_CorrectedJet/selected/'
 
 
 ## define input samples
@@ -127,6 +127,8 @@ else:
         "QCD": f"samples.{args.nanov}.{skim_folder}.fileset_QCD",
         "DY": f"samples.{args.nanov}.{skim_folder}.fileset_DY",
         "DYto2L-2Jets": f"samples.{args.nanov}.{skim_folder}.fileset_DYto2L-2Jets",
+        "DYto2Tau-2Jets_0J": f"samples.{args.nanov}.{skim_folder}.fileset_DYto2Tau-2Jets_0J",
+        "DYto2Tau-2Jets_0J_custom": f"samples.{args.nanov}.{skim_folder}.fileset_DYto2Tau-2Jets_0J_custom",
         "signal": f"samples.{args.nanov}.{skim_folder}.fileset_signal",
         "TT": f"samples.{args.nanov}.{skim_folder}.fileset_TT",
         "singleT": f"samples.{args.nanov}.{skim_folder}.fileset_singleT",
@@ -161,7 +163,7 @@ include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 'HLT',
                'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau_mass',
-               'CorrectedPuppiMET'
+               'CorrectedPuppiMET', 'CorrectedJet'
               ]
 
 ### FIXME: need to add Lxy and IP at GEN level                             
@@ -293,7 +295,63 @@ class SelectionProcessor(processor.ProcessorABC):
 
             jet_factory = CorrectedJetsFactory(name_map, jec_stack)
             corrected_jets = jet_factory.build(jets)
+            events = ak.with_field(events, corrected_jets, "CorrectedJet")
+            print(events.fields)
 
+            puppi_met = events.PuppiMET
+            puppi_met['pt_raw'] = events.RawPuppiMET.pt
+            puppi_met['unclustEDeltaX'] = puppi_met.ptUnclusteredUp * np.cos(puppi_met.phiUnclusteredUp)
+            puppi_met['unclustEDeltaY'] = puppi_met.ptUnclusteredUp * np.sin(puppi_met.phiUnclusteredUp)
+
+            met_name_map = {}
+            met_name_map['METpt'] = 'pt'
+            met_name_map['METphi'] = 'phi'
+            met_name_map['JetPt'] = 'pt'
+            met_name_map['JetPhi'] = 'phi'
+            met_name_map['ptRaw'] = 'pt_raw'
+            met_name_map['UnClusteredEnergyDeltaX'] = 'unclustEDeltaX'
+            met_name_map['UnClusteredEnergyDeltaY'] = 'unclustEDeltaY'
+
+            met_factory = CorrectedMETFactory(met_name_map)
+            CorrectedPuppiMET = met_factory.build(puppi_met, corrected_jets)
+            events = ak.with_field(events, CorrectedPuppiMET, "CorrectedPuppiMET")
+
+        else:
+            ext = extractor()
+            ext.add_weight_sets([
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
+            ])
+            ext.finalize()
+
+            jet_stack_names = [
+                "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
+            ]
+
+            evaluator = ext.make_evaluator()
+            jec_inputs = {name: evaluator[name] for name in jet_stack_names}
+            jec_stack = JECStack(jec_inputs)
+
+            name_map = jec_stack.blank_name_map
+            name_map['JetPt'] = 'pt'
+            name_map['JetMass'] = 'mass'
+            name_map['JetEta'] = 'eta'
+            name_map['JetA'] = 'area'
+
+            jets = events.Jet
+            jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
+            jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
+            #jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
+            jets['rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
+
+            #name_map['ptGenJet'] = 'pt_gen'
+            name_map['ptRaw'] = 'pt_raw'
+            name_map['massRaw'] = 'mass_raw'
+            name_map['Rho'] = 'rho'
+
+            jet_factory = CorrectedJetsFactory(name_map, jec_stack)
+            corrected_jets = jet_factory.build(jets)
+            events = ak.with_field(events, corrected_jets, "CorrectedJet")
+            
             puppi_met = events.PuppiMET
             puppi_met['pt_raw'] = events.RawPuppiMET.pt
             puppi_met['unclustEDeltaX'] = puppi_met.ptUnclusteredUp * np.cos(puppi_met.phiUnclusteredUp)
@@ -372,22 +430,24 @@ class SelectionProcessor(processor.ProcessorABC):
             dl_veto    = dl_mu_veto & dl_el_veto
 
             events = events[dl_veto]    
+            muons = muons[dl_veto]
+            taus = taus[dl_veto]
             ###
 
             #bjets = events.LooseJet[(events.LooseJet.btagDeepFlavB < 0.0614)]
-            bjet_veto = (
-                (events.Jet.pt > 30)
-                & (abs(events.Jet.eta) < 2.4)
-                & (events.Jet.btagDeepFlavB >= 0.3196)
-            )
-            num_bjet = ak.count_nonzero(bjet_veto, axis = 1)
-            events = events[num_bjet == 0]
-            muons = muons[num_bjet == 0]
-            taus = taus[num_bjet == 0]
+            #bjet_veto = (
+            #    (events.Jet.pt > 30)
+            #    & (abs(events.Jet.eta) < 2.4)
+            #    & (events.Jet.btagDeepFlavB >= 0.3196)
+            #)
+            #num_bjet = ak.count_nonzero(bjet_veto, axis = 1)
+            #events = events[num_bjet == 0]
+            #muons = muons[num_bjet == 0]
+            #taus = taus[num_bjet == 0]
             
             ## add transverse mass and mu+tau mass vars
-            met = events.MET.pt            
-            met_phi =  events.MET.phi     
+            met = events.PFMET.pt            
+            met_phi =  events.PFMET.phi     
             dphi = abs(muons.phi - met_phi)
             dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
             mT = np.sqrt(2 * muons.pt * met * (1 - np.cos(dphi)))      
@@ -416,24 +476,37 @@ class SelectionProcessor(processor.ProcessorABC):
             dismuons = dismuons[ak.argsort(dismuons[leading_muon_var], ascending=False, axis=1)]
             dismuons = ak.singletons(ak.firsts(dismuons))
             events["DisMuon"] = dismuons
+            print(f"Printing regular jet pt before choosing leading based on score {events.Jet.pt}")
+            print(f"Printing corrected jet pt before choosing leading based on score {events.CorrectedJet.pt}")
+            print(f"Printing corrected jet score before choosing leading based on score {events.CorrectedJet.disTauTag_score1}")
+            correctedjets = events["CorrectedJet"]
+            correctedjets =  correctedjets[ak.argsort(correctedjets[leading_jet_var], ascending=False, axis = 1)]
+            correctedjets = ak.singletons(ak.firsts(correctedjets))
+            events["CorrectedJet"] = correctedjets
+            print(f"Printing corrected jet pt after choosing leading based on score {events.CorrectedJet.pt}")
+            print(f"Printing corrected jet score after choosing leading based on score {events.CorrectedJet.disTauTag_score1}")
+
             jets = events["Jet"]
             jets =  jets[ak.argsort(jets[leading_jet_var], ascending=False, axis = 1)]
             jets = ak.singletons(ak.firsts(jets))
             events["Jet"] = jets
 
             ## add transverse mass var
-            met = events.PFMET.pt            
-            met_phi =  events.PFMET.phi        
-            dphi = abs(dismuons.phi - met_phi)
-            dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
-            mT = np.sqrt(2 * dismuons.pt * met * (1 - np.cos(dphi)))      
-            events = ak.with_field(events, mT, "mT")
+            #met = events.PFMET.pt            
+            #met_phi =  events.PFMET.phi        
+            #dphi = abs(dismuons.phi - met_phi)
+            #dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
+            #mT = np.sqrt(2 * dismuons.pt * met * (1 - np.cos(dphi)))      
+            #events = ak.with_field(events, mT, "mT")
             
             ## apply selections
             events = event_selection(events, selection_string)  
+            print(f"Printing corrected jet pt after TT_CR selections {events.CorrectedJet.pt}")
+            print(f"Printing corrected jet score after TT_CR selections {events.CorrectedJet.disTauTag_score1}")
 
         logger.info(f"Chose leading objects & filtered events")
 
+        print(events.CorrectedJet.pt[events.CorrectedJet.pt <  32])
         weights = events.genWeight if is_MC else 1 * ak.ones_like(events.event) 
         logger.info("mc weights")
         # Handle systematics and weights
