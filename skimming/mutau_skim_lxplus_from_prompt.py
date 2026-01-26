@@ -105,7 +105,6 @@ else:
 ## restrict to specific sub-samples
 if args.subsample == 'all':
     fileset = input_dataset
-    print(fileset.keys())
 else:  
     fileset = {k: input_dataset[k] for k in args.subsample}
 
@@ -119,7 +118,6 @@ else:
 
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
-print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
 
 ## exclude not used
 exclude_prefixes = ['Flag', 'JetSVs', 'GenJetAK8_', 'SubJet', 
@@ -165,9 +163,6 @@ good_hlts = [
 class SkimProcessor(processor.ProcessorABC):
     def __init__(self):
         pass
-#         self._accumulator = {} 
-#         for samp in fileset:
-#             self._accumulator[samp] = dak.from_awkward(ak.Array([]), npartitions = 1)
 
     def process(self, events):
         import sys
@@ -209,7 +204,7 @@ class SkimProcessor(processor.ProcessorABC):
             mask_ztautau = (counts_tautau == 2)
             mask_zll = ~mask_ztautau
             events = events[mask_zll]
-#             print (f" Removed non zll events from {dataset}")
+            print (f" Removed non zll events from {dataset}")
         ## To reject bad crystal in ECAL 
         bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
         bad_jet_mask = (
@@ -326,28 +321,10 @@ if __name__ == "__main__":
     if not test_job:
         n_port = 8786
         cluster = LPCCondorCluster(
-                cores=10,
-                memory='20000MB',
-#                disk='4000MB',
-                #death_timeout = '240',
-                #nanny=True,
-#                container_runtime = "none",
+                cores=24,
+                memory='48000MB',
                 log_directory = "/uscmst1b_scratch/lpc1/3DayLifetime/condor/log/prompt_skim/v10",
-#                scheduler_options={
-#                    'port': n_port,
-#                    'host': socket.gethostname(),
-#                    },
                 transfer_input_files=['utils.py', './selections/lumi_selections.py'],
-                #job_extra={
-                #    '+JobFlavour': '"workday"',
-                #    'should_transfer_files': 'YES',
-                #    },
-#                job_script_prologue=[
-                #    "export XRD_RUNFORKHANDLER=1",  ### enables fork-safety in the XRootD client, to avoid deadlock when accessing EOS files
-#                    f"export X509_USER_PROXY=$HOME/x509up_u57864",
-#                    "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
-#                ],
-                #worker_extra_args = ['--worker-port 10000:10100']
                )
         cluster.adapt(minimum=1, maximum=200)#, wait_count=3)
         print(cluster.job_script())
@@ -391,11 +368,11 @@ if __name__ == "__main__":
     
     ## save processed run/lumi to json file 
     for isubsample in out['run_dict'].keys():
-        with open(f"{out_folder_json}/processed_lumis_{isubsample}.json", "w") as fp:
+        with open(f"{out_folder_json}processed_lumis_{isubsample}.json", "w") as fp:
             ## convert to normal dict and dump as JSON
             json.dump({isubsample: v for v in out['run_dict'][isubsample].items()}, fp, indent=2)
         ## save proc report to json file (not useful for now)
-        with open(f'{out_folder_json}/result_{isubsample}.json', 'w') as fp:  
+        with open(f'{out_folder_json}result_{isubsample}.json', 'w') as fp:  
             json.dump(proc_report,fp)
 
     elapsed = time.time() - tic

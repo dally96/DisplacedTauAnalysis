@@ -1,6 +1,6 @@
 import argparse, importlib
 import pickle, pdb
-
+from coffea import processor
 from coffea.dataset_tools import (
     apply_to_fileset,
     max_chunks,
@@ -18,7 +18,7 @@ from dask.distributed import Client, wait, progress, LocalCluster
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT', 'JetMET_2022', 'Muon', 'DYto2L-2Jets'],
+	choices=['QCD','DY', 'signal', 'Wto2Q', 'WtoLNu', 'TT', 'singleT', 'JetMET_2022', 'Muon', 'DYto2L-2Jets', 'DYto2Tau-2Jets_0J', 'DYto2Tau-2Jets_0J_custom'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -72,6 +72,8 @@ samples = {
     "JetMET_2022": f"samples.{outdir_p}fileset_JetMET_2022",
     "Muon": f"samples.{outdir_p}fileset_Muon_2022",
     "DYto2L-2Jets": f"samples.{outdir_p}fileset_DYto2L-2Jets",
+    'DYto2Tau-2Jets_0J': f"samples.{outdir_p}fileset_DYto2Tau-2Jets_0J",
+    'DYto2Tau-2Jets_0J_custom': f"samples.{outdir_p}fileset_DYto2Tau-2Jets_0J_custom"
 }
 
 module = importlib.import_module(samples[args.sample])
@@ -96,6 +98,8 @@ pars_per_sample = {
     "QCD"    : [20_000, 1],  
     "DY"     : [10_000, 1000],  
     "DYto2L-2Jets"     : [10_000, 1000],  
+    "DYto2Tau-2Jets_0J"     : [10_000, 1000],  
+    "DYto2Tau-2Jets_0J_custom": [10_000, 1000],  
     "signal" : [20_000, 1],  
     "TT"     : [20_000, 1000],  
     "singleT": [20_000, 1000],  
@@ -115,17 +119,16 @@ if __name__ == "__main__":
     cluster = LocalCluster(n_workers=8, threads_per_worker=1)
     client = Client(cluster)
 
-    dataset_runnable, dataset_updated = preprocess(
+    runner = processor.Runner(processor.DaskExecutor(client=client, compression=None),
+                              align_clusters=False,
+                              skipbadfiles=True,
+                            )
+
+    dataset_runnable = runner.preprocess(
        fileset,
-       align_clusters=False,
-       step_size=pars_per_sample[args.sample][0],
-       files_per_batch=pars_per_sample[args.sample][1],
-       skip_bad_files=True,
-       save_form=False,
-       file_exceptions=(OSError, KeyInFileError),
-       allow_empty_datasets=False,
+       treename = "Events"
     )
-    
+
     if args.subsample != 'all':
         for isubsample in dataset_runnable.keys():
             pkl_name = f"samples/{outdir_s}{args.sample}_{isubsample}_preprocessed.pkl"
@@ -138,7 +141,7 @@ if __name__ == "__main__":
         if nfiles > 0:
             pkl_name.replace('.pkl', f'_{nfiles}files.pkl')
         with open(pkl_name, "wb") as f:
-            pickle.dump(dataset_runnable, f)
+            pickle.dump(list(dataset_runnable), f)
 
     elapsed = time.time() - tic 
     print(f"Preprocessing datasets finished in {elapsed:.1f}s") 

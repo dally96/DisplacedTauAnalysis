@@ -2,7 +2,6 @@ import awkward as ak
 import uproot, os, sys
 import numpy as np
 import gzip, correctionlib, importlib, pickle
-
 #sys.stdout.reconfigure(line_buffering=True)
 #sys.stderr.reconfigure(line_buffering=True)
 #os.environ["PYTHONUNBUFFERED"] = "1"
@@ -110,7 +109,7 @@ else:
     exit(0)
     
 
-out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_folder}/{args.skimversion}_CorrectedJet/selected/'
+out_folder = f'root://cmseos.fnal.gov//store/user/dally/skim/{args.nanov}/{skim_folder}/{args.skimversion}/selected/{selection_string}/'
 
 
 ## define input samples
@@ -119,7 +118,7 @@ if args.usePkl==True:
     ## to be made configurable
     with open(f"samples/{args.nanov}/{skim_folder}/{args.skimversion}/{args.sample}_preprocessed.pkl", "rb") as  f:
         input_dataset = pickle.load(f)
-        print(input_dataset.keys())
+        #print(input_dataset.keys())
 else:
     samples = {
         "Wto2Q": f"samples.{args.nanov}.{skim_folder}.fileset_Wto2Q",
@@ -143,12 +142,10 @@ if args.subsample == 'all':
 else:  
     fileset = {k: input_dataset[k] for k in args.subsample}
 
-
 ## restrict to n files
 process_n_files(int(args.nfiles), fileset)
 ## add an else statement to prevent empty lists if nfiles > len(fileset)            
-print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
-
+#print("Will process {} files from the following samples:".format(args.nfiles), fileset.keys())
 
 ## branches to be included in the output files.
 ## tuned on prompt skim case
@@ -163,7 +160,7 @@ include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 'HLT',
                'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau_mass',
-               'CorrectedPuppiMET', 'CorrectedJet'
+               'CorrectedPuppiMET', 'CorrectedJet', 'n_muons'
               ]
 
 ### FIXME: need to add Lxy and IP at GEN level                             
@@ -250,13 +247,15 @@ class SelectionProcessor(processor.ProcessorABC):
             events["StauTau"] = ak.firsts(events.StauTau[ak.argsort(events.StauTau.pt, ascending=False)], axis = 2) 
             events["StauTau"] = ak.flatten(ak.drop_none(events["StauTau"]), axis=0)
 
+        n_muons = ak.count_nonzero(events.DisMuon.pt, axis = -1)
+        events = ak.with_field(events, n_muons, "n_muons")
+
        # JEC/JERC
         if is_MC:
             ext = extractor()
             ext.add_weight_sets([
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
-            #    "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi.jer.txt",
                 "* * ./jec/Summer22EE_JRV1_MC_SF_AK4PFPuppi.jer.txt",
@@ -266,7 +265,6 @@ class SelectionProcessor(processor.ProcessorABC):
             jet_stack_names = [
                 "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
                 "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
-             #   "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
                 "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
                 "Summer22EE_JRV1_MC_PtResolution_AK4PFPuppi",
                 "Summer22EE_JRV1_MC_SF_AK4PFPuppi"
@@ -295,6 +293,7 @@ class SelectionProcessor(processor.ProcessorABC):
             
             jet_factory = CorrectedJetsFactory(name_map, jec_stack)
             corrected_jets = jet_factory.build(jets)
+
             events = ak.with_field(events, corrected_jets, "CorrectedJet")
 
             puppi_met = events.PuppiMET
@@ -319,12 +318,18 @@ class SelectionProcessor(processor.ProcessorABC):
             print("Are we going through the data correction loop?")
             ext = extractor()
             ext.add_weight_sets([
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi.jec.txt",
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi.jec.txt",
                 "* * ./jec/Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi.jec.txt",
+                "* * ./jec/Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi.jec.txt",
             ])
             ext.finalize()
 
             jet_stack_names = [
+                "Summer22EE_22Sep2023_V2_MC_L1FastJet_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L2Relative_AK4PFPuppi",
                 "Summer22EE_22Sep2023_V2_MC_L2L3Residual_AK4PFPuppi",
+                "Summer22EE_22Sep2023_V2_MC_L3Absolute_AK4PFPuppi",
             ]
 
             evaluator = ext.make_evaluator()
@@ -340,16 +345,12 @@ class SelectionProcessor(processor.ProcessorABC):
             jets = events.Jet
             jets['pt_raw'] = (1 - jets['rawFactor']) * jets['pt']
             jets['mass_raw'] = (1 - jets['rawFactor']) * jets['mass']
-            #jets['pt_gen'] = ak.values_astype(ak.fill_none(jets.matched_gen.pt, 0), np.float32)
             jets['Rho'] = ak.broadcast_arrays(events.Rho.fixedGridRhoFastjetAll, jets.pt)[0]    
 
-            #name_map['ptGenJet'] = 'pt_gen'
             name_map['ptRaw'] = 'pt_raw'
             name_map['massRaw'] = 'mass_raw'
             name_map['Rho'] = 'Rho'
 
-            jet_factory = CorrectedJetsFactory(name_map, jec_stack)
-            corrected_jets = jet_factory.build(jets)
             events = ak.with_field(events, corrected_jets, "CorrectedJet")
             
             puppi_met = events.PuppiMET
@@ -432,18 +433,6 @@ class SelectionProcessor(processor.ProcessorABC):
             events = events[dl_veto]    
             muons = muons[dl_veto]
             taus = taus[dl_veto]
-            ###
-
-            #bjets = events.LooseJet[(events.LooseJet.btagDeepFlavB < 0.0614)]
-            #bjet_veto = (
-            #    (events.Jet.pt > 30)
-            #    & (abs(events.Jet.eta) < 2.4)
-            #    & (events.Jet.btagDeepFlavB >= 0.3196)
-            #)
-            #num_bjet = ak.count_nonzero(bjet_veto, axis = 1)
-            #events = events[num_bjet == 0]
-            #muons = muons[num_bjet == 0]
-            #taus = taus[num_bjet == 0]
             
             ## add transverse mass and mu+tau mass vars
             met = events.PFMET.pt            
@@ -486,20 +475,19 @@ class SelectionProcessor(processor.ProcessorABC):
             jets = ak.singletons(ak.firsts(jets))
             events["Jet"] = jets
 
-            ## add transverse mass var
-            #met = events.PFMET.pt            
-            #met_phi =  events.PFMET.phi        
-            #dphi = abs(dismuons.phi - met_phi)
-            #dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
-            #mT = np.sqrt(2 * dismuons.pt * met * (1 - np.cos(dphi)))      
-            #events = ak.with_field(events, mT, "mT")
+            # add transverse mass var
+            met = events.CorrectedPuppiMET.pt            
+            met_phi =  events.CorrectedPuppiMET.phi        
+            dphi = abs(dismuons.phi - met_phi)
+            dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)  # wrap to [-pi, pi]
+            mT = np.sqrt(2 * dismuons.pt * met * (1 - np.cos(dphi)))      
+            events["DisMuon"] = ak.with_field(events.DisMuon, mT, "mT")
             
             ## apply selections
             events = event_selection(events, selection_string)  
 
         logger.info(f"Chose leading objects & filtered events")
 
-        print(events.CorrectedJet.pt[events.CorrectedJet.pt <  32])
         weights = events.genWeight if is_MC else 1 * ak.ones_like(events.event) 
         logger.info("mc weights")
         # Handle systematics and weights
@@ -522,7 +510,7 @@ class SelectionProcessor(processor.ProcessorABC):
         events_to_write = uproot_writeable_selected(events, include_all, include_prefixes, include_postfixes)
         # unique name: dataset name + chunk range
         fname = os.path.basename(events.metadata["filename"]).replace(".root", "")
-        outname = f"{out_folder}{dataset}/{selection_string}/{fname}_{selection_string}.root"
+        outname = f"{out_folder}{dataset}/{fname}_{selection_string}.root"
 
         with uproot.recreate(outname) as fout:
             fout["Events"] = events_to_write
@@ -547,17 +535,8 @@ if __name__ == "__main__":
         cluster = LPCCondorCluster(
                 cores=24,
                 memory='48000MB',
-                #disk='1000MB',
-                #death_timeout = '600',
-                #lcg = True,
-                #nanny = False,
-                #container_runtime = "none",
                 log_directory = f"/uscmst1b_scratch/lpc1/3DayLifetime/condor/log/selected/{args.skimversion}",
                 transfer_input_files = ["selection_function.py", "utils.py", "Cert_Collisions2022_355100_362760_Golden.json", "jec/"],
-                #scheduler_options={
-                #    'port': n_port,
-                #    'host': socket.gethostname(),
-                #    },
                 job_extra_directives={
                     "should_transfer_files": "YES",
                     '+JobFlavour': '"longlunch"',
@@ -567,7 +546,6 @@ if __name__ == "__main__":
                     f"export X509_USER_PROXY=$HOME/x509up_u57864",
                     "export PYTHONPATH=$PYTHONPATH:$_CONDOR_SCRATCH_DIR:$HOME",
                 ],
-                #worker_extra_args = ['--worker-port 10000:10100']
                 )
          #minimum > 0: https://github.com/CoffeaTeam/coffea/issues/465
         cluster.adapt(minimum=1, maximum=200)
@@ -579,14 +557,10 @@ if __name__ == "__main__":
     client = Client(cluster)
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
-        ### alternative executors
-        ## executor=processor.FuturesExecutor(compression=None, workers = 4),
-        ## executor=processor.IterativeExecutor(compression=None),
         chunksize=30_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
         savemetrics=True,
-#         maxchunks=4,
     )
     
     out, proc_report = lxplus_run(
@@ -598,5 +572,3 @@ if __name__ == "__main__":
 
     elapsed = time.time() - tic 
     print(f"Finished in {elapsed:.1f}s")
-#     client.shutdown()
-#     cluster.close()
