@@ -128,11 +128,12 @@ include_postfixes = ['pt', 'eta', 'phi', 'pdgId', 'status', 'statusFlags', 'mass
                      'disTauTag_score1', 'rawFactor', 'nConstituents',
                      'genPartIdxMother'
                     ]                       
-include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET',         'GenVtx',
+include_all = ['Tau',  'PFMET',  'ChsMET', 'PuppiMET', 'GenVtx',
                'nTau', 'nPFMET', 'nChsMET','nPuppiMET', 'nPV', 'nGenVtx',
                'nVtx', 'event', 'run', 'luminosityBlock', 'Pileup', 'weights', 'genWeight', 'weight', 'HLT',
                'nDisMuon', 'nMuon', 'nJet',  'nGenPart', 'nGenVisTau', 'Stau', 'StauTau', 'mT', 'PV', 'mutau_mass',
-               'CorrectedPuppiMET', 'L1MaterialDisMuon', 'L2MaterialDisMuon'
+               'CorrectedPuppiMET', 'L1MaterialDisMuon', 'L2MaterialDisMuon', 'L1DiMuon', 'L2DiMuon',
+               'L1NoneMaterialDisMuon', 'L2NoneMaterialDisMuon', 'NoneVertexDisMuon'
               ]
 
 class MaterialProcessor(processor.ProcessorABC):
@@ -153,12 +154,21 @@ class MaterialProcessor(processor.ProcessorABC):
         num_dimuon = ak.count_nonzero(events.dimuon.pt, axis = 1)
         events = events[num_dimuon > 0]
         
+        events["DisMuon"] = events.DisMuon[events.DisMuon.mediumId == 1]
+        events["DisMuon"] = events.DisMuon[ak.argsort(events.DisMuon.pt, ascending=False, axis=1)]
+        events["DisMuon"] = ak.singletons(ak.firsts(events.DisMuon))
+
         l1_pt = ak.cartesian([events.DisMuon.pt, events.dimuon.l1_pt])
         l1_charge =ak.cartesian([events.DisMuon.charge, events.dimuon.l1_charge])
         l1_idx = ak.argcartesian([events.DisMuon.pt, events.dimuon.l1_pt])
 
         l1_charge_mask = (l1_charge['0'] == l1_charge['1'])
         l1_pt_mask = (abs(l1_pt['0'] - l1_pt['1']) < 1)
+        
+        print(f"Check events {events.event[ak.any((abs(l1_pt['0'] - l1_pt['1']) > 0) & (abs(l1_pt['0'] - l1_pt['1']) < 1), axis = -1)]}")
+
+        l1_material_mask = l1_charge_mask & l1_pt_mask 
+        l1_material_mask = ~ak.any(l1_charge_mask & l1_pt_mask, axis = -1)
 
         l1_dismuon_idx = l1_idx['0'][l1_charge_mask & l1_pt_mask]
         l1_dimuon_idx = l1_idx['1'][l1_charge_mask & l1_pt_mask]
@@ -172,6 +182,14 @@ class MaterialProcessor(processor.ProcessorABC):
 
         l2_charge_mask = (l2_charge['0'] == l2_charge['1'])
         l2_pt_mask = (abs(l2_pt['0'] - l2_pt['1']) < 1)
+
+        l2_material_mask = l2_charge_mask & l2_pt_mask 
+        l2_material_mask = ~ak.any(l2_charge_mask & l2_pt_mask, axis = -1)
+
+        material_mask = (l1_material_mask | l2_material_mask)
+
+        non_vtx_leading_dismuon = ak.mask(events.DisMuon, material_mask)
+        non_vtx_leading_dismuon = ak.Array(ak.fill_none(non_vtx_leading_dismuon, [], axis = 0))
 
         l2_dismuon_idx = l2_idx['0'][l2_charge_mask & l2_pt_mask]
         l2_dimuon_idx = l2_idx['1'][l2_charge_mask & l2_pt_mask]
@@ -202,6 +220,9 @@ class MaterialProcessor(processor.ProcessorABC):
 
         l1_mat_mask = ak.where(l1_mat_muon > 0, True, False)
         l1_mat_dismuon = l1_dismuon_idx[l1_mat_mask]
+        l1_mat_dimuon = l1_dimuon_idx[l1_mat_mask]
+        
+        l1_non_material_leading_dismuon = l1_dismuon_idx[~l1_mat_mask]
 
         l2_x_index = ak.values_astype((30 + l2_vtx_x)//0.05, "int64")
         l2_y_index = ak.values_astype((30 + l2_vtx_y)//0.05, "int64")
@@ -220,13 +241,26 @@ class MaterialProcessor(processor.ProcessorABC):
 
         l2_mat_mask = ak.where(l2_mat_muon > 0, True, False)
         l2_mat_dismuon = l2_dismuon_idx[l2_mat_mask]
+        l2_mat_dimuon = l2_dimuon_idx[l2_mat_mask]
+
+        l2_non_material_leading_dismuon = l2_dismuon_idx[~l2_mat_mask]
 
         l1_dismuon = events.DisMuon[l1_mat_dismuon]
+        l1_non_material_dismuon = events.DisMuon[l1_non_material_leading_dismuon]
         l2_dismuon = events.DisMuon[l2_mat_dismuon]
+        l2_non_material_dismuon = events.DisMuon[l2_non_material_leading_dismuon]
 
+        l1_dimuon = events.dimuon[l1_mat_dimuon]
+        l2_dimuon = events.dimuon[l2_mat_dimuon]
         
         events = ak.with_field(events, l1_dismuon, "L1MaterialDisMuon")
         events = ak.with_field(events, l2_dismuon, "L2MaterialDisMuon")
+        events = ak.with_field(events, l1_non_material_dismuon, "L1NoneMaterialDisMuon")
+        events = ak.with_field(events, l2_non_material_dismuon, "L2NoneMaterialDisMuon")
+        events = ak.with_field(events, ak.Array(non_vtx_leading_dismuon), "NoneVertexDisMuon")
+        events = ak.with_field(events, l1_dimuon, "L1DiMuon")
+        events = ak.with_field(events, l2_dimuon, "L2DiMuon")
+        
 
         ## prevent writing out files with empty trees
         if not len(events) > 0:
@@ -245,7 +279,6 @@ class MaterialProcessor(processor.ProcessorABC):
             fout["Events"] = events_to_write
 #         skim = ak.to_parquet(events_to_write, outname.replace('.root', '.parquet'), extensionarray=False)
         return {"entries_written": len(events_to_write)}
-
 
     def postprocess(self, accumulator):
         return accumulator

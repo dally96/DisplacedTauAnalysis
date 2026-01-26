@@ -81,6 +81,7 @@ def uproot_writeable_selected(events, include_all, include_prefixes, include_pos
         if events[bname].fields:
             fields = {}
             for n in events[bname].fields:
+#                print(f"Is {bname} root compatible? {is_rootcompat(events[bname][n])}")
                 if is_rootcompat(events[bname][n]):
 #                     print (bname, n)
                     if keep_branch or (reduced_branch and n in include_postfixes):

@@ -204,16 +204,16 @@ class SkimProcessor(processor.ProcessorABC):
         events = events[(~bad_event_mask) & (num_bad_jets < 1)]
         print("Applied veto for bad crystal")
 
-        ## NB: to be double checked if the string identifying the buggy DY dataset is correct
-        if is_MC and dataset == 'DYJetsToLL_M-50': 
-            lhe_part = events.LHEPart
-            outcoming = lhe_part[lhe_part.status > 0]
-            lhe_z = outcoming[(outcoming.status == 2) & (outcoming.pdgId==23)]
-            out_tau_tau = outcoming[(abs(outcoming.pdgId)==15)]
-            counts_tautau = ak.num(out_tau_tau, axis=1)  
-            mask_ztautau = (counts_tautau == 2)
-            mask_zll = ~mask_ztautau
-            events = events[mask_zll]
+        ### NB: to be double checked if the string identifying the buggy DY dataset is correct
+        #if is_MC and dataset == 'DYJetsToLL_M-50': 
+        #    lhe_part = events.LHEPart
+        #    outcoming = lhe_part[lhe_part.status > 0]
+        #    lhe_z = outcoming[(outcoming.status == 2) & (outcoming.pdgId==23)]
+        #    out_tau_tau = outcoming[(abs(outcoming.pdgId)==15)]
+        #    counts_tautau = ak.num(out_tau_tau, axis=1)  
+        #    mask_ztautau = (counts_tautau == 2)
+        #    mask_zll = ~mask_ztautau
+        #    events = events[mask_zll]
         ## To reject bad crystal in ECAL 
         bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
         bad_jet_mask = (

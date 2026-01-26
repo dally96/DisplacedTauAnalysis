@@ -18,46 +18,41 @@ hep.style.use("CMS")
 
 nanov = 'Summer22_CHS_v10/'
 # nanov = ''
-sample_folder = f"/eos/uscms/store/user/dally/skim/{nanov}prompt_mutau/v8/selected/faster_trial/"
+#sample_folder = f"/eos/uscms/store/user/dally/skim/{nanov}prompt_mutau/v8/selected/faster_trial/"
+sample_folder = f"/eos/uscms/store/user/dally/skim/{nanov}mutau/v3/selected/W_CR/faster_trial/"
 
 ## if a sample is not ready yet, comment it out
 all_samples_dict = {
     "DY" : [
-        #"DYJetsToLL_M-50",
-        'DYto2L-2Jets_MLL-50',
-    ],
-    "DYTau_0": [
+        "DYJetsToLL_M-50",
+        #'DYto2L-2Jets_MLL-50',
         "DYto2Tau-2Jets_MLL-50_0J",
-    ],
-    "DYTau_1": [
         "DYto2Tau-2Jets_MLL-50_1J",
-    ],
-    "DYTau_2": [
         "DYto2Tau-2Jets_MLL-50_2J",
-      ],
+    ],
     "QCD" : [
 ##       "QCD_PT-50to80",
-        "QCD_PT-80to120",
-##        "QCD_PT-120to170",
-#        "QCD_PT-170to300",
+        #"QCD_PT-80to120",
+        #"QCD_PT-120to170",
+        "QCD_PT-170to300",
         "QCD_PT-300to470",
-        "QCD_PT-470to600",
-        "QCD_PT-600to800",
-#        "QCD_PT-800to1000",
-##        "QCD_PT-1000to1400",
-##        "QCD_PT-1400to1800",
+#        "QCD_PT-470to600",
+#        "QCD_PT-600to800",
+        "QCD_PT-800to1000",
+        "QCD_PT-1000to1400",
+        "QCD_PT-1400to1800",
 ##        "QCD_PT-1800to2400",
-##        "QCD_PT-3200",
+        #"QCD_PT-3200",
      ],
     "Wto2Q" : [
-        "Wto2Q-2Jets_PTQQ-100to200_1J",
+        #"Wto2Q-2Jets_PTQQ-100to200_1J",
 ##        "Wto2Q-2Jets_PTQQ-100to200_2J",
-        "Wto2Q-2Jets_PTQQ-200to400_1J",
+        #"Wto2Q-2Jets_PTQQ-200to400_1J",
         "Wto2Q-2Jets_PTQQ-200to400_2J",
-##        "Wto2Q-2Jets_PTQQ-400to600_1J",
-##        "Wto2Q-2Jets_PTQQ-400to600_2J",
-##        "Wto2Q-2Jets_PTQQ-600_1J",
-##        "Wto2Q-2Jets_PTQQ-600_2J",
+        #"Wto2Q-2Jets_PTQQ-400to600_1J",
+        "Wto2Q-2Jets_PTQQ-400to600_2J",
+        #"Wto2Q-2Jets_PTQQ-600_1J",
+        #"Wto2Q-2Jets_PTQQ-600_2J",
      ],
     "WtoLNu" : [
         "WtoLNu-4Jets",
@@ -79,11 +74,11 @@ all_samples_dict = {
       "TWminustoLNu2Q",
       "TbarBQ_t-channel_4FS",
       ],  
-    #"JetMET": [
-    #  "JetMET_Run2022E",
-    #  "JetMET_Run2022F",
-    #  "JetMET_Run2022G",
-    #  ], 
+    "JetMET": [
+      "JetMET_Run2022E",
+      "JetMET_Run2022F",
+      "JetMET_Run2022G",
+      ], 
     #"JetMET_Muon": [
     #  "JetMET_Muon_Run2022E",
     #  "JetMET_Muon_Run2022F",
@@ -94,12 +89,12 @@ all_samples_dict = {
     #  "JetMET_Muon_Run2022F",
     #  "JetMET_Muon_Run2022G",
     #  ], 
-    "Muon": [
-        "Muon_Run2022E",
-        "Muon_Run2022F",
-        "Muon_Run2022G",
-    #    "Muon_Run2022_VVLooseDeepTauVsE",
-    ],
+    #"Muon": [
+    #    "Muon_Run2022E",
+    #    "Muon_Run2022F",
+    #    "Muon_Run2022G",
+    ##    "Muon_Run2022_VVLooseDeepTauVsE",
+    #],
     #"JetMET_Run2022E": [
     #  "JetMET_Run2022E",
     #],
@@ -148,7 +143,7 @@ target_lumi = 26.7
 dataset_name = 'all'
 
 # Load plot settings from JSON file
-with open("./plots_config/mutau_mass_plot_settings.json", "r") as file:
+with open("./plots_config/displaced_corrected_plot_settings.json", "r") as file:
     plot_settings = json.load(file)
 
 # Directory creation for plots (directory_path = "plots/" + args.process)
@@ -188,17 +183,31 @@ for process in available_processes:
     #    events["PuppiMET"] = events.CorrectedPuppiMET
     ## disable for now
 #     print ('need to put back weights')
+
+    pt_raw = (1 - events.Jet.rawFactor) * events.Jet.pt
+    events["Jet"] = ak.with_field(events.Jet, pt_raw, "ptRaw")
+
+    dphi = abs(events.DisMuon.phi - events.CorrectedPuppiMET.phi)
+    dphi = np.where(dphi > np.pi, 2*np.pi - dphi, dphi)
+    mT = np.sqrt(2 * events.DisMuon.pt * events.CorrectedPuppiMET.pt * (1 - np.cos(dphi)))
+    events["DisMuon"] = ak.with_field(events.DisMuon, mT, "mT")
+
     weights = events.run / events.run
-#    if "jetmet" in process.lower():
-#        weights = weights
-    if "muon" in process.lower():
+    if "jetmet" in process.lower():
         weights = weights
+#    if "muon" in process.lower():
+#        weights = weights
     else:
         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[process]
 #         lumi_weight = target_lumi * xsec[process] * br[process] * 1000 / sum_gen_w[reverse_samples_lookup[process]][process]
         weights = events.weight * lumi_weight ## am i missing the sumGenW here?
 
     for plot_name, settings in plot_settings.items():
+        if "weight" in plot_name: continue
+        #if "Jet_pt" not in plot_name: continue
+        if "correction" in plot_name: continue
+        if "resolution" in plot_name: continue
+        #if 'dxy' not in plot_name: continue
         ## test, not clear why
 #         print("vals type:", type(var_values), "vals layout:", var_values.layout.form)
         if not settings["per_event"]:
@@ -247,9 +256,6 @@ for plot_name, histograms in histogram_dict.items():
         hist_Wto2Q     = np.zeros(len(binning)-1)
         hist_WtoLNu    = np.zeros(len(binning)-1)
         hist_EWK       = np.zeros(len(binning)-1)
-        hist_DYTau_0       = np.zeros(len(binning)-1)
-        hist_DYTau_1       = np.zeros(len(binning)-1)
-        hist_DYTau_2       = np.zeros(len(binning)-1)
         hist_TT        = np.zeros(len(binning)-1)
         hist_singleT   = np.zeros(len(binning)-1)
         hist_Top   = np.zeros(len(binning)-1)
@@ -282,7 +288,7 @@ for plot_name, histograms in histogram_dict.items():
             #    hist_Data_F += histogram
             #eliif process in all_samples_dict["JetMET_Run2022G"]:
             #    hist_Data_G += histogram
-            if process in all_samples_dict['Muon']:
+            if process in all_samples_dict['JetMET']:
                 hist_Data += histogram
             #if process in all_samples_dict['JetMET_Muon']:
             #    hist_Data_Muon += histogram
@@ -294,12 +300,6 @@ for plot_name, histograms in histogram_dict.items():
                 hist_Top += histogram
             elif process in all_samples_dict['DY']:
                 hist_EWK += histogram
-            elif process in all_samples_dict['DYTau_0']:
-                hist_DYTau_0 += histogram
-            elif process in all_samples_dict['DYTau_1']:
-                hist_DYTau_1 += histogram
-            elif process in all_samples_dict['DYTau_2']:
-                hist_DYTau_2 += histogram
             elif process in all_samples_dict['WtoLNu']:
                 hist_WtoLNu += histogram
                 hist_WJets += histogram
@@ -308,8 +308,8 @@ for plot_name, histograms in histogram_dict.items():
                 hist_WJets += histogram
             elif process in all_samples_dict['QCD']:
                 hist_QCD += histogram
-            elif process in all_samples_dict['Stau']:
-                hist_Sig += histogram
+            #elif process in all_samples_dict['Stau']:
+            #    hist_Sig += histogram
         else:
             if process == "Data2018C":
                 data_hist = histogram
@@ -334,7 +334,7 @@ for plot_name, histograms in histogram_dict.items():
         hists_to_plot.append(hist_TT)
         labels.append('TT')
         hists_to_plot.append(hist_EWK)
-        labels.append('DYto2L-2Jets')
+        labels.append('DY')
         #hists_to_plot.append(hist_DYTau_0)
         #labels.append('DYtoTauTau_0Jets')
         #hists_to_plot.append(hist_DYTau_1)
@@ -373,25 +373,25 @@ for plot_name, histograms in histogram_dict.items():
     ax_main.legend()
     
     ## this part is still to be done 
-    #if groupProcesses:
-    ## # # if args.groupProcesses:
-    #    sum_histogram = np.sum(np.asarray(hists_to_plot), axis=0)
-    #    sum_data_histogram = np.sum(np.asarray(data_hists), axis=0)
-    #    ratio_hist = sum_data_histogram / (sum_histogram + np.finfo(float).eps)
-    ## #     # Adding relative sqrtN Poisson uncertainty for now, should be improved when using the hist package
-    #    rel_unc = np.sqrt(sum_data_histogram) / sum_data_histogram
-    #    rel_unc *= ratio_hist
-    #    rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
-    #    hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
-    #    ax_ratio.axhline(1, color='gray', linestyle='--')
-    #ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
-    #ax_main.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
-    #ax_main.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
-    #ax_ratio.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
-    #ax_ratio.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
-    #ax_ratio.set_ylabel('Data / MC')
-    #ax_ratio.set_xlim(binning[0], binning[-1])
-    #ax_ratio.set_ylim(0.6, 1.4)
+    if groupProcesses:
+    # # # if args.groupProcesses:
+        sum_histogram = np.sum(np.asarray(hists_to_plot), axis=0)
+        sum_data_histogram = np.sum(np.asarray(data_hists), axis=0)
+        ratio_hist = sum_data_histogram / (sum_histogram + np.finfo(float).eps)
+    # #     # Adding relative sqrtN Poisson uncertainty for now, should be improved when using the hist package
+        rel_unc = np.sqrt(sum_data_histogram) / sum_data_histogram
+        rel_unc *= ratio_hist
+        rel_unc[rel_unc < 0] = 0 # Not exactly sure why we have negative values, but this solves it for the moment
+        hep.histplot(ratio_hist, bins=binning, histtype='errorbar', yerr=rel_unc, color='black', label='Ratio', ax=ax_ratio)
+        ax_ratio.axhline(1, color='gray', linestyle='--')
+    ax_ratio.set_xlabel(plot_settings[plot_name].get("xlabel"), usetex=False)
+    ax_main.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
+    ax_main.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
+    ax_ratio.xaxis.set_major_locator(MultipleLocator(plot_settings[plot_name].get("x_major_ticks")))
+    ax_ratio.xaxis.set_minor_locator(MultipleLocator(plot_settings[plot_name].get("x_minor_ticks")))
+    ax_ratio.set_ylabel('Data / MC')
+    ax_ratio.set_xlim(binning[0], binning[-1])
+    ax_ratio.set_ylim(0.6, 1.4)
     
     # Decorating with CMS label
     hep.cms.label(data=True, loc=0, label="Private Work", com=13.6, lumi=round(target_lumi, 1), ax=ax_main)
@@ -399,7 +399,7 @@ for plot_name, histograms in histogram_dict.items():
     
     # Saving with special name
     #filename = f"/eos/uscms/store/user/dally/DisplacedTauAnalysis/plots/{dataset_name}_{plot_name}"
-    filedir = "Zpeak_Run2022EE_v5"
+    filedir = "W_CR"
     if filedir not in os.listdir('plots/'):
         os.mkdir(f'plots/{filedir}')
     filename = f"./plots/{filedir}/{dataset_name}_{plot_name}"

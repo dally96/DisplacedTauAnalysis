@@ -26,8 +26,16 @@ treeName = "Events"
 
 # Source directory
 # sourceDir = "/eos/cms/store/user/fiorendi/displacedTaus/skim/Summer22_CHS_v7/mutau/daniel/selected/"
-sourceDir = "/eos/uscms/store/user/dally/skim/Summer22_CHS_v10/prompt_mutau/v8/selected/"
+#sourceDir = "/eos/uscms/store/user/dally/skim/Summer22_CHS_v10/prompt_mutau/v8_nobJetVeto/selected/"
+#sourceDir = "/eos/uscms/store/user/dally/skim/Summer22_CHS_v10/mutau/v3/material_veto/"
+sourceDir = "/eos/uscms/store/user/dally/skim/Summer22_CHS_v10/mutau/v3/selected/W_CR"
+#sourceDir = "/eos/uscms/store/group/lpcdisptau/dally/displacedTaus/skim/Summer22_CHS_v10/mutau/v3/"
 sampleDir = sourceDir
+
+selection = "QCD_CR"
+#selection = "TT_CR"
+#selection = "HPSTauMu"
+#selection = "jet_dmu"
 
 ## create merged directory if missing
 os.makedirs(os.path.join(sourceDir, mergeDir), exist_ok=True)
@@ -48,11 +56,14 @@ def hadd_files(output, files):
 
 if doMerge:
     for folder in os.listdir(sampleDir):
+        if "result" in folder:
+            continue
+        if "processed" in folder:
+            continue
 #         pdb.set_trace()
         if mergeDir in folder:
             continue
         folderPath = os.path.join(sampleDir, folder)
-        folderPath = os.path.join(folderPath, "TT_CR")
         if not os.path.isdir(folderPath):
             continue
 

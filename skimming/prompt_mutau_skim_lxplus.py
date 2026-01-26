@@ -33,7 +33,7 @@ PFNanoAODSchema.mixins["DisMuon"] = "Muon"
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
 	"--sample",
-	choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon', 'DYto2L-2Jets'],
+	#choices=['QCD','DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'JetMET_2022', 'Muon', 'DYto2L-2Jets', 'DYto2Tau-2Jets_0J'],
 	required=True,
 	help='Specify the sample you want to process')
 parser.add_argument(
@@ -199,13 +199,13 @@ class SkimProcessor(processor.ProcessorABC):
         dataset_run_dict[dataset] = dict(run_dict)
 
         ## To reject bad crystal in ECAL 
-        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.MET.pt > 100))
+        bad_event_mask = ((events.event >= 362433) & (events.event <= 367144) & (events.PFMET.pt > 100))
         bad_jet_mask = (
                         (events.Jet.pt > 50)
                         & ((events.Jet.eta > -0.5) & (events.Jet.eta < -0.1))
                         & ((events.Jet.phi > -2.1) & (events.Jet.phi < -1.8))
                         & ((events.Jet.chEmEF > 0.9) | (events.Jet.neEmEF > 0.9))
-                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.MET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
+                        & (abs((events.Jet.phi - ak.broadcast_arrays(events.PFMET, events.Jet)[0].phi + np.pi) % (2 * np.pi) - np.pi) > 2.9)
         )
         
         num_bad_jets = ak.count_nonzero(bad_jet_mask, axis = 1)
@@ -456,7 +456,7 @@ if __name__ == "__main__":
     client.upload_file('selections/lumi_selections.py')
     lxplus_run = processor.Runner(
         executor=processor.DaskExecutor(client=client, compression=None),
-        chunksize=50_000,
+#        chunksize=50_000,
         skipbadfiles=True,
         schema=PFNanoAODSchema,
         savemetrics=True,

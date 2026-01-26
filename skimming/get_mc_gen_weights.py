@@ -8,7 +8,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description="")
 parser.add_argument(
     "--sample",
-    choices=['QCD', 'DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT'],
+    choices=['QCD', 'DY', 'signal', 'WtoLNu', 'Wto2Q', 'TT', 'singleT', 'DYto2L-2Jets', 'DYto2Tau-2Jets_0J', 'DYto2Tau-2Jets_0J_custom'],
     required=True,
     help="Specify the sample you want to process")
 parser.add_argument(
@@ -38,6 +38,9 @@ samples = {
     "WtoLNu": f"samples.{custom_nano_v_p}fileset_WtoLNu",
     "QCD": f"samples.{custom_nano_v_p}fileset_QCD",
     "DY": f"samples.{custom_nano_v_p}fileset_DY",
+    "DYto2L-2Jets": f"samples.{custom_nano_v_p}fileset_DYto2L-2Jets",
+    "DYto2Tau-2Jets_0J": f"samples.{custom_nano_v_p}fileset_DYto2Tau-2Jets_0J",
+    "DYto2Tau-2Jets_0J_custom": f"samples.{custom_nano_v_p}fileset_DYto2Tau-2Jets_MLL-50_0J_custom",
     "signal": f"samples.{custom_nano_v_p}fileset_signal",
     "TT": f"samples.{custom_nano_v_p}fileset_TT",
     "singleT": f"samples.{custom_nano_v_p}fileset_singleT",
@@ -58,8 +61,8 @@ def process_file(ifile):
         with uproot.open(ifile) as file:
             lumis = file["LuminosityBlocks/luminosityBlock"].array(library="np")
             runs = file["Runs"]
-            sumGenW = runs["genEventSumw"].array(library="np")[0]
-            sumGenN = runs["genEventCount"].array(library="np")[0]
+            sumGenW = runs["genEventSumw"].array(library="np").sum()
+            sumGenN = runs["genEventCount"].array(library="np").sum()
         # Store lumis as a list (JSON-friendly)
         return {"lumisections": lumis.tolist(),
                 "sumgenw": float(sumGenW),
